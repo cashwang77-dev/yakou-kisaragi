@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>夜校・如月</title>
+<meta name="description" content="像素斜角校園恐怖潛行遊戲。放學後返校拿手機的咪醬，發現學校變成了怪談的巢穴。試玩版：序章～第一章。">
+<meta property="og:title" content="夜校・如月｜試玩版">
+<meta property="og:image" content="https://cashwang77-dev.github.io/yakou-kisaragi/og.png">
+<meta property="og:url" content="https://cashwang77-dev.github.io/yakou-kisaragi/">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:description" content="放學後，咪醬回到學校拿手機。時鐘停在 4:44，操場上有個戴口罩的女人……">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Noto+Serif+TC:wght@600;900&display=swap" rel="stylesheet">
+<style>
+:root{--u:1px;--red:#c8323c;--ink:#e8e4da;--dim:#8d8a84}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-family:"Noto Sans TC",sans-serif;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+#wrap{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);overflow:hidden;background:#000}
+#c{width:100%;height:100%;display:block;image-rendering:pixelated;image-rendering:crisp-edges}
+.ui{position:absolute;pointer-events:none}
+.hide{display:none!important}
+/* HUD */
+#hud{inset:0}
+#hearts{left:calc(var(--u)*10);top:calc(var(--u)*8);display:flex;gap:calc(var(--u)*3)}
+#hearts i{width:calc(var(--u)*13);height:calc(var(--u)*12);background:var(--red);clip-path:polygon(50% 100%,0 40%,0 15%,15% 0,35% 0,50% 18%,65% 0,85% 0,100% 15%,100% 40%);opacity:.95}
+#hearts i.off{background:#3a2a2c}
+#stam{left:calc(var(--u)*10);top:calc(var(--u)*24);width:calc(var(--u)*76);height:calc(var(--u)*3);background:#222}
+#stam b{display:block;height:100%;background:#9fb3a6;width:100%}
+#obj{right:calc(var(--u)*10);top:calc(var(--u)*8);max-width:calc(var(--u)*250);text-align:right;font-size:calc(var(--u)*10.5);line-height:1.4;text-shadow:0 0 4px #000,0 0 2px #000}
+#obj small{display:block;color:var(--dim);font-size:calc(var(--u)*8)}
+#inv{left:50%;transform:translateX(-50%);bottom:calc(var(--u)*6);display:flex;gap:calc(var(--u)*4);pointer-events:auto}
+#inv .s{min-width:calc(var(--u)*30);height:calc(var(--u)*26);border:1px solid #514c47;background:rgba(10,10,14,.72);font-size:calc(var(--u)*8);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:0 calc(var(--u)*4);line-height:1.15;white-space:nowrap}
+#inv .s em{font-style:normal;color:var(--dim);font-size:calc(var(--u)*7)}
+#inv .s.on{border-color:#c9b98a}
+#inv .s.tap{cursor:pointer}
+#prompt{font-size:calc(var(--u)*9);background:rgba(0,0,0,.7);border:1px solid #6b655c;padding:calc(var(--u)*1) calc(var(--u)*5);transform:translate(-50%,-100%);white-space:nowrap}
+#hint{left:calc(var(--u)*10);bottom:calc(var(--u)*38);font-size:calc(var(--u)*8);color:var(--dim);line-height:1.5;text-shadow:0 0 3px #000}
+#toast{left:50%;top:22%;transform:translateX(-50%);font-size:calc(var(--u)*11);background:rgba(0,0,0,.75);border-top:1px solid #6b655c;border-bottom:1px solid #6b655c;padding:calc(var(--u)*4) calc(var(--u)*18);opacity:0;transition:opacity .3s;white-space:nowrap}
+#toast.show{opacity:1}
+#chap{inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;font-family:"Noto Serif TC",serif;opacity:0;transition:opacity 1s}
+#chap.show{opacity:1}
+#chap b{font-size:calc(var(--u)*26);letter-spacing:.2em;text-shadow:0 0 12px #000,0 0 4px #000}
+#chap span{font-size:calc(var(--u)*10);color:var(--dim);letter-spacing:.4em;margin-bottom:calc(var(--u)*6)}
+/* 對話框 */
+#dlg{left:calc(var(--u)*40);right:calc(var(--u)*40);bottom:calc(var(--u)*40);min-height:calc(var(--u)*64);background:rgba(6,6,10,.88);border:1px solid #6b655c;padding:calc(var(--u)*8) calc(var(--u)*12);pointer-events:auto;display:flex;gap:calc(var(--u)*10)}
+#dlg .face{width:calc(var(--u)*56);height:calc(var(--u)*56);flex:none;background:#1b0e10 center/contain no-repeat;image-rendering:pixelated;border:1px solid #4a2a2e}
+#dlg .face.none{display:none}
+#dlg .body{flex:1}
+#dlg .nm{font-size:calc(var(--u)*9);color:#c9b98a;margin-bottom:calc(var(--u)*3)}
+#dlg .tx{font-size:calc(var(--u)*11.5);line-height:1.6;min-height:calc(var(--u)*36)}
+#dlg .ch{display:flex;flex-direction:column;gap:calc(var(--u)*3);margin-top:calc(var(--u)*4)}
+#dlg .ch button{font:inherit;font-size:calc(var(--u)*10);text-align:left;background:rgba(40,36,34,.9);color:var(--ink);border:1px solid #5b554c;padding:calc(var(--u)*3) calc(var(--u)*8);cursor:pointer}
+#dlg .ch button:hover,#dlg .ch button.sel{border-color:#c9b98a;background:rgba(70,60,46,.9)}
+#dlg .timer{height:calc(var(--u)*2);background:var(--red);margin-top:calc(var(--u)*4);transform-origin:left}
+#dlg .more{position:absolute;right:calc(var(--u)*10);bottom:calc(var(--u)*4);font-size:calc(var(--u)*8);color:var(--dim);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.2}}
+/* 電話 */
+#phone{inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;gap:calc(var(--u)*16);pointer-events:auto}
+#phone img{width:calc(var(--u)*120);border:1px solid #4a2a2e;filter:contrast(1.1)}
+#phone .pb{width:calc(var(--u)*260)}
+#phone .who{font-size:calc(var(--u)*9);color:#c9b98a;letter-spacing:.2em}
+#phone .num{font-size:calc(var(--u)*14);margin:calc(var(--u)*3) 0 calc(var(--u)*8);font-family:"Noto Serif TC",serif}
+#phone .ptx{font-size:calc(var(--u)*12);line-height:1.7;min-height:calc(var(--u)*60);font-family:"Noto Serif TC",serif}
+#phone .ring{animation:shake .12s infinite}
+@keyframes shake{25%{transform:translate(1px,-1px)}75%{transform:translate(-1px,1px)}}
+/* 全畫面卡片（過場、標題、結束） */
+.full{inset:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000 center/cover no-repeat}
+.full::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.82))}
+.full>*{position:relative}
+#card .ctx{position:absolute;left:calc(var(--u)*50);right:calc(var(--u)*50);bottom:calc(var(--u)*42);font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*13);line-height:1.8;text-shadow:0 0 6px #000;min-height:calc(var(--u)*50)}
+#card .more{position:absolute;right:calc(var(--u)*20);bottom:calc(var(--u)*14);font-size:calc(var(--u)*8);color:var(--dim);animation:blink 1s infinite}
+#title h1{font-family:"Noto Serif TC",serif;font-weight:900;font-size:calc(var(--u)*44);letter-spacing:.16em;text-shadow:0 0 18px #000,0 0 6px #300;color:#efe8dc}
+#title h1 em{font-style:normal;color:var(--red)}
+#title p.sub{font-size:calc(var(--u)*9);color:#b5aea4;letter-spacing:.5em;margin:calc(var(--u)*4) 0 calc(var(--u)*24)}
+.btns{display:flex;flex-direction:column;gap:calc(var(--u)*6);align-items:center}
+.btns button{font:inherit;font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*12);width:calc(var(--u)*150);padding:calc(var(--u)*5);background:rgba(0,0,0,.6);color:var(--ink);border:1px solid #6b655c;cursor:pointer;letter-spacing:.2em}
+.btns button:hover,.btns button:focus{border-color:var(--red);color:#fff;outline:none}
+#title .foot{position:absolute;pointer-events:auto;bottom:calc(var(--u)*10);font-size:calc(var(--u)*8);color:#77726b}
+#title .foot a{color:#a99f8e}
+#help{background:rgba(0,0,0,.92)}
+#help::before{display:none}
+#help .hb{width:calc(var(--u)*430);font-size:calc(var(--u)*10);line-height:1.75}
+#help h2{font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*16);margin-bottom:calc(var(--u)*8);letter-spacing:.2em}
+#help table{width:100%;border-collapse:collapse;margin-bottom:calc(var(--u)*8)}
+#help td{border-bottom:1px solid #2c2a27;padding:calc(var(--u)*2) calc(var(--u)*4)}
+#help td:first-child{color:#c9b98a;width:38%}
+#over h2,#end h2{font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*30);letter-spacing:.3em;color:var(--red);text-shadow:0 0 10px #000;margin-bottom:calc(var(--u)*8)}
+#end h2{color:#efe8dc}
+#over p,#end p{font-size:calc(var(--u)*11);margin-bottom:calc(var(--u)*18);text-align:center;line-height:1.8;text-shadow:0 0 4px #000}
+/* 觸控 */
+#touch{inset:0;pointer-events:none}
+#stick{position:absolute;left:calc(var(--u)*22);bottom:calc(var(--u)*30);width:calc(var(--u)*90);height:calc(var(--u)*90);border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.16);pointer-events:auto}
+#stick b{position:absolute;left:50%;top:50%;width:40%;height:40%;margin:-20% 0 0 -20%;border-radius:50%;background:rgba(255,255,255,.2)}
+#tbtns{position:absolute;right:calc(var(--u)*14);bottom:calc(var(--u)*30);display:grid;grid-template-columns:repeat(2,calc(var(--u)*44));gap:calc(var(--u)*7);pointer-events:auto}
+#tbtns button{height:calc(var(--u)*44);border-radius:50%;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.22);color:#ddd;font:inherit;font-size:calc(var(--u)*10)}
+#tbtns button.on{background:rgba(200,50,60,.35)}
+#rot{inset:0;background:#000;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:9;pointer-events:auto;text-align:center;line-height:2}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c" width="640" height="360"></canvas>
+  <div id="hud" class="ui hide">
+    <div id="hearts" class="ui"></div>
+    <div id="stam" class="ui"><b></b></div>
+    <div id="obj" class="ui"></div>
+    <div id="hint" class="ui"></div>
+    <div id="inv" class="ui"></div>
+    <div id="prompt" class="ui hide"></div>
+  </div>
+  <div id="touch" class="ui hide">
+    <div id="stick"><b></b></div>
+    <div id="tbtns">
+      <button data-k="flash">燈</button><button data-k="act">調查</button>
+      <button data-k="crouch">蹲</button><button data-k="run">跑</button>
+    </div>
+  </div>
+  <div id="toast" class="ui"></div>
+  <div id="chap" class="ui"><span></span><b></b></div>
+  <div id="dlg" class="ui hide"><div class="face none"></div><div class="body"><div class="nm"></div><div class="tx"></div><div class="ch"></div><div class="timer hide"></div></div><div class="more">▼</div></div>
+  <div id="phone" class="ui hide"><img src="assets/mary.png" alt=""><div class="pb"><div class="who">來電</div><div class="num">未知號碼</div><div class="ptx"></div></div></div>
+  <div id="card" class="ui full hide"><div class="ctx"></div><div class="more">點擊繼續 ▼</div></div>
+  <div id="title" class="ui full" style="background-image:url(assets/card_gate.jpg)">
+    <h1>夜校・<em>如月</em></h1>
+    <p class="sub">試玩版　序章～第一章</p>
+    <div class="btns">
+      <button id="bStart">開始遊戲</button>
+      <button id="bCont" class="hide">從存檔繼續</button>
+      <button id="bHelp">操作說明</button>
+    </div>
+    <div class="foot" id="foot">戴上耳機遊玩效果最佳</div>
+  </div>
+  <div id="help" class="ui full hide">
+    <div class="hb">
+      <h2>操作說明</h2>
+      <table>
+        <tr><td>移動</td><td>WASD／方向鍵（手機：左下搖桿）</td></tr>
+        <tr><td>跑步（Shift）</td><td>快，但腳步聲大，會消耗體力</td></tr>
+        <tr><td>蹲下（C）</td><td>慢，幾乎沒有聲音，也比較不容易被看見</td></tr>
+        <tr><td>手電筒（F）</td><td>看得清楚，但光線也會讓鬼發現你</td></tr>
+        <tr><td>調查／躲藏（E 或空白鍵）</td><td>撿東西、開門，靠近草叢、垃圾桶、器材箱、桌子時可以躲進去</td></tr>
+        <tr><td>丟東西（1／2）</td><td>1 丟空罐引開注意；2 丟鼈甲糖（點下方道具欄也可以）</td></tr>
+      </table>
+      <p>鬼怪頭上出現「？」表示起疑，出現「！」就是被發現了，快跑或躲起來。被抓到時可以回答問題、反擊或丟東西爭取時間。</p>
+      <div class="btns" style="margin-top:calc(var(--u)*14)"><button id="bHelpBack">返回</button></div>
+    </div>
+  </div>
+  <div id="over" class="ui full hide" style="background-image:url(assets/card_hall.jpg)">
+    <h2>被抓住了</h2><p id="overTx"></p>
+    <div class="btns"><button id="bRetry">從檢查點重來</button><button id="bToTitle">回到標題</button></div>
+  </div>
+  <div id="end" class="ui full hide" style="background-image:url(assets/card_class.jpg)">
+    <h2>試玩版　完</h2>
+    <p>手機另一頭的瑪莉，正一步步靠近。<br>第二章「七大不思議」製作中。</p>
+    <div class="btns"><button id="bEndTitle">回到標題</button></div>
+  </div>
+  <div id="rot" class="ui hide">請將手機轉為橫向遊玩<br>↻</div>
+</div>
+<script src="game.js"></script>
+</body>
+</html>
