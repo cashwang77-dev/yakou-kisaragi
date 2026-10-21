@@ -1075,7 +1075,7 @@ function drawObj(o, alpha) {
 }
 function drawSprite(img, x, y, dir, opt = {}) {
   if (!img) return;
-  const rows = img.height > img.width / 8 * 1.8 ? 4 : 1;   // 4 列＝走路動畫
+  const rows = img.rows || (img.height > img.width / 8 * 1.8 ? 4 : 1);   // 咪醬 9 列（站/走4/跑4）、鬼 4 列
   const fw = img.width / 8, fh = img.height / rows, fy = ((opt.frame || 0) % rows) * fh, [sx, sy] = iso(x, y);
   const bob = opt.bob || 0;
   ctx.globalAlpha = opt.alpha ?? 1;
@@ -1119,7 +1119,7 @@ function render() {
   }
   for (const it of ITEMS) if (!it.taken) list.push({ d: it.x + it.y - .3, f: () => { const [sx, sy] = iso(it.x, it.y); const on = Math.sin(G.t * 4 + it.x) > .3; ctx.fillStyle = on ? 'rgba(255,240,200,.9)' : 'rgba(255,240,200,.35)'; ctx.fillRect(sx - 1, sy - (it.id === 'phone' ? 13 : 3), 2, 2); if (on) { ctx.fillRect(sx - 3, sy - (it.id === 'phone' ? 12 : 2), 6, 0.6); } } });
   for (const p of G.projs) list.push({ d: p.x + p.y, f: () => { const [sx, sy] = iso(p.x, p.y); ctx.fillStyle = p.kind === 'can' ? '#9aa' : '#d99a2b'; ctx.fillRect(sx - 2, sy - 10 - Math.sin((.5 - p.life) / .5 * Math.PI) * 12, 4, 3); } });
-  if (!P.hidden) list.push({ d: pd, f: () => drawSprite(IMG.mi, P.x, P.y, P.dir, { frame: P.moving ? P.frame : 0, bob: P.moving && P.frame % 2 ? -1 : 0, crouch: P.crouch }) });
+  if (!P.hidden) list.push({ d: pd, f: () => drawSprite(IMG.mi, P.x, P.y, P.dir, { frame: P.moving ? (P.run ? 4 : 0) + P.frame : 0, crouch: P.crouch }) });
   if (G.shadow) { const s = G.shadow; list.push({ d: s.x + s.y, f: () => drawSprite(IMG.mi, s.x, s.y, s.dir, { tint: 'rgba(0,0,0,1)', alpha: .85 * (s.a ?? 1), noShadow: true }) }); }
   if (GH.active) list.push({ d: GH.x + GH.y, f: () => drawSprite(IMG.kuchisake, GH.x, GH.y, GH.dir, { frame: GH.moving ? GH.frame : 0, bob: GH.moving && GH.frame % 2 ? -1 : 0, jit: GH.state === 'chase' ? (Math.random() - .5) * 2 : 0 }) });
   list.sort((a, b) => a.d - b.d);
@@ -1219,6 +1219,7 @@ if (!Q.get('embed')) $('#foot').innerHTML = `戴上耳機遊玩效果最佳　�
 
 loadImages(['mi', 'kuchisake', 'ninomiya', 'floors', 'floors2', 'walls', 't_tree', 't_dead1', 't_dead2', 't_dead3', 't_bush1', 't_bush2', 't_bush3', 't_cypress', 't_lamp', 't_rack', 't_bike', 't_bench1', 't_bench2', 't_trash', 't_fount', 't_board']).then(() => {
   buildFloor();
+  if (IMG.mi) IMG.mi.rows = 9;
   if (TEST && TEST !== 'shot') { setInterval(() => { update(1 / 30); }, 8); setInterval(render, 200); runTest(TEST); }
   else { requestAnimationFrame(loop); if (TEST) runTest(TEST); }
 });
