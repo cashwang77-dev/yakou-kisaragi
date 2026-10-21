@@ -69,6 +69,17 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
 .full::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.82))}
 .full>*{position:relative}
 #card{z-index:5}
+/* 開場漫畫：2x2 四格依序出現，旁白方框＋對話泡泡 */
+#comic{inset:0;z-index:9;pointer-events:auto;background:#0b0b0d;display:flex;align-items:center;justify-content:center}
+#comic .page{position:relative;width:min(100%,calc(100vh*1.78));aspect-ratio:16/9;max-height:100%;display:grid;grid-template:1fr 1fr/1fr 1fr;gap:calc(var(--u)*6);padding:calc(var(--u)*8);box-sizing:border-box}
+#comic .pn{position:relative;background:#000 center/cover no-repeat;border:calc(var(--u)*2) solid #e9e5dc;opacity:0;transform:scale(.94) rotate(-.4deg);transition:opacity .5s,transform .5s,filter .5s;filter:brightness(.42) grayscale(.2)}
+#comic .pn.on{opacity:1;transform:none}
+#comic .pn.cur{filter:none;box-shadow:0 0 calc(var(--u)*14) rgba(0,0,0,.9);z-index:2}
+#comic .cap{position:absolute;left:calc(var(--u)*-4);top:calc(var(--u)*-4);max-width:72%;background:#f3f0e8;color:#111;font-family:"Noto Serif TC",serif;font-weight:600;font-size:calc(var(--u)*11);line-height:1.6;padding:calc(var(--u)*4) calc(var(--u)*7);border:calc(var(--u)*1.5) solid #111;box-shadow:calc(var(--u)*2) calc(var(--u)*2) 0 #000}
+#comic .bub{position:absolute;right:6%;top:8%;max-width:46%;background:#fff;color:#111;font-family:"Noto Serif TC",serif;font-weight:600;font-size:calc(var(--u)*12);line-height:1.5;padding:calc(var(--u)*7) calc(var(--u)*11);border:calc(var(--u)*1.5) solid #111;border-radius:50%/42%}
+#comic .bub::after{content:"";position:absolute;left:18%;bottom:calc(var(--u)*-10);border:calc(var(--u)*6) solid transparent;border-top:calc(var(--u)*12) solid #111;border-bottom:0}
+#comic .cap:empty,#comic .bub:empty{display:none}
+#comic .more{position:absolute;right:calc(var(--u)*14);bottom:calc(var(--u)*6);font-size:calc(var(--u)*8);color:var(--dim);animation:blink 1s infinite}
 #card .ctx{position:absolute;left:calc(var(--u)*50);right:calc(var(--u)*50);bottom:calc(var(--u)*42);font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*13);line-height:1.8;text-shadow:0 0 6px #000;min-height:calc(var(--u)*50)}
 #card .more{position:absolute;right:calc(var(--u)*20);bottom:calc(var(--u)*14);font-size:calc(var(--u)*8);color:var(--dim);animation:blink 1s infinite}
 #title h1{font-family:"Noto Serif TC",serif;font-weight:900;font-size:calc(var(--u)*44);letter-spacing:.16em;text-shadow:0 0 18px #000,0 0 6px #300;color:#efe8dc}
@@ -119,6 +130,11 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
 .phone #phone .ptx{font-size:calc(var(--u)*14)}
 .phone #card .ctx{left:calc(var(--u)*24);right:calc(var(--u)*24);bottom:calc(var(--u)*30);font-size:calc(var(--u)*15)}
 .phone #card .more{font-size:calc(var(--u)*10)}
+.phone #comic .page{gap:calc(var(--u)*4);padding:calc(var(--u)*4)}
+.phone #comic .cap{font-size:calc(var(--u)*12);max-width:92%;padding:calc(var(--u)*3) calc(var(--u)*5)}
+.phone #comic .bub{font-size:calc(var(--u)*12);max-width:64%;right:2%;top:auto;bottom:5%;padding:calc(var(--u)*5) calc(var(--u)*9)}
+.phone #comic .bub::after{bottom:auto;top:calc(var(--u)*-10);border-top:0;border-bottom:calc(var(--u)*12) solid #111}
+.phone #comic .more{font-size:calc(var(--u)*10)}
 .phone #chap b{font-size:calc(var(--u)*30)}
 .phone #chap span{font-size:calc(var(--u)*12)}
 .phone .btns button{font-size:calc(var(--u)*14);width:calc(var(--u)*170);padding:calc(var(--u)*6)}
@@ -166,6 +182,7 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
   <div id="chap" class="ui"><span></span><b></b></div>
   <div id="dlg" class="ui hide"><div class="face none"></div><div class="body"><div class="nm"></div><div class="tx"></div><div class="ch"></div><div class="timer hide"></div></div><div class="more">▼</div></div>
   <div id="phone" class="ui hide"><img src="assets/mary.png" alt=""><div class="pb"><div class="who">來電</div><div class="num">未知號碼</div><div class="ptx"></div></div></div>
+  <div id="comic" class="ui hide"><div class="page"><div class="pn"></div><div class="pn"></div><div class="pn"></div><div class="pn"></div></div><div class="more">點擊繼續 ▼</div></div>
   <div id="card" class="ui full hide"><div class="ctx"></div><div class="more">點擊繼續 ▼</div></div>
   <div id="title" class="ui full" style="background-image:url(assets/card_gate.jpg)">
     <h1>夜校・<em>如月</em></h1>

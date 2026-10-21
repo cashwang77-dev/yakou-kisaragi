@@ -313,6 +313,7 @@ const KEY = isTouch ? { flash: '按「燈」', act: '按「調查」', can: '點
   });
   $('#dlg').addEventListener('pointerdown', e => { if (e.target.tagName !== 'BUTTON' && advanceFn) advanceFn(); });
   $('#card').addEventListener('pointerdown', () => { audioInit(); if (advanceFn) advanceFn(); });
+  $('#comic').addEventListener('pointerdown', () => { audioInit(); if (advanceFn) advanceFn(); });
   $('#phone').addEventListener('pointerdown', () => { if (advanceFn) advanceFn(); });
 })();
 
@@ -464,6 +465,23 @@ function card(img, lines) {
     const tx = c.querySelector('.ctx');
     for (const l of lines) {
       await new Promise(r2 => { let done = false; const skip = typeText(tx, l, () => { done = true; }); advanceFn = () => { if (!done) { skip(); return; } advanceFn = null; r2(); }; if (TEST) setTimeout(() => { advanceFn && advanceFn(); advanceFn && advanceFn(); }, 5); });
+    }
+    c.classList.add('hide'); G.lock--; res();
+  });
+}
+/* 開場漫畫：steps＝[{p: 格 0-3, nar: 旁白} 或 {p, say: 台詞}]，四格依序亮起，前面的格變暗留著 */
+function comic(steps) {
+  return new Promise(async res => {
+    G.lock++;
+    const c = $('#comic'), pns = [...c.querySelectorAll('.pn')];
+    pns.forEach((pn, i) => { pn.className = 'pn'; pn.style.backgroundImage = `url(assets/comic${i + 1}.jpg)`; pn.innerHTML = '<div class="cap"></div><div class="bub"></div>'; });
+    c.classList.remove('hide');
+    for (const [si, st] of steps.entries()) {
+      const hold = TEST === 'comic' && si >= +(Q.get('step') || 0);   // 截圖測試：停在第 step 步
+      pns.forEach((pn, i) => { pn.classList.toggle('cur', i === st.p); if (i === st.p) pn.classList.add('on'); });
+      const pn = pns[st.p], el = pn.querySelector(st.say ? '.bub' : '.cap');
+      pn.querySelector(st.say ? '.cap' : '.bub').textContent = '';
+      await new Promise(r2 => { let done = false; const skip = typeText(el, st.say || st.nar, () => { done = true; }); advanceFn = () => { if (!done) { skip(); return; } advanceFn = null; r2(); }; if (TEST && !hold) setTimeout(() => { advanceFn && advanceFn(); advanceFn && advanceFn(); }, 5); });
     }
     c.classList.add('hide'); G.lock--; res();
   });
@@ -794,7 +812,12 @@ function damage(n) {
 /* ---------- 劇情 ---------- */
 async function intro() {
   G.mode = 'cut';
-  await card('card_gate', ['二月某日，晚上七點。', '回家的電車上，咪醬伸手摸口袋——手機不見了。', '「啊……忘在教室的抽屜裡了。」', '手機殼裡還夾著定期票。沒有它，明天連學校都去不了。', '她在下一站下車，沿著來時的路走回學校。']);
+  await comic([
+    { p: 0, nar: '二月某日，晚上七點。' }, { p: 0, nar: '回家的電車上，咪醬伸手摸口袋——手機不見了。' },
+    { p: 1, say: '啊……忘在教室的抽屜裡了。' },
+    { p: 2, nar: '手機殼裡還夾著定期票。沒有它，明天連學校都去不了。' },
+    { p: 3, nar: '她在下一站下車，沿著來時的路走回學校。' },
+  ]);
   startPlay();
   chapter('序章', '放學後');
   setObj('回學校，到二年B班拿手機');
@@ -1251,6 +1274,7 @@ async function runTest(kind) {
   const tp = (x, y) => { P.x = x; P.y = y; };
   try {
     resetWorld(); G.mode = 'play'; startPlay();
+    if (kind === 'comic') { intro(); document.title = 'COMIC'; return; }
     if (kind === 'shot') { tp(Number(Q.get('x') || 27.5), Number(Q.get('y') || 30)); P.dir = 0; G.inv.flashlight = true; P.light = true; if (Q.get('ghost')) { const ch = Q.get('ghost') === 'chase'; spawnGhost(P.x - (ch ? 6 : 2), P.y - (ch ? 6 : 2)); GH.state = ch ? 'chase' : 'pause'; GH.timer = 99; GH.dir = 4; } if (Q.get('crouch')) P.crouch = true; if (Q.get('pose')) setPose(Q.get('pose')); if (Q.get('atk')) GH.atkLoop = true; if (Q.get('dir')) P.dir = +Q.get('dir'); if (Q.get('hold')) { G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 }; G.inv.candy = 2; catchPlayer(false); } document.title = 'SHOT'; return; }
     if (kind === 'chase') {
       G.flags.log = true; G.inv.flashlight = true; P.light = true; G.inv.candy = 1; G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 };
