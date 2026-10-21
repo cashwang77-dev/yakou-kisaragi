@@ -92,7 +92,8 @@ async function getPage(n) {
   if (!G.inv.pages.includes(n)) G.inv.pages.push(n);
   sfx.pick(); updateHUD(); toast(`得到【交換日記　第 ${n} 頁】`);
   await says(PAGE_TEXT[n].map(t => ['交換日記', t]));
-  await says(['……交換日記？寫的人叫「妃姬子」。', n === 1 ? '澄香……黑板上那個值日生的名字。' : '七大不思議……所以這間學校的怪談，都是「門」？']);
+  if (n === 1) await says(['……交換日記？寫的人叫「妃姬子」。', '澄香……黑板上那個值日生的名字。']);
+  else if (n === 2) await says(['……交換日記？寫的人叫「妃姬子」。', '七大不思議……所以這間學校的怪談，都是「門」？']);
 }
 async function sceneAction(o) {
   const I = G.inv;
@@ -380,8 +381,8 @@ async function testCh2() {
     const t0 = performance.now(); while (!ITEMS.some(i => i.id === 'page1') && performance.now() - t0 < 30000) await wait(100);
     const pg = ITEMS.find(i => i.id === 'page1'); if (!pg) throw 'page1 not dropped';
     tp(pg.x, pg.y - .4); await interact(); await waitFree();
-    const t1 = performance.now(); while (G.mode === 'play' && performance.now() - t1 < 20000) await wait(100);
-    document.title = (G.mode === 'end' && (G.inv.pages || []).length === 2 ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());
+    const t1 = performance.now(); while (G.mode === 'play' && G.scene === 2 && performance.now() - t1 < 20000) await wait(100);
+    document.title = ((G.mode === 'end' || G.scene === 3) && (G.inv.pages || []).length === 2 ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());
   } catch (e) { document.title = 'ERR ' + e + ' ' + JSON.stringify(stateSummary()); }
 }
 // ?test=ch2load：第二章存檔 → 回到第一章 → 讀檔，應該回到第二章且物件、道具正確

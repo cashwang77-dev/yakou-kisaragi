@@ -1288,10 +1288,10 @@ try { if (localStorage.getItem(SAVE_KEY)) $('#bCont').classList.remove('hide'); 
 const BLOG = 'https://cashkingw.blogspot.com/2026/10/444.html';
 if (!Q.get('embed')) $('#foot').innerHTML = `戴上耳機遊玩效果最佳　｜　<a href="${Q.get('blog') || BLOG}" target="_top" style="pointer-events:auto">Cash城部落格</a>`;
 
-loadImages(['ninomiya_walk', 'mi', 'mi_crouch', 'mi_hurt', 'mi_throw', 'mi_light', 'mi_down', 'kuchisake', 'kuchisake_chase', 'kuchisake_atk', 'ninomiya', 'floors', 'floors2', 'walls', 't_tree', 't_dead1', 't_dead2', 't_dead3', 't_bush1', 't_bush2', 't_bush3', 't_cypress', 't_lamp', 't_rack', 't_bike', 't_bench1', 't_bench2', 't_trash', 't_fount', 't_board']).then(() => {
+loadImages(['anatomy', 'tvwoman', 'beethoven', 'hanako', 'ninomiya_walk', 'mi', 'mi_crouch', 'mi_hurt', 'mi_throw', 'mi_light', 'mi_down', 'kuchisake', 'kuchisake_chase', 'kuchisake_atk', 'ninomiya', 'floors', 'floors2', 'walls', 't_tree', 't_dead1', 't_dead2', 't_dead3', 't_bush1', 't_bush2', 't_bush3', 't_cypress', 't_lamp', 't_rack', 't_bike', 't_bench1', 't_bench2', 't_trash', 't_fount', 't_board']).then(() => {
   buildFloor();
   if (IMG.mi) IMG.mi.rows = 9;
-  for (const [k, r] of [['mi_crouch', 4], ['mi_hurt', 2], ['mi_throw', 2], ['mi_light', 1], ['mi_down', 1], ['kuchisake_atk', 4], ['ninomiya_walk', 4]]) if (IMG[k]) IMG[k].rows = r;
+  for (const [k, r] of [['mi_crouch', 4], ['mi_hurt', 2], ['mi_throw', 2], ['mi_light', 1], ['mi_down', 1], ['kuchisake_atk', 4], ['ninomiya_walk', 4], ['anatomy', 4]]) if (IMG[k]) IMG[k].rows = r;
   if (TEST && TEST !== 'shot') { setInterval(() => { update(1 / 30); }, 8); setInterval(render, 200); runTest(TEST); }
   else { requestAnimationFrame(loop); if (TEST) runTest(TEST); }
 });
@@ -1303,6 +1303,7 @@ async function runTest(kind) {
     resetWorld(); G.mode = 'play'; startPlay();
     if (kind === 'ch2') return testCh2();
     if (kind === 'ch2load') return testCh2Load();
+    if (kind === 'ch2b') return testCh2b();
     if (kind === 'comic') { intro(); document.title = 'COMIC'; return; }
     if (kind === 'shot') { if (Q.get('scene')) loadScene(+Q.get('scene')); tp(Number(Q.get('x') || 27.5), Number(Q.get('y') || 30)); P.dir = 0; G.inv.flashlight = true; P.light = true; if (Q.get('ghost')) { const ch = Q.get('ghost') === 'chase'; spawnGhost(P.x - (ch ? 6 : 2), P.y - (ch ? 6 : 2)); GH.state = ch ? 'chase' : 'pause'; GH.timer = 99; GH.dir = 4; } if (Q.get('crouch')) P.crouch = true; if (Q.get('pose')) setPose(Q.get('pose')); if (Q.get('atk')) GH.atkLoop = true; if (Q.get('dir')) P.dir = +Q.get('dir'); if (Q.get('hold')) { G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 }; G.inv.candy = 2; catchPlayer(false); } document.title = 'SHOT'; return; }
     if (kind === 'chase') {
