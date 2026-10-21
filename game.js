@@ -400,18 +400,29 @@ function layout() {
   $('#rot').classList.toggle('hide', !(isTouch && h > w && w < 600));
 }
 addEventListener('resize', layout); addEventListener('orientationchange', () => setTimeout(layout, 300)); layout();
-/* 全螢幕（Android、平板；iPhone Safari 不支援時隱藏按鈕） */
+/* 全螢幕：Android、平板用 Fullscreen API；iPhone Safari 不支援 → 教玩家「加入主畫面」（manifest／apple-mobile-web-app-capable 開啟時沒有網址列） */
+const canFS = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+const isStandalone = !!navigator.standalone || matchMedia('(display-mode: fullscreen), (display-mode: standalone)').matches;
+const isIPhone = /iPhone|iPod/.test(navigator.userAgent);
+function goFS() {
+  const de = document.documentElement, req = de.requestFullscreen || de.webkitRequestFullscreen;
+  if (!canFS || !req || document.fullscreenElement || document.webkitFullscreenElement) return Promise.resolve();
+  const r = req.call(de);
+  return (r && r.then ? r : Promise.resolve()).then(() => { try { screen.orientation.lock('landscape').catch(() => { }); } catch (e) { } });
+}
+const showA2hs = () => $('#a2hs').classList.remove('hide');
 (function setupFS() {
-  const de = document.documentElement, b = $('#fs');
-  const can = document.fullscreenEnabled || document.webkitFullscreenEnabled;
-  if (!can) return;
-  b.classList.remove('hide');
-  b.addEventListener('click', () => {
-    audioInit();
-    const on = document.fullscreenElement || document.webkitFullscreenElement;
-    if (on) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-    else { const r = (de.requestFullscreen || de.webkitRequestFullscreen).call(de); if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape').catch(() => { }); } catch (e) { } }).catch(() => { }); }
-  });
+  const b = $('#fs');
+  if (canFS) {
+    b.classList.remove('hide');
+    b.addEventListener('click', () => {
+      audioInit();
+      if (document.fullscreenElement || document.webkitFullscreenElement) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+      else goFS().catch(() => { });
+    });
+  } else if (isTouch && !isStandalone && !Q.get('embed')) {
+    b.classList.remove('hide'); b.addEventListener('click', showA2hs);
+  }
 })();
 let toastT = 0;
 function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => e.classList.remove('show'), 2200); }
@@ -1266,19 +1277,18 @@ function resetWorld() {
   Object.assign(P, { x: 27.5, y: 38.7, dir: 0, hidden: null, light: false, crouch: false, stam: 100 });
   GH.active = false; G.candies = []; G.projs = []; G.shadow = null;
 }
-$('#bStart').onclick = () => { audioInit(); resetWorld(); $('#title').classList.add('hide'); intro(); };
-$('#bCont').onclick = () => { audioInit(); let s = null; try { s = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { } if (!s) return; resetWorld(); G.cp = s; loadCP(s); startPlay(); };
+// 手機按開始時順便全螢幕（Android）
+const fsOnStart = () => { if (isTouch && !Q.get('embed')) goFS().catch(() => { }); };
+$('#bStart').onclick = () => { audioInit(); fsOnStart(); resetWorld(); $('#title').classList.add('hide'); intro(); };
+$('#bCont').onclick = () => { audioInit(); fsOnStart(); let s = null; try { s = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { } if (!s) return; resetWorld(); G.cp = s; loadCP(s); startPlay(); };
 $('#bHelp').onclick = () => $('#help').classList.remove('hide');
-// 手機在部落格裡（iframe）畫面太小：提供全螢幕／新分頁開啟
+$('#bA2hsBack').onclick = () => $('#a2hs').classList.add('hide');
+// 手機在部落格裡（iframe）畫面太小：提供全螢幕／新分頁開啟；iPhone 直接開網頁時教加入主畫面
 if (Q.get('embed') && isTouch) {
   const bf = $('#bFull'); bf.classList.remove('hide');
-  bf.onclick = () => {
-    audioInit();
-    const de = document.documentElement, req = de.requestFullscreen || de.webkitRequestFullscreen;
-    if (req && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
-      const r = req.call(de); if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape').catch(() => { }); } catch (e) { } }).catch(() => window.open(location.pathname, '_blank'));
-    } else window.open(location.pathname, '_blank');
-  };
+  bf.onclick = () => { audioInit(); if (canFS) goFS().catch(() => window.open(location.pathname, '_blank')); else window.open(location.pathname, '_blank'); };
+} else if (isIPhone && !isStandalone) {
+  const bf = $('#bFull'); bf.classList.remove('hide'); bf.onclick = showA2hs;
 }
 $('#bHelpBack').onclick = () => $('#help').classList.add('hide');
 $('#bRetry').onclick = () => { $('#over').classList.add('hide'); loadCP(G.cp); startPlay(); };

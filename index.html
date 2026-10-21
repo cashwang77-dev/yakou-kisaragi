@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>夜校・如月</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="夜校如月">
+<meta name="theme-color" content="#000000">
+<link rel="apple-touch-icon" href="assets/icon180.png">
 <meta name="description" content="像素斜角校園恐怖潛行遊戲。放學後返校拿手機的咪醬，發現學校變成了怪談的巢穴。試玩版：序章～第一章。">
 <meta property="og:title" content="夜校・如月｜試玩版">
 <meta property="og:image" content="https://cashwang77-dev.github.io/yakou-kisaragi/og.png">
@@ -156,6 +163,13 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
 .phone #title .btns{gap:calc(var(--u)*5)}
 .phone #title .btns button{padding:calc(var(--u)*4)}
 .phone #title .foot{bottom:calc(var(--u)*4)}
+#a2hs{z-index:10;pointer-events:auto;background:rgba(0,0,0,.88)}
+#a2hs .hb{text-align:center;font-size:calc(var(--u)*10.5);line-height:1.6}
+#a2hs .hb b{color:#f0c674}
+#a2hs .hb small{display:block;color:var(--dim);font-size:calc(var(--u)*9.5);margin-top:calc(var(--u)*6)}
+.phone #a2hs .hb{font-size:calc(var(--u)*11)}
+#a2hs h2{font-size:calc(var(--u)*15);margin-bottom:calc(var(--u)*4)}
+.phone #a2hs .btns button,#a2hs .btns button{font-size:calc(var(--u)*12);padding:calc(var(--u)*3)}
 #rot{inset:0;background:#000;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:9;pointer-events:auto;text-align:center;line-height:2}
 </style>
 </head>
@@ -208,6 +222,15 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
       </table>
       <p>鬼怪頭上出現「？」表示起疑，出現「！」就是被發現了，快跑或躲起來。被抓到時可以回答問題、反擊或丟東西爭取時間。</p>
       <div class="btns" style="margin-top:calc(var(--u)*14)"><button id="bHelpBack">返回</button></div>
+    </div>
+  </div>
+  <div id="a2hs" class="ui full hide">
+    <div class="hb">
+      <h2>全螢幕遊玩（iPhone）</h2>
+      <p>iPhone 的 Safari 不允許網頁自己全螢幕，<br>請把遊戲<b>加入主畫面</b>，從桌面圖示開啟就沒有網址列：</p>
+      <p style="margin-top:calc(var(--u)*6)">① 點下方工具列的 <b>分享鍵 ⬆︎</b><br>②  選 <b>「加入主畫面」</b><br>③  回桌面點「夜校如月」圖示</p>
+      <small>主畫面版和 Safari 的存檔是分開的；加入後建議從頭玩或在主畫面版裡繼續。</small>
+      <div class="btns" style="margin-top:calc(var(--u)*6)"><button id="bA2hsBack">知道了</button></div>
     </div>
   </div>
   <div id="over" class="ui full hide" style="background-image:url(assets/card_hall.jpg)">
