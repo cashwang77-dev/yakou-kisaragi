@@ -30,6 +30,23 @@ const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? 'X' : T[y * W + x];
 const put = (x, y, c) => { T[y * W + x] = c; };
 const fill = (x0, y0, x1, y1, c) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) put(x, y, c); };
 
+const DOORS = {};
+function door(x, y, o) { put(x, y, 'D'); DOORS[x + ',' + y] = Object.assign({ x, y, locked: false }, o); }
+const INDOOR = new Set(['_', ':', 'D']);
+const isInside = (x, y) => { const c = at(Math.floor(x), Math.floor(y)); return c === '_' || c === ':'; };
+const OBJ = [], OBJAT = {}, LIGHTS = [], ITEMS = [];
+const HIDE = { bush: '躲進草叢', trash: '躲進垃圾桶', box: '躲進器材箱', bleach: '躲到看台下', desk: '躲到桌子底下', tdesk: '躲到講台下', locker: '躲進置物櫃', bed: '躲到床簾後', shelf: '擠進書架縫隙', cabinet: '躲進掃除用具櫃' };
+function obj(t, x, y, o) { const b = Object.assign({ t, x, y, solid: true }, o); OBJ.push(b); return b; }
+function item(id, x, y, name) { ITEMS.push({ id, x: x + .5, y: y + .5, name, taken: false }); }
+let STATUE = {}, LAMPS = [];
+/* 場景：每章一張 40x40 地圖。loadScene 清空後重建地圖、物件、光源、道具、巡邏路線，並重畫地板 */
+const SCENES = { 1: buildCh1 };
+function resetMap() { T.fill('X'); for (const k in DOORS) delete DOORS[k]; for (const k in OBJAT) delete OBJAT[k]; OBJ.length = LIGHTS.length = ITEMS.length = 0; }
+function indexObjs() { OBJ.forEach(o => { OBJAT[o.x + ',' + o.y] = o; }); if (Object.keys(OBJAT).length !== OBJ.length) console.warn('物件重疊'); }
+function loadScene(n) { resetMap(); G.scene = n; SCENES[n](); indexObjs(); PATROL.splice(0, PATROL.length, ...SCENE_PATROL[n]); if (IMG.floors) buildFloor(); }
+
+/* 第一章：校園（主校舍 y1-12、操場、前庭、器材小屋、警衛室） */
+function buildCh1() {
 // 主校舍：y1 外牆、y2-7 教室、y8 走廊牆、y9-11 走廊、y12 正面外牆
 fill(1, 1, 38, 12, '#');
 fill(2, 2, 11, 7, '_'); fill(13, 2, 21, 7, '_'); fill(23, 2, 31, 7, '_'); fill(33, 2, 37, 7, '_');
@@ -47,8 +64,6 @@ fill(18, 38, 38, 39, 'r');
 fill(3, 32, 7, 35, '#'); fill(4, 33, 6, 34, '_');
 fill(31, 32, 34, 35, '#'); fill(32, 33, 33, 34, '_');
 
-const DOORS = {};
-function door(x, y, o) { put(x, y, 'D'); DOORS[x + ',' + y] = Object.assign({ x, y, locked: false }, o); }
 door(4, 8, { locked: true, sign: '1-A', msg: '一年A班。門鎖著。' });
 door(10, 8, { locked: true, msg: '一年A班。門鎖著。' });
 door(14, 8, { sign: '2-B' }); door(20, 8, {});
@@ -58,23 +73,18 @@ door(35, 8, { locked: true, sign: '倉庫', msg: '倉庫。門鎖著。' });
 door(8, 12, { locked: true, key: 'sidekey', msg: '側門鎖著。' });
 door(27, 12, { locked: true, chain: true, msg: 'chain' }); door(28, 12, { locked: true, chain: true, msg: 'chain' });
 door(5, 32, {}); door(31, 33, {});
-const INDOOR = new Set(['_', ':', 'D']);
-const isInside = (x, y) => { const c = at(Math.floor(x), Math.floor(y)); return c === '_' || c === ':'; };
 
 /* 物件 */
-const OBJ = [];
-const HIDE = { bush: '躲進草叢', trash: '躲進垃圾桶', box: '躲進器材箱', bleach: '躲到看台下', desk: '躲到桌子底下', tdesk: '躲到講台下', locker: '躲進置物櫃' };
-function obj(t, x, y, o) { const b = Object.assign({ t, x, y, solid: true }, o); OBJ.push(b); return b; }
 [[20, 18], [23, 24], [35, 18], [37, 24], [21, 32], [37, 31], [19, 21], [33, 25]].forEach(p => obj('tree', p[0], p[1]));
 [[24, 20], [33, 22], [19, 28], [36, 27], [22, 35], [12, 35]].forEach(p => obj('bush', p[0], p[1]));
-const LAMPS = [[26, 19], [29, 26], [26, 33], [8, 16], [15, 32], [3, 24]];
+LAMPS = [[26, 19], [29, 26], [26, 33], [8, 16], [15, 32], [3, 24]];
 LAMPS.forEach(p => obj('lamp', p[0], p[1]));
 obj('vend', 15, 15, { act: 'vend' }); obj('vend', 16, 15, { act: 'vend' });
 for (let y = 18; y <= 30; y++) if (y !== 24) { obj('bleach', 1, y); obj('bleach', 2, y, { hideOnly: true }); }
 [[10, 21], [14, 29], [6, 26]].forEach(p => obj('box', p[0], p[1]));
 obj('box', 6, 34, { act: 'keybox', hide: false });
 [[24, 15], [31, 15], [13, 13]].forEach(p => obj('trash', p[0], p[1]));
-const STATUE = obj('statue', 32, 17, { act: 'statue' });
+STATUE = obj('statue', 32, 17, { act: 'statue' });
 for (let x = 33; x <= 37; x++) obj('bike', x, 29);
 obj('board', 30, 14, { act: 'board' });
 obj('fount', 34, 20, { act: 'fount' });
@@ -88,20 +98,14 @@ for (const [x0, x1] of [[2, 11], [13, 21], [23, 31]]) {
 for (const x of [16, 17, 18]) obj('locker', x, 7);
 for (const x of [5, 6, 15, 16]) obj('locker', x, 11);
 for (const x of [23, 24, 25, 30, 31, 32]) obj('shoe', x, 11, { act: 'shoe' });
-const OBJAT = {};
-OBJ.forEach(o => { OBJAT[o.x + ',' + o.y] = o; });
-if (Object.keys(OBJAT).length !== OBJ.length) console.warn('物件重疊');
 
 /* 光源 */
-const LIGHTS = [];
 LAMPS.forEach(([x, y], i) => LIGHTS.push({ x: x + .5, y: y + .5, r: 3.8, c: '255,190,120', fl: i === 3 }));
 LIGHTS.push({ x: 15.5, y: 15.9, r: 2.4, c: '170,210,255' }, { x: 16.5, y: 15.9, r: 2.4, c: '170,210,255' });
 LIGHTS.push({ x: 32.8, y: 33.8, r: 2.4, c: '255,200,140', id: 'guard' });
 LIGHTS.push({ x: 2.6, y: 10.4, r: 1.7, c: '90,255,140' }, { x: 37.4, y: 10.4, r: 1.7, c: '90,255,140' });
 
 /* 地上物品 */
-const ITEMS = [];
-function item(id, x, y, name) { ITEMS.push({ id, x: x + .5, y: y + .5, name, taken: false }); }
 item('flashlight', 32, 34, '手電筒');
 item('bandage', 33, 34, '繃帶');
 item('broom', 32, 30, '掃把');
@@ -110,6 +114,8 @@ item('can', 29, 23, '空罐');
 item('can', 11, 17, '空罐');
 item('can', 9, 10, '空罐');
 item('phone', 18, 6, '手機');
+}
+buildCh1(); indexObjs();   // 開機先建第一章（這時 G 還沒建立，不能呼叫 loadScene）
 
 /* 碰撞 */
 function solidTile(x, y) {
@@ -202,6 +208,7 @@ function buildFloor() {
   const g = floorC.getContext('2d'), m = maskC.getContext('2d');
   const useTex = !!(IMG.floors && IMG.floors2);
   g.imageSmoothingEnabled = true;
+  g.clearRect(0, 0, FW, FH); m.clearRect(0, 0, FW, FH);   // 換場景時重畫
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     let c = at(x, y);
     if (c === 'f' || c === 'P') c = x < 17 && y < 37 ? ',' : '.';
@@ -219,7 +226,13 @@ function buildFloor() {
     if (INDOOR.has(at(x, y)) || c === '_' || c === ':') diamond(m, x, y, 'rgba(0,0,0,.38)');   // 室內額外暗度
   }
   // 夜色：整片地面乘上冷色調
-  if (useTex) { g.globalCompositeOperation = 'multiply'; g.fillStyle = '#727b94'; g.fillRect(0, 0, FW, FH); g.globalCompositeOperation = 'source-over'; }
+  if (useTex) {
+    const keep = document.createElement('canvas'); keep.width = FW; keep.height = FH; keep.getContext('2d').drawImage(floorC, 0, 0);
+    g.globalCompositeOperation = 'multiply'; g.fillStyle = '#727b94'; g.fillRect(0, 0, FW, FH);
+    g.globalCompositeOperation = 'destination-in'; g.drawImage(keep, 0, 0);   // 相乘會把透明處也塗上顏色 → 只保留原本有地板的地方
+    g.globalCompositeOperation = 'source-over';
+  }
+  if (G.scene === 1) {   // 第一章：操場跑道、道路標線
   // 操場跑道
   g.strokeStyle = 'rgba(210,200,180,.22)'; g.lineWidth = 1;
   for (const k of [0, 1.1]) {
@@ -230,6 +243,7 @@ function buildFloor() {
   // 道路標線
   g.fillStyle = 'rgba(220,210,170,.35)';
   for (let x = 18; x < 39; x += 1.5) { const [a, b] = isoW(x, 39); g.fillRect(a | 0, b | 0, 9, 2); }
+  }
   // 水窪
   for (let i = 0; i < 26; i++) {
     const x = 1 + R() * 37, y = 13 + R() * 24; const c = at(x | 0, y | 0);
@@ -259,11 +273,12 @@ function faceRect(x, y, side, u0, u1, v0, v1, col) {
 /* ---------- 狀態 ---------- */
 const G = {
   mode: 'title', lock: 0, t: 0, flags: {}, inv: { cans: 0, candy: 0, weapon: null, key: false, flashlight: false, phone: false, bandage: 0 },
-  hearts: 5, cp: null, noises: [], projs: [], candies: [], flash: 0, nextBolt: 12, triggers: {}, shadow: null
+  scene: 1, hearts: 5, cp: null, noises: [], projs: [], candies: [], flash: 0, nextBolt: 12, triggers: {}, shadow: null
 };
 const P = { x: 27.5, y: 38.7, dir: 0, vx: 0, vy: 0, r: .26, stam: 100, tired: false, crouch: false, run: false, light: false, hidden: null, hiddenSeen: false, step: 0, inv: 0, moving: false };
 const GH = { x: 9, y: 18, dir: 4, r: .28, active: false, state: 'idle', path: null, pathT: 0, wp: 0, sus: 0, timer: 0, look: 0, last: null, lastSeenT: -9, mode: 'patrol', freeze: 5, script: 0, step: 0, visible: false, seeT: 0 };
-const PATROL = [[9.5, 18.5], [14.5, 21.5], [12.5, 30.5], [8.5, 33.5], [4.5, 29.5], [4.5, 20.5], [9.5, 25.5]];
+const SCENE_PATROL = { 1: [[9.5, 18.5], [14.5, 21.5], [12.5, 30.5], [8.5, 33.5], [4.5, 29.5], [4.5, 20.5], [9.5, 25.5]] };   // 裂口女巡邏點（各章）
+const PATROL = [...SCENE_PATROL[1]];
 const SCRIPT = [[25.5, 10.5], [20.5, 10.5], [20.5, 8.5], [20.5, 7.5], [19.5, 5.5], [15.5, 5.5], [13.5, 3.5], [16.5, 3.5], [20.5, 3.5], [20.5, 7.5], [20.5, 9.5], [27.5, 10.5], [33.5, 10.5]];
 
 /* ---------- 輸入 ---------- */
@@ -417,6 +432,7 @@ function updateHUD() {
   if (I.bandage) s.push(`<div class="s">繃帶×${I.bandage}</div>`);
   if (I.key) s.push(`<div class="s">側門鑰匙</div>`);
   if (I.phone) s.push(`<div class="s">手機</div>`);
+  if (typeof sceneHUD === 'function') sceneHUD(s);
   if (P.crouch) s.push(`<div class="s on">蹲下中<em>${isTouch ? '' : 'C'}</em></div>`);
   $('#inv').innerHTML = s.join('');
   $('#inv').querySelectorAll('.tap').forEach(e => e.addEventListener('pointerdown', ev => { ev.preventDefault(); press(e.dataset.k); }));
@@ -516,7 +532,7 @@ function nearestInteract() {
     const o = OBJAT[tx + ',' + ty];
     if (!o || (o.t === 'statue' && o.gone && G.flags.statueSeenGone)) continue;
     if (o.act === 'keybox' && G.inv.key) continue;
-    if (o.act) { bd = d; best = { kind: 'obj', o, label: { vend: '調查販賣機', statue: '調查雕像', log: '看值班日誌', keybox: '打開器材箱', shoe: '看看鞋箱', board: '看公告欄', fount: '看看噴水池' }[o.act] }; }
+    if (o.act) { bd = d; best = { kind: 'obj', o, label: o.label || { vend: '調查販賣機', statue: '調查雕像', log: '看值班日誌', keybox: '打開器材箱', shoe: '看看鞋箱', board: '看公告欄', fount: '看看噴水池' }[o.act] }; }
     else if (HIDE[o.t] && o.hide !== false) { bd = d; best = { kind: 'hide', o, label: HIDE[o.t] }; }
   }
   return best;
@@ -580,6 +596,7 @@ async function useDoor(dr) {
   await says([dr.msg]);
 }
 async function objAction(o) {
+  if (G.scene !== 1 && typeof sceneAction === 'function' && await sceneAction(o) !== false) return;
   if (o.act === 'vend') {
     if (G.flags.vend) { await says(['販賣機的燈一閃一閃的。已經沒有東西掉出來了。']); return; }
     G.flags.vend = true; sfx.vend(); G.inv.candy += 2; updateHUD();
@@ -651,6 +668,7 @@ function investigate(x, y) { GH.state = 'investigate'; GH.target = [x, y]; GH.pa
 function ghostFacing() { return DIRV[GH.dir]; }
 function canSeePlayer() {
   if (P.hidden || G.mode !== 'play') return false;
+  if (typeof sceneSafe === 'function' && sceneSafe(P.x, P.y)) return false;   // 安全屋（第二章保健室）
   const d = dist(GH.x, GH.y, P.x, P.y);
   let range = 5.2;
   if (P.light) range += 3.2;
@@ -746,7 +764,7 @@ function ghostUpdate(dt) {
       }
       if (sees) walkTo(P.x, P.y, 3.25, dt);
       else if (GH.last) { const arrived = walkTo(GH.last[0], GH.last[1], 3.25, dt); if (arrived || G.t - GH.lastSeenT > 3) { GH.state = 'search'; GH.searchT = 4.5; GH.target = null; GH.sus = .5; } }
-      if (d < .62 && P.inv <= 0 && !P.hidden) catchPlayer(false);
+      if (d < .62 && P.inv <= 0 && !P.hidden && !(typeof sceneSafe === 'function' && sceneSafe(P.x, P.y))) catchPlayer(false);
       break;
     }
     case 'search': {
@@ -838,7 +856,7 @@ const TRIG = [
 ];
 function checkTriggers() {
   if (G.lock) return;
-  for (const t of TRIG) if (!G.triggers[t.id] && t.when()) { G.triggers[t.id] = true; t.run(); return; }
+  for (const t of TRIG) if ((t.scene || 1) === G.scene && !G.triggers[t.id] && t.when()) { G.triggers[t.id] = true; t.run(); return; }
 }
 /* 原創怪談：慢一拍的影子 */
 function shadowScare() {
@@ -865,6 +883,7 @@ async function scriptDone() {
   await wait(800);
   await says(['……腳步聲走遠了。']);
   await phoneCall(['我是瑪莉。', '我現在……在鞋箱前面。', '……我知道你在哪裡哦。']);
+  if (typeof startCh2 === 'function') return startCh2();
   G.mode = 'end'; $('#hud').classList.add('hide'); $('#touch').classList.add('hide');
   $('#end').classList.remove('hide');
   try { localStorage.removeItem(SAVE_KEY); } catch (e) { }
@@ -873,19 +892,21 @@ async function scriptDone() {
 
 /* ---------- 檢查點 ---------- */
 function snapshot() {
-  return { flags: { ...G.flags }, inv: JSON.parse(JSON.stringify(G.inv)), hearts: Math.max(G.hearts, 3), triggers: { ...G.triggers }, statue: !!STATUE.gone, items: ITEMS.map(i => i.taken), doors: Object.values(DOORS).map(d => d.locked), px: P.x, py: P.y, obj: OBJTEXT };
+  return { scene: G.scene, flags: { ...G.flags }, inv: JSON.parse(JSON.stringify(G.inv)), hearts: Math.max(G.hearts, 3), triggers: { ...G.triggers }, statue: !!STATUE.gone, items: ITEMS.map(i => i.taken), doors: Object.values(DOORS).map(d => d.locked), px: P.x, py: P.y, obj: OBJTEXT };
 }
 function saveCP(name) {
   G.cp = { name, ...snapshot() };
   try { localStorage.setItem(SAVE_KEY, JSON.stringify(G.cp)); } catch (e) { }
 }
 function loadCP(cp) {
+  if ((cp.scene || 1) !== G.scene) loadScene(cp.scene || 1);
   G.flags = { ...cp.flags }; G.inv = JSON.parse(JSON.stringify(cp.inv)); G.hearts = cp.hearts; G.triggers = { ...cp.triggers };
   STATUE.gone = cp.statue; ITEMS.forEach((it, i) => it.taken = cp.items[i]); Object.values(DOORS).forEach((d, i) => d.locked = cp.doors[i]);
   P.x = cp.px; P.y = cp.py; P.hidden = null; P.light = G.inv.flashlight; P.crouch = false; P.inv = 2; P.stam = 100; P.pose = null; GH.atk = 0;
   G.candies = []; G.projs = []; G.noises = []; G.shadow = null;
   GH.active = false;
   if (cp.name === 'phone') { const ph = ITEMS.find(i => i.id === 'phone'); ph.taken = false; G.inv.phone = false; }
+  else if (G.scene !== 1) { if (typeof sceneOnLoad === 'function') sceneOnLoad(cp); }
   else if (G.flags.log) { spawnGhost(); const far = PATROL.map((w, i) => [dist(w[0], w[1], P.x, P.y), i]).sort((a, b) => b[0] - a[0])[0][1]; GH.x = PATROL[far][0]; GH.y = PATROL[far][1]; GH.wp = far; }
   setObj(cp.obj);
 }
@@ -938,6 +959,7 @@ function update(dt) {
   G.projs = G.projs.filter(p => !p.dead);
   G.noises = G.noises.filter(n => G.t - n.t < .1);
   ghostUpdate(dt);
+  if (G.scene !== 1 && typeof sceneUpdate === 'function') sceneUpdate(dt);
   // 影子
   if (G.shadow) { const s = G.shadow; s.t += dt; if (s.turn && !s.turned) { s.turned = true; s.dir = dirFromWorld(P.x - s.x, P.y - s.y); } if (s.leave) { s.a = (s.a ?? 1) - dt * .35; s.x -= dt * .5; s.y -= dt * .5; s.dir = 1; if (s.a <= 0) G.shadow = null; } }
   // 雷
@@ -1011,7 +1033,7 @@ function drawWall(x, y, alpha) {
       box(x, y, 1, 1, 6, '#3a3328', null, null, WALLH - 6); ctx.globalAlpha = 1; return;
     }
     const [t, l, r] = wallColors(x, y);
-    const side = y === 8 || y === 12 || y === 32 ? 'L' : 'R';
+    const side = at(x - 1, y) === '#' || at(x + 1, y) === '#' ? 'L' : 'R';   // 左右是牆＝門開在橫向的牆上
     if (IMG.walls) {
       texFace(x, y, 'L', side === 'L' && isExt(x, y) ? 2 : wallTex(x, y, 'L'), 'rgba(0,0,0,.12)');
       texFace(x, y, 'R', side === 'R' && isExt(x, y) ? 2 : wallTex(x, y, 'R'), 'rgba(0,0,0,.4)');
@@ -1033,7 +1055,8 @@ function drawWall(x, y, alpha) {
     if (Rr) texFace(x, y, 'R', wallTex(x, y, 'R'), 'rgba(0,0,0,.4)');
     box(x, y, 1, 1, WALLH, isExt(x, y) ? '#8d8475' : '#7c7466', null, null);
   } else box(x, y, 1, 1, WALLH, t, L, Rr);
-  // 窗戶（外牆）、黑板、班牌、時鐘
+  // 窗戶（外牆）、黑板、班牌、時鐘（第一章的固定位置）
+  if (G.scene !== 1) { if (typeof sceneWallDeco === 'function') sceneWallDeco(x, y, L, Rr); ctx.globalAlpha = 1; return; }
   if (!IMG.walls && L && y === 12 && x % 3 === 1) { faceRect(x, y, 'L', .18, .82, 13, 28, '#141a24'); faceRect(x, y, 'L', .2, .45, 15, 26, 'rgba(90,110,140,.25)'); }
   if (L && y === 1 && ((x >= 15 && x <= 19) || (x >= 4 && x <= 9) || (x >= 25 && x <= 29))) faceRect(x, y, 'L', 0, 1, 10, 27, '#1f3327');
   if (L && y === 1 && x === 17) { ctx.fillStyle = 'rgba(220,220,210,.55)'; const [sx, sy] = iso(x, y + 1); ctx.fillRect(sx + 3, sy - 22, 9, 1); ctx.fillRect(sx + 5, sy - 18, 6, 1); }
@@ -1098,6 +1121,7 @@ function drawObj(o, alpha) {
     case 'tdesk': box(x + .05, y + .2, .9, .6, 14, '#5c4733', '#3f3124', '#352a1f'); break;
     case 'locker': box(x + .1, y + .2, .8, .6, 32, '#5c6266', '#43494d', '#3a3f43'); ctx.fillStyle = '#2a2e31'; ctx.fillRect(cx - 1, cy - 28, 1, 24); break;
     case 'shoe': box(x + .1, y + .15, .8, .7, 28, '#6a5845', '#4b3e30', '#413528'); for (let k = 0; k < 3; k++) faceRect(x, y, 'L', .15, .85, 6 + k * 8, 7 + k * 8, '#2e251c'); break;
+    default: if (typeof sceneDrawObj === 'function') sceneDrawObj(o, cx, cy, shaking);
   }
   ctx.globalAlpha = 1;
 }
@@ -1167,6 +1191,7 @@ function render() {
   if (!P.hidden) list.push({ d: pd, f: drawMi });
   if (G.shadow) { const s = G.shadow; list.push({ d: s.x + s.y, f: () => drawSprite(IMG.mi, s.x, s.y, s.dir, { tint: 'rgba(0,0,0,1)', alpha: .85 * (s.a ?? 1), noShadow: true }) }); }
   if (GH.active) list.push({ d: GH.x + GH.y, f: () => drawSprite(...ghSpr(), { bob: GH.moving && GH.frame % 2 ? -1 : 0, jit: GH.state === 'chase' ? (Math.random() - .5) * 2 : 0 }) });
+  if (G.scene !== 1 && typeof sceneSprites === 'function') sceneSprites(list);
   list.sort((a, b) => a.d - b.d);
   for (const l of list) l.f(l.tall && l.d > pd + .2 && near(l.sx, l.sy, l.tall) && !P.hidden ? .3 : 1);
   // 光照（DARK＝整體暗幕濃度，太暗玩起來很累 → 2026-10-21 由 .8 調到 .6）
@@ -1234,6 +1259,7 @@ function loop(now) {
 /* ---------- 標題、選單 ---------- */
 function stateSummary() { return { mode: G.mode, x: +P.x.toFixed(2), y: +P.y.toFixed(2), hearts: G.hearts, inv: G.inv, ghost: GH.active ? GH.state : 'off', gx: +GH.x.toFixed(1), gy: +GH.y.toFixed(1), flags: G.flags, trig: Object.keys(G.triggers), lock: G.lock, path: GH.path && GH.path.length, scr: GH.script, t: +G.t.toFixed(1) }; }
 function resetWorld() {
+  if (G.scene !== 1) loadScene(1);
   G.flags = {}; G.triggers = {}; G.inv = { cans: 0, candy: 0, weapon: null, key: false, flashlight: false, phone: false, bandage: 0 }; G.hearts = 5;
   ITEMS.forEach(i => i.taken = false); STATUE.gone = false;
   Object.values(DOORS).forEach(d => { d.locked = !!(d.msg || d.key); });
@@ -1262,10 +1288,10 @@ try { if (localStorage.getItem(SAVE_KEY)) $('#bCont').classList.remove('hide'); 
 const BLOG = 'https://cashkingw.blogspot.com/2026/10/444.html';
 if (!Q.get('embed')) $('#foot').innerHTML = `戴上耳機遊玩效果最佳　｜　<a href="${Q.get('blog') || BLOG}" target="_top" style="pointer-events:auto">Cash城部落格</a>`;
 
-loadImages(['mi', 'mi_crouch', 'mi_hurt', 'mi_throw', 'mi_light', 'mi_down', 'kuchisake', 'kuchisake_chase', 'kuchisake_atk', 'ninomiya', 'floors', 'floors2', 'walls', 't_tree', 't_dead1', 't_dead2', 't_dead3', 't_bush1', 't_bush2', 't_bush3', 't_cypress', 't_lamp', 't_rack', 't_bike', 't_bench1', 't_bench2', 't_trash', 't_fount', 't_board']).then(() => {
+loadImages(['ninomiya_walk', 'mi', 'mi_crouch', 'mi_hurt', 'mi_throw', 'mi_light', 'mi_down', 'kuchisake', 'kuchisake_chase', 'kuchisake_atk', 'ninomiya', 'floors', 'floors2', 'walls', 't_tree', 't_dead1', 't_dead2', 't_dead3', 't_bush1', 't_bush2', 't_bush3', 't_cypress', 't_lamp', 't_rack', 't_bike', 't_bench1', 't_bench2', 't_trash', 't_fount', 't_board']).then(() => {
   buildFloor();
   if (IMG.mi) IMG.mi.rows = 9;
-  for (const [k, r] of [['mi_crouch', 4], ['mi_hurt', 2], ['mi_throw', 2], ['mi_light', 1], ['mi_down', 1], ['kuchisake_atk', 4]]) if (IMG[k]) IMG[k].rows = r;
+  for (const [k, r] of [['mi_crouch', 4], ['mi_hurt', 2], ['mi_throw', 2], ['mi_light', 1], ['mi_down', 1], ['kuchisake_atk', 4], ['ninomiya_walk', 4]]) if (IMG[k]) IMG[k].rows = r;
   if (TEST && TEST !== 'shot') { setInterval(() => { update(1 / 30); }, 8); setInterval(render, 200); runTest(TEST); }
   else { requestAnimationFrame(loop); if (TEST) runTest(TEST); }
 });
@@ -1275,8 +1301,10 @@ async function runTest(kind) {
   const tp = (x, y) => { P.x = x; P.y = y; };
   try {
     resetWorld(); G.mode = 'play'; startPlay();
+    if (kind === 'ch2') return testCh2();
+    if (kind === 'ch2load') return testCh2Load();
     if (kind === 'comic') { intro(); document.title = 'COMIC'; return; }
-    if (kind === 'shot') { tp(Number(Q.get('x') || 27.5), Number(Q.get('y') || 30)); P.dir = 0; G.inv.flashlight = true; P.light = true; if (Q.get('ghost')) { const ch = Q.get('ghost') === 'chase'; spawnGhost(P.x - (ch ? 6 : 2), P.y - (ch ? 6 : 2)); GH.state = ch ? 'chase' : 'pause'; GH.timer = 99; GH.dir = 4; } if (Q.get('crouch')) P.crouch = true; if (Q.get('pose')) setPose(Q.get('pose')); if (Q.get('atk')) GH.atkLoop = true; if (Q.get('dir')) P.dir = +Q.get('dir'); if (Q.get('hold')) { G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 }; G.inv.candy = 2; catchPlayer(false); } document.title = 'SHOT'; return; }
+    if (kind === 'shot') { if (Q.get('scene')) loadScene(+Q.get('scene')); tp(Number(Q.get('x') || 27.5), Number(Q.get('y') || 30)); P.dir = 0; G.inv.flashlight = true; P.light = true; if (Q.get('ghost')) { const ch = Q.get('ghost') === 'chase'; spawnGhost(P.x - (ch ? 6 : 2), P.y - (ch ? 6 : 2)); GH.state = ch ? 'chase' : 'pause'; GH.timer = 99; GH.dir = 4; } if (Q.get('crouch')) P.crouch = true; if (Q.get('pose')) setPose(Q.get('pose')); if (Q.get('atk')) GH.atkLoop = true; if (Q.get('dir')) P.dir = +Q.get('dir'); if (Q.get('hold')) { G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 }; G.inv.candy = 2; catchPlayer(false); } document.title = 'SHOT'; return; }
     if (kind === 'chase') {
       G.flags.log = true; G.inv.flashlight = true; P.light = true; G.inv.candy = 1; G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 };
       spawnGhost(9.5, 20.5); tp(9.5, 24.5); P.dir = 0; GH.state = 'pauseLook'; GH.timer = 9; GH.look = -9; GH.dir = dirFromWorld(P.x - GH.x, P.y - GH.y);
@@ -1304,8 +1332,8 @@ async function runTest(kind) {
     tp(17.5, 8.0 - .9); P.y = 6.6; P.x = 17.5;
     hide(OBJAT['17,7']);
     const t0 = performance.now();
-    while (G.mode === 'play' && performance.now() - t0 < 60000) await wait(100);
-    document.title = (G.mode === 'end' ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());
+    while (G.mode === 'play' && G.scene === 1 && performance.now() - t0 < 60000) await wait(100);
+    document.title = (G.mode === 'end' || G.scene === 2 ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());
   } catch (e) { document.title = 'ERR ' + e + ' ' + JSON.stringify(stateSummary()); }
 }
 async function waitFree() { for (let i = 0; i < 400 && G.lock; i++) await wait(20); }
