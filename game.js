@@ -2,7 +2,8 @@
 /* 夜校・如月　試玩版（序章～第一章）
    斜角像素渲染＋光照、鬼怪視線/聽覺 AI、躲藏、反擊、劇情腳本、Web Audio 合成音效。 */
 
-const VW = 640, VH = 360, TW = 32, TH = 16, WALLH = 34;
+const VW = 640, TW = 32, TH = 16, WALLH = 34;
+let VH = 360;  // 平板直向時會拉高，顯示更多地圖
 const $ = s => document.querySelector(s);
 const cvs = $('#c'), ctx = cvs.getContext('2d');
 ctx.imageSmoothingEnabled = false;
@@ -271,7 +272,8 @@ function press(k) {
 }
 /* 觸控 */
 const TOUCH = { x: 0, y: 0, id: null };
-const isTouch = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
+const isTouch = !!Q.get('touch') || matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+const KEY = isTouch ? { flash: '按「燈」', act: '按「調查」', can: '點下方道具欄', candy: '點下方道具欄' } : { flash: '按 F', act: '按 E', can: '按 1', candy: '按 2' };
 (function setupTouch() {
   const st = $('#stick'), kn = st.querySelector('b');
   const upd = (cx, cy) => { const r = st.getBoundingClientRect(); let dx = cx - (r.left + r.width / 2), dy = cy - (r.top + r.height / 2); const m = Math.hypot(dx, dy), mx = r.width / 2; if (m > mx) { dx *= mx / m; dy *= mx / m; } TOUCH.x = dx / mx; TOUCH.y = dy / mx; kn.style.transform = `translate(${dx}px,${dy}px)`; };
@@ -346,12 +348,29 @@ const sfx = {
 
 /* ---------- UI ---------- */
 function layout() {
-  const w = innerWidth, h = innerHeight, s = Math.min(w / VW, h / VH), wrap = $('#wrap');
+  const w = innerWidth, h = innerHeight, wrap = $('#wrap');
+  const tall = isTouch && h > w && w >= 600;
+  const nvh = tall ? Math.min(1100, Math.round(VW * h / w)) : 360;
+  if (nvh !== VH) { VH = nvh; cvs.height = VH; ctx.imageSmoothingEnabled = false; }
+  const s = Math.min(w / VW, h / VH);
   wrap.style.width = VW * s + 'px'; wrap.style.height = VH * s + 'px';
   document.documentElement.style.setProperty('--u', s + 'px');
-  $('#rot').classList.toggle('hide', !(isTouch && h > w));
+  $('#rot').classList.toggle('hide', !(isTouch && h > w && w < 600));
 }
-addEventListener('resize', layout); layout();
+addEventListener('resize', layout); addEventListener('orientationchange', () => setTimeout(layout, 300)); layout();
+/* 全螢幕（Android、平板；iPhone Safari 不支援時隱藏按鈕） */
+(function setupFS() {
+  const de = document.documentElement, b = $('#fs');
+  const can = document.fullscreenEnabled || document.webkitFullscreenEnabled;
+  if (!can) return;
+  b.classList.remove('hide');
+  b.addEventListener('click', () => {
+    audioInit();
+    const on = document.fullscreenElement || document.webkitFullscreenElement;
+    if (on) (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    else { const r = (de.requestFullscreen || de.webkitRequestFullscreen).call(de); if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape').catch(() => { }); } catch (e) { } }).catch(() => { }); }
+  });
+})();
 let toastT = 0;
 function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => e.classList.remove('show'), 2200); }
 function chapter(sub, title) {
@@ -364,14 +383,14 @@ function updateHUD() {
   $('#hearts').innerHTML = Array.from({ length: 5 }, (_, i) => `<i class="${i < G.hearts ? '' : 'off'}"></i>`).join('');
   $('#obj').innerHTML = OBJTEXT ? `<small>目標</small>${OBJTEXT}` : '';
   const I = G.inv, s = [];
-  if (I.flashlight) s.push(`<div class="s ${P.light ? 'on' : ''} tap" data-k="flash">手電筒<em>F</em></div>`);
+  if (I.flashlight) s.push(`<div class="s ${P.light ? 'on' : ''} tap" data-k="flash">手電筒<em>${isTouch ? '點按開關' : 'F'}</em></div>`);
   if (I.weapon) s.push(`<div class="s">${I.weapon.name}<em>耐久 ${I.weapon.dur}</em></div>`);
-  if (I.cans) s.push(`<div class="s tap" data-k="throwCan">空罐×${I.cans}<em>1 丟出</em></div>`);
-  if (I.candy) s.push(`<div class="s tap" data-k="throwCandy">鼈甲糖×${I.candy}<em>2 丟出</em></div>`);
+  if (I.cans) s.push(`<div class="s tap" data-k="throwCan">空罐×${I.cans}<em>${isTouch ? '點按丟出' : '1 丟出'}</em></div>`);
+  if (I.candy) s.push(`<div class="s tap" data-k="throwCandy">鼈甲糖×${I.candy}<em>${isTouch ? '點按丟出' : '2 丟出'}</em></div>`);
   if (I.bandage) s.push(`<div class="s">繃帶×${I.bandage}</div>`);
   if (I.key) s.push(`<div class="s">側門鑰匙</div>`);
   if (I.phone) s.push(`<div class="s">手機</div>`);
-  if (P.crouch) s.push(`<div class="s on">蹲下中<em>C</em></div>`);
+  if (P.crouch) s.push(`<div class="s on">蹲下中<em>${isTouch ? '' : 'C'}</em></div>`);
   $('#inv').innerHTML = s.join('');
   $('#inv').querySelectorAll('.tap').forEach(e => e.addEventListener('pointerdown', ev => { ev.preventDefault(); press(e.dataset.k); }));
 }
@@ -470,7 +489,7 @@ function hide(o) {
   P.hidden = o; P.light = false; P.crouch = false;
   P.hiddenSeen = GH.active && GH.state === 'chase' && G.t - GH.lastSeenT < .9;
   noise(.15, .08, 'lowpass', 600);
-  toast(HIDE[o.t].replace('躲', '躲') + '……（再按一次出來）');
+  toast(HIDE[o.t] + '……（' + KEY.act + '出來）');
   updateHUD();
 }
 function unhide() {
@@ -492,8 +511,8 @@ async function takeItem(it) {
     I.weapon = it.id === 'broom' ? { id: 'broom', name: '掃把', dur: 2 } : { id: 'lid', name: '垃圾桶蓋', dur: 3 };
   }
   it.taken = true; sfx.pick();
-  if (it.id === 'flashlight') { I.flashlight = true; P.light = true; toast('得到【手電筒】　按 F 開關'); }
-  else if (it.id === 'can') { I.cans++; toast('得到【空罐】　按 1 丟出去，可以引開注意'); }
+  if (it.id === 'flashlight') { I.flashlight = true; P.light = true; toast('得到【手電筒】　' + KEY.flash + '開關'); }
+  else if (it.id === 'can') { I.cans++; toast('得到【空罐】　' + KEY.can + '丟出去，可以引開注意'); }
   else if (it.id === 'bandage') { I.bandage++; toast('得到【繃帶】　受傷時會自動使用'); }
   else if (it.id === 'broom') { toast('拿起【掃把】　被抓住時可以反擊（2 次）'); }
   else if (it.id === 'lid') { toast('拿起【垃圾桶蓋】　被抓住時可以擋一下（3 次）'); }
@@ -521,7 +540,7 @@ async function objAction(o) {
     if (G.flags.vend) { await says(['販賣機的燈一閃一閃的。已經沒有東西掉出來了。']); return; }
     G.flags.vend = true; sfx.vend(); G.inv.candy += 2; updateHUD();
     await says(['咦……還沒投錢，出貨口就「咚」地掉出東西。', '兩包鼈甲糖（べっこう飴）。包裝上的保存期限是……2004年？']);
-    toast('得到【鼈甲糖】×2　按 2 丟出');
+    toast('得到【鼈甲糖】×2　' + KEY.candy + '丟出');
     return;
   }
   if (o.act === 'statue') {
@@ -995,6 +1014,7 @@ function drawSprite(img, x, y, dir, opt = {}) {
   ctx.globalAlpha = 1;
 }
 function render() {
+  if (dark.height !== VH) dark.height = VH;
   // 鏡頭
   const [px, py] = isoW(P.x, P.y);
   const tx = px - VW / 2, ty = py - VH / 2 - 14;
