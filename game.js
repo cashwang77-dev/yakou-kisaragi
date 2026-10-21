@@ -1120,7 +1120,7 @@ function resetWorld() {
   Object.assign(P, { x: 27.5, y: 38.7, dir: 0, hidden: null, light: false, crouch: false, stam: 100 });
   GH.active = false; G.candies = []; G.projs = []; G.shadow = null;
 }
-$('#bStart').onclick = () => { audioInit(); resetWorld(); intro(); };
+$('#bStart').onclick = () => { audioInit(); resetWorld(); $('#title').classList.add('hide'); intro(); };
 $('#bCont').onclick = () => { audioInit(); let s = null; try { s = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { } if (!s) return; resetWorld(); G.cp = s; loadCP(s); startPlay(); };
 $('#bHelp').onclick = () => $('#help').classList.remove('hide');
 $('#bHelpBack').onclick = () => $('#help').classList.add('hide');

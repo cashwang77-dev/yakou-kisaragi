@@ -68,6 +68,7 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
 .full{inset:0;pointer-events:auto;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000 center/cover no-repeat}
 .full::before{content:"";position:absolute;inset:0;background:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.82))}
 .full>*{position:relative}
+#card{z-index:5}
 #card .ctx{position:absolute;left:calc(var(--u)*50);right:calc(var(--u)*50);bottom:calc(var(--u)*42);font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*13);line-height:1.8;text-shadow:0 0 6px #000;min-height:calc(var(--u)*50)}
 #card .more{position:absolute;right:calc(var(--u)*20);bottom:calc(var(--u)*14);font-size:calc(var(--u)*8);color:var(--dim);animation:blink 1s infinite}
 #title h1{font-family:"Noto Serif TC",serif;font-weight:900;font-size:calc(var(--u)*44);letter-spacing:.16em;text-shadow:0 0 18px #000,0 0 6px #300;color:#efe8dc}
