@@ -1128,7 +1128,7 @@ $('#bRetry').onclick = () => { $('#over').classList.add('hide'); loadCP(G.cp); s
 const toTitle = () => { location.href = location.pathname + location.search; };
 $('#bToTitle').onclick = toTitle; $('#bEndTitle').onclick = toTitle;
 try { if (localStorage.getItem(SAVE_KEY)) $('#bCont').classList.remove('hide'); } catch (e) { }
-const BLOG = 'https://cashkingw.blogspot.com/search/label/' + encodeURIComponent('夜校如月');
+const BLOG = 'https://cashkingw.blogspot.com/2026/10/444.html';
 if (!Q.get('embed')) $('#foot').innerHTML = `戴上耳機遊玩效果最佳　｜　<a href="${Q.get('blog') || BLOG}" target="_top" style="pointer-events:auto">Cash城部落格</a>`;
 
 buildFloor();
