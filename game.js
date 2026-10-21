@@ -657,6 +657,7 @@ function walkTo(tx, ty, speed, dt) {
   const ox = GH.x, oy = GH.y; moveEnt(GH, dx / d * s, dy / d * s);
   if (Math.hypot(GH.x - ox, GH.y - oy) < s * .2) GH.pathT = 0;
   GH.dir = dirFromWorld(dx, dy); GH.moving = true;
+  GH.animD = (GH.animD || 0) + s; GH.frame = 1 + Math.floor(GH.animD / (speed > 2.5 ? .48 : .34)) % 4;
   GH.step += s; if (GH.step > .55) { GH.step = 0; ghostStep(); }
   return false;
 }
@@ -884,6 +885,7 @@ function update(dt) {
     moveEnt(P, wx * sp * dt, wy * sp * dt);
     const moved = Math.hypot(P.x - ox, P.y - oy);
     P.dir = dirFromWorld(wx, wy); P.moving = moved > .001; P.run = running && P.moving;
+    P.animD = (P.animD || 0) + moved; P.frame = 1 + Math.floor(P.animD / (P.run ? .5 : P.crouch ? .26 : .34)) % 4;
     if (P.run) { P.stam -= 26 * dt; if (P.stam <= 0) { P.stam = 0; P.tired = true; } }
     P.step += moved;
     const stride = P.run ? .62 : P.crouch ? .5 : .55;
@@ -893,7 +895,7 @@ function update(dt) {
       if (!P.crouch) addNoise(P.x, P.y, nr);
       sfx.step(isInside(P.x, P.y), P.run ? .2 : P.crouch ? .04 : .1, 0);
     }
-  } else P.run = false;
+  } else { P.run = false; P.animD = 0; P.frame = 0; }
   if (!P.run) { P.stam = Math.min(100, P.stam + 16 * dt); if (P.tired && P.stam > 35) P.tired = false; }
   P.inv -= dt;
   // 投擲物
@@ -1073,16 +1075,17 @@ function drawObj(o, alpha) {
 }
 function drawSprite(img, x, y, dir, opt = {}) {
   if (!img) return;
-  const fw = img.width / 8, fh = img.height, [sx, sy] = iso(x, y);
+  const rows = img.height > img.width / 8 * 1.8 ? 4 : 1;   // 4 列＝走路動畫
+  const fw = img.width / 8, fh = img.height / rows, fy = ((opt.frame || 0) % rows) * fh, [sx, sy] = iso(x, y);
   const bob = opt.bob || 0;
   ctx.globalAlpha = opt.alpha ?? 1;
   if (!opt.noShadow) { ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.ellipse(sx, sy, 9, 4, 0, 0, 7); ctx.fill(); }
   const h = opt.crouch ? fh * .78 : fh;
   if (opt.tint) {
     const t = drawSprite.tc || (drawSprite.tc = document.createElement('canvas')); t.width = fw; t.height = fh;
-    const g = t.getContext('2d'); g.clearRect(0, 0, fw, fh); g.drawImage(img, dir * fw, 0, fw, fh, 0, 0, fw, fh); g.globalCompositeOperation = 'source-atop'; g.fillStyle = opt.tint; g.fillRect(0, 0, fw, fh); g.globalCompositeOperation = 'source-over';
+    const g = t.getContext('2d'); g.clearRect(0, 0, fw, fh); g.drawImage(img, dir * fw, fy, fw, fh, 0, 0, fw, fh); g.globalCompositeOperation = 'source-atop'; g.fillStyle = opt.tint; g.fillRect(0, 0, fw, fh); g.globalCompositeOperation = 'source-over';
     ctx.drawImage(t, 0, 0, fw, fh, Math.round(sx - fw / 2), Math.round(sy - h + 1 - bob), fw, h);
-  } else ctx.drawImage(img, dir * fw, 0, fw, fh, Math.round(sx - fw / 2 + (opt.jit || 0)), Math.round(sy - h + 1 - bob), fw, h);
+  } else ctx.drawImage(img, dir * fw, fy, fw, fh, Math.round(sx - fw / 2 + (opt.jit || 0)), Math.round(sy - h + 1 - bob), fw, h);
   ctx.globalAlpha = 1;
 }
 function render() {
@@ -1116,9 +1119,9 @@ function render() {
   }
   for (const it of ITEMS) if (!it.taken) list.push({ d: it.x + it.y - .3, f: () => { const [sx, sy] = iso(it.x, it.y); const on = Math.sin(G.t * 4 + it.x) > .3; ctx.fillStyle = on ? 'rgba(255,240,200,.9)' : 'rgba(255,240,200,.35)'; ctx.fillRect(sx - 1, sy - (it.id === 'phone' ? 13 : 3), 2, 2); if (on) { ctx.fillRect(sx - 3, sy - (it.id === 'phone' ? 12 : 2), 6, 0.6); } } });
   for (const p of G.projs) list.push({ d: p.x + p.y, f: () => { const [sx, sy] = iso(p.x, p.y); ctx.fillStyle = p.kind === 'can' ? '#9aa' : '#d99a2b'; ctx.fillRect(sx - 2, sy - 10 - Math.sin((.5 - p.life) / .5 * Math.PI) * 12, 4, 3); } });
-  if (!P.hidden) list.push({ d: pd, f: () => drawSprite(IMG.mi, P.x, P.y, P.dir, { bob: P.moving ? (Math.floor(G.t * (P.run ? 12 : 8)) % 2) : 0, crouch: P.crouch }) });
+  if (!P.hidden) list.push({ d: pd, f: () => drawSprite(IMG.mi, P.x, P.y, P.dir, { frame: P.moving ? P.frame : 0, bob: P.moving && P.frame % 2 ? -1 : 0, crouch: P.crouch }) });
   if (G.shadow) { const s = G.shadow; list.push({ d: s.x + s.y, f: () => drawSprite(IMG.mi, s.x, s.y, s.dir, { tint: 'rgba(0,0,0,1)', alpha: .85 * (s.a ?? 1), noShadow: true }) }); }
-  if (GH.active) list.push({ d: GH.x + GH.y, f: () => drawSprite(IMG.kuchisake, GH.x, GH.y, GH.dir, { bob: GH.moving ? (Math.floor(G.t * 7) % 2) : 0, jit: GH.state === 'chase' ? (Math.random() - .5) * 2 : 0 }) });
+  if (GH.active) list.push({ d: GH.x + GH.y, f: () => drawSprite(IMG.kuchisake, GH.x, GH.y, GH.dir, { frame: GH.moving ? GH.frame : 0, bob: GH.moving && GH.frame % 2 ? -1 : 0, jit: GH.state === 'chase' ? (Math.random() - .5) * 2 : 0 }) });
   list.sort((a, b) => a.d - b.d);
   for (const l of list) l.f(l.tall && l.d > pd + .2 && near(l.sx, l.sy, l.tall) && !P.hidden ? .3 : 1);
   // 光照
@@ -1155,7 +1158,7 @@ function render() {
   // 鬼的剪影（在黑暗中隱約可見）與狀態符號
   if (GH.active && G.mode === 'play') {
     const d = dist(GH.x, GH.y, P.x, P.y);
-    if (d < 8) drawSprite(IMG.kuchisake, GH.x, GH.y, GH.dir, { alpha: .14 * (1 - d / 8), noShadow: true });
+    if (d < 8) drawSprite(IMG.kuchisake, GH.x, GH.y, GH.dir, { frame: GH.moving ? GH.frame : 0, alpha: .14 * (1 - d / 8), noShadow: true });
     const [gx, gy] = iso(GH.x, GH.y);
     const mark = GH.state === 'chase' ? '!' : (GH.sus > .25 || GH.state === 'investigate' || GH.state === 'search') ? '?' : GH.state === 'confused' ? '…' : '';
     if (mark && d < 14) { ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = mark === '!' ? '#ff3b3b' : '#ffd35a'; ctx.fillText(mark, gx, gy - 66); }
