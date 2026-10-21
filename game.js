@@ -619,7 +619,7 @@ function throwItem(kind) {
   if (kind === 'can') I.cans--; else I.candy--;
   const [fx, fy] = DIRV[P.dir], m = Math.hypot(fx, fy);
   G.projs.push({ kind, x: P.x, y: P.y, vx: fx / m * 9, vy: fy / m * 9, life: .5, h: 0 });
-  sfx.whoosh(); updateHUD();
+  setPose('throw', .35); sfx.whoosh(); updateHUD();
 }
 // 方向：0 U,1 UL,2 L,3 DL,4 D,5 DR,6 R,7 UR（畫面方向）→ 世界向量
 const SCR = [[0, -1], [-1, -1], [-1, 0], [-1, 1], [0, 1], [1, 1], [1, 0], [1, -1]];
@@ -772,6 +772,7 @@ async function catchPlayer(pulled) {
   } else {
     const line = a === 'beauty' ? '「……這樣也美嗎？」她扯下了口罩。' : a === 'ugly' ? '「……醜？」剪刀閃了一下。' : '沉默。剪刀「喀嚓」一聲張開了。';
     await say('戴口罩的女人', line, face);
+    GH.atk = NOW(); await wait(260);           // 揮剪刀動畫砍到第 2 格時才受傷
     sfx.snip(); sfx.hurt(); damage(a === 'ugly' ? 2 : 1);
     GH.state = 'stun'; GH.timer = 1.3;
     const [fx, fy] = DIRV[GH.dir]; moveEnt(P, fx * .8, fy * .8);
@@ -780,8 +781,11 @@ async function catchPlayer(pulled) {
 }
 function clampFree(x, y) { for (let k = 0; k < 10; k++) { if (!hitAt(x, y, .2)) return [x, y]; x = (x + P.x) / 2; y = (y + P.y) / 2; } return [P.x, P.y]; }
 const faceURL = () => 'assets/kuchisake_face.png';
+/* 咪醬的動作姿勢（受傷／丟東西／倒地），用真實時間計時，對話中也會播 */
+const NOW = () => performance.now() / 1000;
+function setPose(k, dur) { P.pose = { k, until: dur ? NOW() + dur : Infinity }; }
 function damage(n) {
-  G.hearts -= n; shake = 10;
+  G.hearts -= n; shake = 10; setPose('hurt', .8);
   if (G.hearts <= 0 && G.inv.bandage) { G.inv.bandage--; G.hearts = 1; toast('用掉了繃帶……還撐得住'); }
   if (G.hearts <= 0) { G.hearts = 0; gameOver(); }
   updateHUD();
@@ -855,7 +859,7 @@ function saveCP(name) {
 function loadCP(cp) {
   G.flags = { ...cp.flags }; G.inv = JSON.parse(JSON.stringify(cp.inv)); G.hearts = cp.hearts; G.triggers = { ...cp.triggers };
   STATUE.gone = cp.statue; ITEMS.forEach((it, i) => it.taken = cp.items[i]); Object.values(DOORS).forEach((d, i) => d.locked = cp.doors[i]);
-  P.x = cp.px; P.y = cp.py; P.hidden = null; P.light = G.inv.flashlight; P.crouch = false; P.inv = 2; P.stam = 100;
+  P.x = cp.px; P.y = cp.py; P.hidden = null; P.light = G.inv.flashlight; P.crouch = false; P.inv = 2; P.stam = 100; P.pose = null; GH.atk = 0;
   G.candies = []; G.projs = []; G.noises = []; G.shadow = null;
   GH.active = false;
   if (cp.name === 'phone') { const ph = ITEMS.find(i => i.id === 'phone'); ph.taken = false; G.inv.phone = false; }
@@ -863,9 +867,9 @@ function loadCP(cp) {
   setObj(cp.obj);
 }
 function gameOver() {
-  G.mode = 'over'; sfx.sting();
+  G.mode = 'over'; sfx.sting(); setTimeout(() => setPose('down'), 500);
   $('#overTx').textContent = ['剪刀的聲音，就在耳邊。', '「……下次，要回答得好聽一點哦。」'][Math.floor(Math.random() * 2)];
-  setTimeout(() => { $('#hud').classList.add('hide'); $('#touch').classList.add('hide'); $('#over').classList.remove('hide'); }, 600);
+  setTimeout(() => { $('#hud').classList.add('hide'); $('#touch').classList.add('hide'); $('#over').classList.remove('hide'); }, 1800);
 }
 
 /* ---------- 更新 ---------- */
@@ -1074,8 +1078,23 @@ function drawObj(o, alpha) {
   }
   ctx.globalAlpha = 1;
 }
-const ghImg = () => GH.state === 'chase' && IMG.kuchisake_chase || IMG.kuchisake;   // 追擊時換成舉剪刀衝刺
-function drawSprite(img, x, y, dir, opt = {}) {
+// 裂口女：揮剪刀（4 格 × .14 秒）＞ 追擊時舉剪刀衝刺 ＞ 一般走路
+function ghSpr() {
+  const t = GH.atkLoop ? NOW() % .56 : NOW() - (GH.atk || 0);
+  if (t < .56 && IMG.kuchisake_atk) return [IMG.kuchisake_atk, GH.x, GH.y, GH.dir, Math.floor(t / .14)];
+  return [GH.state === 'chase' && IMG.kuchisake_chase || IMG.kuchisake, GH.x, GH.y, GH.dir, GH.moving ? GH.frame : 0];
+}
+// 咪醬：動作姿勢 ＞ 蹲 ＞ 拿手電筒站著 ＞ 一般走跑
+function drawMi() {
+  const k = P.pose && NOW() < P.pose.until ? P.pose.k : null, img = k && IMG['mi_' + k];
+  if (img) return drawSprite(img, P.x, P.y, P.dir, { frame: k === 'hurt' ? Math.floor(NOW() * 6) : 0, noShadow: k === 'down' });
+  if (P.crouch && IMG.mi_crouch) return drawSprite(IMG.mi_crouch, P.x, P.y, P.dir, { bob: P.moving && P.frame % 2 ? -1 : 0 });
+  if (P.light && !P.moving && IMG.mi_light) return drawSprite(IMG.mi_light, P.x, P.y, P.dir);
+  drawSprite(IMG.mi, P.x, P.y, P.dir, { frame: P.moving ? (P.run ? 4 : 0) + P.frame : 0 });
+}
+function drawSprite(img, x, y, dir, frame, opt) {
+  if (typeof frame === 'object') { opt = frame; frame = undefined; }   // drawSprite(img,x,y,dir,opt) 或 (img,x,y,dir,frame,opt)
+  opt = { ...(opt || {}) }; if (frame !== undefined) opt.frame = frame;
   if (!img) return;
   const rows = img.rows || (img.height > img.width / 8 * 1.8 ? 4 : 1);   // 咪醬 9 列（站/走4/跑4）、鬼 4 列
   const fw = img.width / 8, fh = img.height / rows, fy = ((opt.frame || 0) % rows) * fh, [sx, sy] = iso(x, y);
@@ -1121,9 +1140,9 @@ function render() {
   }
   for (const it of ITEMS) if (!it.taken) list.push({ d: it.x + it.y - .3, f: () => { const [sx, sy] = iso(it.x, it.y); const on = Math.sin(G.t * 4 + it.x) > .3; ctx.fillStyle = on ? 'rgba(255,240,200,.9)' : 'rgba(255,240,200,.35)'; ctx.fillRect(sx - 1, sy - (it.id === 'phone' ? 13 : 3), 2, 2); if (on) { ctx.fillRect(sx - 3, sy - (it.id === 'phone' ? 12 : 2), 6, 0.6); } } });
   for (const p of G.projs) list.push({ d: p.x + p.y, f: () => { const [sx, sy] = iso(p.x, p.y); ctx.fillStyle = p.kind === 'can' ? '#9aa' : '#d99a2b'; ctx.fillRect(sx - 2, sy - 10 - Math.sin((.5 - p.life) / .5 * Math.PI) * 12, 4, 3); } });
-  if (!P.hidden) list.push({ d: pd, f: () => P.crouch && IMG.mi_crouch ? drawSprite(IMG.mi_crouch, P.x, P.y, P.dir, { bob: P.moving && P.frame % 2 ? -1 : 0 }) : drawSprite(IMG.mi, P.x, P.y, P.dir, { frame: P.moving ? (P.run ? 4 : 0) + P.frame : 0, crouch: P.crouch }) });
+  if (!P.hidden) list.push({ d: pd, f: drawMi });
   if (G.shadow) { const s = G.shadow; list.push({ d: s.x + s.y, f: () => drawSprite(IMG.mi, s.x, s.y, s.dir, { tint: 'rgba(0,0,0,1)', alpha: .85 * (s.a ?? 1), noShadow: true }) }); }
-  if (GH.active) list.push({ d: GH.x + GH.y, f: () => drawSprite(ghImg(), GH.x, GH.y, GH.dir, { frame: GH.moving ? GH.frame : 0, bob: GH.moving && GH.frame % 2 ? -1 : 0, jit: GH.state === 'chase' ? (Math.random() - .5) * 2 : 0 }) });
+  if (GH.active) list.push({ d: GH.x + GH.y, f: () => drawSprite(...ghSpr(), { bob: GH.moving && GH.frame % 2 ? -1 : 0, jit: GH.state === 'chase' ? (Math.random() - .5) * 2 : 0 }) });
   list.sort((a, b) => a.d - b.d);
   for (const l of list) l.f(l.tall && l.d > pd + .2 && near(l.sx, l.sy, l.tall) && !P.hidden ? .3 : 1);
   // 光照
@@ -1160,7 +1179,7 @@ function render() {
   // 鬼的剪影（在黑暗中隱約可見）與狀態符號
   if (GH.active && G.mode === 'play') {
     const d = dist(GH.x, GH.y, P.x, P.y);
-    if (d < 8) drawSprite(ghImg(), GH.x, GH.y, GH.dir, { frame: GH.moving ? GH.frame : 0, alpha: .14 * (1 - d / 8), noShadow: true });
+    if (d < 8) drawSprite(...ghSpr(), { alpha: .14 * (1 - d / 8), noShadow: true });
     const [gx, gy] = iso(GH.x, GH.y);
     const mark = GH.state === 'chase' ? '!' : (GH.sus > .25 || GH.state === 'investigate' || GH.state === 'search') ? '?' : GH.state === 'confused' ? '…' : '';
     if (mark && d < 14) { ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = mark === '!' ? '#ff3b3b' : '#ffd35a'; ctx.fillText(mark, gx, gy - 66); }
@@ -1219,10 +1238,10 @@ try { if (localStorage.getItem(SAVE_KEY)) $('#bCont').classList.remove('hide'); 
 const BLOG = 'https://cashkingw.blogspot.com/2026/10/444.html';
 if (!Q.get('embed')) $('#foot').innerHTML = `戴上耳機遊玩效果最佳　｜　<a href="${Q.get('blog') || BLOG}" target="_top" style="pointer-events:auto">Cash城部落格</a>`;
 
-loadImages(['mi', 'mi_crouch', 'kuchisake', 'kuchisake_chase', 'ninomiya', 'floors', 'floors2', 'walls', 't_tree', 't_dead1', 't_dead2', 't_dead3', 't_bush1', 't_bush2', 't_bush3', 't_cypress', 't_lamp', 't_rack', 't_bike', 't_bench1', 't_bench2', 't_trash', 't_fount', 't_board']).then(() => {
+loadImages(['mi', 'mi_crouch', 'mi_hurt', 'mi_throw', 'mi_light', 'mi_down', 'kuchisake', 'kuchisake_chase', 'kuchisake_atk', 'ninomiya', 'floors', 'floors2', 'walls', 't_tree', 't_dead1', 't_dead2', 't_dead3', 't_bush1', 't_bush2', 't_bush3', 't_cypress', 't_lamp', 't_rack', 't_bike', 't_bench1', 't_bench2', 't_trash', 't_fount', 't_board']).then(() => {
   buildFloor();
   if (IMG.mi) IMG.mi.rows = 9;
-  if (IMG.mi_crouch) IMG.mi_crouch.rows = 1;
+  for (const [k, r] of [['mi_crouch', 1], ['mi_hurt', 2], ['mi_throw', 1], ['mi_light', 1], ['mi_down', 1], ['kuchisake_atk', 4]]) if (IMG[k]) IMG[k].rows = r;
   if (TEST && TEST !== 'shot') { setInterval(() => { update(1 / 30); }, 8); setInterval(render, 200); runTest(TEST); }
   else { requestAnimationFrame(loop); if (TEST) runTest(TEST); }
 });
@@ -1232,7 +1251,7 @@ async function runTest(kind) {
   const tp = (x, y) => { P.x = x; P.y = y; };
   try {
     resetWorld(); G.mode = 'play'; startPlay();
-    if (kind === 'shot') { tp(Number(Q.get('x') || 27.5), Number(Q.get('y') || 30)); P.dir = 0; G.inv.flashlight = true; P.light = true; if (Q.get('ghost')) { const ch = Q.get('ghost') === 'chase'; spawnGhost(P.x - (ch ? 6 : 2), P.y - (ch ? 6 : 2)); GH.state = ch ? 'chase' : 'pause'; GH.timer = 99; GH.dir = 4; } if (Q.get('crouch')) P.crouch = true; if (Q.get('hold')) { G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 }; G.inv.candy = 2; catchPlayer(false); } document.title = 'SHOT'; return; }
+    if (kind === 'shot') { tp(Number(Q.get('x') || 27.5), Number(Q.get('y') || 30)); P.dir = 0; G.inv.flashlight = true; P.light = true; if (Q.get('ghost')) { const ch = Q.get('ghost') === 'chase'; spawnGhost(P.x - (ch ? 6 : 2), P.y - (ch ? 6 : 2)); GH.state = ch ? 'chase' : 'pause'; GH.timer = 99; GH.dir = 4; } if (Q.get('crouch')) P.crouch = true; if (Q.get('pose')) setPose(Q.get('pose')); if (Q.get('atk')) GH.atkLoop = true; if (Q.get('dir')) P.dir = +Q.get('dir'); if (Q.get('hold')) { G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 }; G.inv.candy = 2; catchPlayer(false); } document.title = 'SHOT'; return; }
     if (kind === 'chase') {
       G.flags.log = true; G.inv.flashlight = true; P.light = true; G.inv.candy = 1; G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 };
       spawnGhost(9.5, 20.5); tp(9.5, 24.5); P.dir = 0; GH.state = 'pauseLook'; GH.timer = 9; GH.look = -9; GH.dir = dirFromWorld(P.x - GH.x, P.y - GH.y);
