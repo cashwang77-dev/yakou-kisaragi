@@ -374,7 +374,8 @@ function layout() {
   const small = isTouch && Math.min(w, h) < 540;          // 手機：鏡頭拉近、字放大
   const tall = isTouch && h > w && w >= 600;               // 平板直向：往下延伸
   let nvw = 640, nvh = 360;
-  if (small) { nvh = 270; nvw = h > w ? 480 : clamp(Math.round(270 * w / h), 480, 600); }
+  if (small) { nvh = 210; nvw = h > w ? 400 : clamp(Math.round(210 * w / h), 360, 520); }
+  document.documentElement.classList.toggle('phone', small);
   if (tall) nvh = Math.min(1100, Math.round(640 * h / w));
   if (nvw !== VW || nvh !== VH) { VW = nvw; VH = nvh; cvs.width = VW; cvs.height = VH; ctx.imageSmoothingEnabled = false; }
   const s = Math.min(w / VW, h / VH);

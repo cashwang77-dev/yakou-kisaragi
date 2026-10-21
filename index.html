@@ -98,6 +98,48 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
 #tbtns button.on{background:rgba(200,50,60,.35)}
 #fs{position:absolute;right:calc(var(--u)*8);bottom:calc(var(--u)*8);z-index:8;width:calc(var(--u)*26);height:calc(var(--u)*26);background:rgba(0,0,0,.5);border:1px solid #5b554c;color:#ddd;font-size:calc(var(--u)*13);line-height:1;cursor:pointer;pointer-events:auto}
 #hud:not(.hide)~#fs{bottom:auto;top:calc(var(--u)*42)}
+/* 手機：字、按鈕再放大一級（--u 本身已因鏡頭拉近變大） */
+.phone #hearts i{width:calc(var(--u)*15);height:calc(var(--u)*14)}
+.phone #stam{width:calc(var(--u)*84)}
+.phone #obj{font-size:calc(var(--u)*12);max-width:calc(var(--u)*200)}
+.phone #obj small{font-size:calc(var(--u)*9)}
+.phone #prompt{font-size:calc(var(--u)*11)}
+.phone #toast{font-size:calc(var(--u)*12.5);white-space:normal;text-align:center;width:max-content;max-width:90%}
+.phone #inv{bottom:calc(var(--u)*4)}
+.phone #inv .s{font-size:calc(var(--u)*9.5);height:calc(var(--u)*30);min-width:calc(var(--u)*36)}
+.phone #inv .s em{font-size:calc(var(--u)*8)}
+.phone #dlg{left:calc(var(--u)*12);right:calc(var(--u)*12);bottom:calc(var(--u)*10);min-height:calc(var(--u)*70);padding:calc(var(--u)*7) calc(var(--u)*10)}
+.phone #dlg .face{width:calc(var(--u)*48);height:calc(var(--u)*48)}
+.phone #dlg .nm{font-size:calc(var(--u)*10.5)}
+.phone #dlg .tx{font-size:calc(var(--u)*13.5);line-height:1.55}
+.phone #dlg .ch button{font-size:calc(var(--u)*12);padding:calc(var(--u)*4) calc(var(--u)*8)}
+.phone #dlg .more{font-size:calc(var(--u)*10)}
+.phone #phone img{width:calc(var(--u)*100)}
+.phone #phone .pb{width:calc(var(--u)*230)}
+.phone #phone .ptx{font-size:calc(var(--u)*14)}
+.phone #card .ctx{left:calc(var(--u)*24);right:calc(var(--u)*24);bottom:calc(var(--u)*30);font-size:calc(var(--u)*15)}
+.phone #card .more{font-size:calc(var(--u)*10)}
+.phone #chap b{font-size:calc(var(--u)*30)}
+.phone #chap span{font-size:calc(var(--u)*12)}
+.phone .btns button{font-size:calc(var(--u)*14);width:calc(var(--u)*170);padding:calc(var(--u)*6)}
+.phone #title h1{font-size:calc(var(--u)*40)}
+.phone #title p.sub{font-size:calc(var(--u)*10.5);margin-bottom:calc(var(--u)*16)}
+.phone #title .foot{font-size:calc(var(--u)*9)}
+.phone #help .hb{width:calc(var(--u)*380);font-size:calc(var(--u)*10.5);line-height:1.6}
+.phone #over p,.phone #end p{font-size:calc(var(--u)*13)}
+.phone #fs{width:calc(var(--u)*30);height:calc(var(--u)*30);font-size:calc(var(--u)*15)}
+.phone #hud:not(.hide)~#fs{top:calc(var(--u)*46)}
+.phone #stick{left:calc(var(--u)*12);bottom:calc(var(--u)*14);width:calc(var(--u)*74);height:calc(var(--u)*74)}
+.phone #tbtns{right:calc(var(--u)*10);bottom:calc(var(--u)*14);grid-template-columns:repeat(2,calc(var(--u)*48));gap:calc(var(--u)*6)}
+.phone #tbtns button{height:calc(var(--u)*48);font-size:calc(var(--u)*13);font-weight:700}
+.phone #dlg .ch{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--u)*4)}
+.phone #dlg .ch button{padding:calc(var(--u)*5) calc(var(--u)*8)}
+#dlg,#phone,#card{z-index:9}
+.phone #title h1{font-size:calc(var(--u)*34)}
+.phone #title p.sub{margin:calc(var(--u)*2) 0 calc(var(--u)*10)}
+.phone #title .btns{gap:calc(var(--u)*5)}
+.phone #title .btns button{padding:calc(var(--u)*4)}
+.phone #title .foot{bottom:calc(var(--u)*4)}
 #rot{inset:0;background:#000;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:9;pointer-events:auto;text-align:center;line-height:2}
 </style>
 </head>
