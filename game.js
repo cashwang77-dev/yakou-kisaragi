@@ -216,10 +216,10 @@ function buildFloor() {
     else if (c === 'r') { diamond(g, x, y, '#18191e'); speck(g, x, y, ['#222329', '#121317'], 6); }
     else if (c === '_') { diamond(g, x, y, (x % 2) ? '#30231a' : '#2d2118'); const [sx, sy] = isoW(x, y + .5); g.fillStyle = '#231a13'; for (let k = -14; k < 14; k += 2) g.fillRect(sx + k, sy + k / 2 | 0, 1, 1); }
     else if (c === ':') { diamond(g, x, y, (x + y) % 2 ? '#262a2f' : '#2b3035'); speck(g, x, y, ['#30353b'], 2); }
-    if (INDOOR.has(at(x, y)) || c === '_' || c === ':') diamond(m, x, y, 'rgba(0,0,0,.62)');
+    if (INDOOR.has(at(x, y)) || c === '_' || c === ':') diamond(m, x, y, 'rgba(0,0,0,.38)');   // 室內額外暗度
   }
   // 夜色：整片地面乘上冷色調
-  if (useTex) { g.globalCompositeOperation = 'multiply'; g.fillStyle = '#4a5268'; g.fillRect(0, 0, FW, FH); g.globalCompositeOperation = 'source-over'; }
+  if (useTex) { g.globalCompositeOperation = 'multiply'; g.fillStyle = '#727b94'; g.fillRect(0, 0, FW, FH); g.globalCompositeOperation = 'source-over'; }
   // 操場跑道
   g.strokeStyle = 'rgba(210,200,180,.22)'; g.lineWidth = 1;
   for (const k of [0, 1.1]) {
@@ -1132,6 +1132,7 @@ function drawSprite(img, x, y, dir, frame, opt) {
   } else ctx.drawImage(img, dir * fw, fy, fw, fh, Math.round(sx - fw / 2 + (opt.jit || 0)), Math.round(sy - h + 1 - bob), fw, h);
   ctx.globalAlpha = 1;
 }
+const DARK = .6;
 function render() {
   if (dark.height !== VH || dark.width !== VW) { dark.width = VW; dark.height = VH; }
   // 鏡頭
@@ -1168,10 +1169,10 @@ function render() {
   if (GH.active) list.push({ d: GH.x + GH.y, f: () => drawSprite(...ghSpr(), { bob: GH.moving && GH.frame % 2 ? -1 : 0, jit: GH.state === 'chase' ? (Math.random() - .5) * 2 : 0 }) });
   list.sort((a, b) => a.d - b.d);
   for (const l of list) l.f(l.tall && l.d > pd + .2 && near(l.sx, l.sy, l.tall) && !P.hidden ? .3 : 1);
-  // 光照
+  // 光照（DARK＝整體暗幕濃度，太暗玩起來很累 → 2026-10-21 由 .8 調到 .6）
   const fl = G.flash;
   dctx.globalCompositeOperation = 'source-over'; dctx.clearRect(0, 0, VW, VH);
-  dctx.fillStyle = `rgba(3,4,10,${.8 - fl * .55})`; dctx.fillRect(0, 0, VW, VH);
+  dctx.fillStyle = `rgba(3,4,10,${DARK - fl * .4})`; dctx.fillRect(0, 0, VW, VH);
   dctx.globalAlpha = 1 - fl * .7; dctx.drawImage(maskC, -Math.round(camX), -Math.round(camY)); dctx.globalAlpha = 1;
   dctx.globalCompositeOperation = 'destination-out';
   const glow = (x, y, r, a) => { const g = dctx.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, `rgba(0,0,0,${a})`); g.addColorStop(.55, `rgba(0,0,0,${a * .55})`); g.addColorStop(1, 'rgba(0,0,0,0)'); dctx.fillStyle = g; dctx.beginPath(); dctx.arc(x, y, r, 0, 7); dctx.fill(); };
@@ -1181,9 +1182,9 @@ function render() {
     const [sx, sy] = iso(l.x, l.y); if (sx < -150 || sx > VW + 150 || sy < -150 || sy > VH + 150) continue;
     glow(sx, sy - 4, l.r * 22, .92);
   }
-  if (!P.hidden) glow(psx, psy - 18, 30, .5);
+  if (!P.hidden) glow(psx, psy - 18, 52, .7);   // 咪醬周圍的微光（看得到腳邊）
   if (P.light && !P.hidden) {
-    const [fx, fy] = SCR[P.dir], ang = Math.atan2(fy * .55, fx), len = 165, spread = .42;
+    const [fx, fy] = SCR[P.dir], ang = Math.atan2(fy * .55, fx), len = 200, spread = .48;
     const g = dctx.createRadialGradient(psx, psy - 14, 6, psx, psy - 14, len);
     g.addColorStop(0, 'rgba(0,0,0,.98)'); g.addColorStop(.7, 'rgba(0,0,0,.8)'); g.addColorStop(1, 'rgba(0,0,0,0)');
     dctx.fillStyle = g; dctx.beginPath(); dctx.moveTo(psx, psy - 14); dctx.arc(psx, psy - 14, len, ang - spread, ang + spread); dctx.closePath(); dctx.fill();
