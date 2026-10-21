@@ -783,7 +783,7 @@ function clampFree(x, y) { for (let k = 0; k < 10; k++) { if (!hitAt(x, y, .2)) 
 const faceURL = () => 'assets/kuchisake_face.png';
 /* 咪醬的動作姿勢（受傷／丟東西／倒地），用真實時間計時，對話中也會播 */
 const NOW = () => performance.now() / 1000;
-function setPose(k, dur) { P.pose = { k, until: dur ? NOW() + dur : Infinity }; }
+function setPose(k, dur) { P.pose = { k, t0: NOW(), until: dur ? NOW() + dur : Infinity }; }
 function damage(n) {
   G.hearts -= n; shake = 10; setPose('hurt', .8);
   if (G.hearts <= 0 && G.inv.bandage) { G.inv.bandage--; G.hearts = 1; toast('用掉了繃帶……還撐得住'); }
@@ -1087,8 +1087,8 @@ function ghSpr() {
 // 咪醬：動作姿勢 ＞ 蹲 ＞ 拿手電筒站著 ＞ 一般走跑
 function drawMi() {
   const k = P.pose && NOW() < P.pose.until ? P.pose.k : null, img = k && IMG['mi_' + k];
-  if (img) return drawSprite(img, P.x, P.y, P.dir, { frame: k === 'hurt' ? Math.floor(NOW() * 6) : 0, noShadow: k === 'down' });
-  if (P.crouch && IMG.mi_crouch) return drawSprite(IMG.mi_crouch, P.x, P.y, P.dir, { bob: P.moving && P.frame % 2 ? -1 : 0 });
+  if (img) return drawSprite(img, P.x, P.y, P.dir, { frame: k === 'hurt' ? Math.floor(NOW() * 6) : k === 'throw' ? +(NOW() - P.pose.t0 > .12) : 0, noShadow: k === 'down' });
+  if (P.crouch && IMG.mi_crouch) return drawSprite(IMG.mi_crouch, P.x, P.y, P.dir, P.moving ? P.frame % 4 : 0);
   if (P.light && !P.moving && IMG.mi_light) return drawSprite(IMG.mi_light, P.x, P.y, P.dir);
   drawSprite(IMG.mi, P.x, P.y, P.dir, { frame: P.moving ? (P.run ? 4 : 0) + P.frame : 0 });
 }
@@ -1241,7 +1241,7 @@ if (!Q.get('embed')) $('#foot').innerHTML = `戴上耳機遊玩效果最佳　�
 loadImages(['mi', 'mi_crouch', 'mi_hurt', 'mi_throw', 'mi_light', 'mi_down', 'kuchisake', 'kuchisake_chase', 'kuchisake_atk', 'ninomiya', 'floors', 'floors2', 'walls', 't_tree', 't_dead1', 't_dead2', 't_dead3', 't_bush1', 't_bush2', 't_bush3', 't_cypress', 't_lamp', 't_rack', 't_bike', 't_bench1', 't_bench2', 't_trash', 't_fount', 't_board']).then(() => {
   buildFloor();
   if (IMG.mi) IMG.mi.rows = 9;
-  for (const [k, r] of [['mi_crouch', 1], ['mi_hurt', 2], ['mi_throw', 1], ['mi_light', 1], ['mi_down', 1], ['kuchisake_atk', 4]]) if (IMG[k]) IMG[k].rows = r;
+  for (const [k, r] of [['mi_crouch', 4], ['mi_hurt', 2], ['mi_throw', 2], ['mi_light', 1], ['mi_down', 1], ['kuchisake_atk', 4]]) if (IMG[k]) IMG[k].rows = r;
   if (TEST && TEST !== 'shot') { setInterval(() => { update(1 / 30); }, 8); setInterval(render, 200); runTest(TEST); }
   else { requestAnimationFrame(loop); if (TEST) runTest(TEST); }
 });
