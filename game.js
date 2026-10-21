@@ -2,8 +2,8 @@
 /* 夜校・如月　試玩版（序章～第一章）
    斜角像素渲染＋光照、鬼怪視線/聽覺 AI、躲藏、反擊、劇情腳本、Web Audio 合成音效。 */
 
-const VW = 640, TW = 32, TH = 16, WALLH = 34;
-let VH = 360;  // 平板直向時會拉高，顯示更多地圖
+const TW = 32, TH = 16, WALLH = 34;
+let VW = 640, VH = 360;  // 手機縮小內部解析度（＝放大畫面與文字），平板直向會拉高
 const $ = s => document.querySelector(s);
 const cvs = $('#c'), ctx = cvs.getContext('2d');
 ctx.imageSmoothingEnabled = false;
@@ -76,6 +76,9 @@ obj('box', 6, 34, { act: 'keybox', hide: false });
 [[24, 15], [31, 15], [13, 13]].forEach(p => obj('trash', p[0], p[1]));
 const STATUE = obj('statue', 32, 17, { act: 'statue' });
 for (let x = 33; x <= 37; x++) obj('bike', x, 29);
+obj('board', 30, 14, { act: 'board' });
+obj('fount', 34, 20, { act: 'fount' });
+obj('bench', 21, 16); obj('bench', 36, 33, { v: 1 });
 obj('gdesk', 33, 33, { act: 'log' });
 // 教室（2-B 與其他班的桌子）
 for (const [x0, x1] of [[2, 11], [13, 21], [23, 31]]) {
@@ -183,14 +186,31 @@ function diamond(g, x, y, col) {
 function speck(g, x, y, cols, n) {
   for (let i = 0; i < n; i++) { const u = R(), v = R(); const [sx, sy] = isoW(x + u, y + v); g.fillStyle = cols[i % cols.length]; g.fillRect(sx | 0, sy | 0, 1, 1); }
 }
+/* 斜角地磚貼圖：64x64 一組（2x2 格），依格子奇偶取四分之一，仿射到菱形 */
+function texTile(g, img, idx, x, y, base) {
+  diamond(g, x, y, base);
+  const [sx, sy] = isoW(x, y);
+  g.setTransform(.5, .25, -.5, .25, sx, sy);
+  g.drawImage(img, idx * 64 + (x % 2) * 32, (y % 2) * 32, 32, 32, 0, 0, 32, 32);
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+const FLOORTEX = { // 地形: [圖, 索引, 底色]
+  '.': ['floors2', 0, '#4a6b36'], ',': ['floors2', 1, '#857563'], '=': ['floors', 0, '#8f8778'],
+  'r': ['floors', 7, '#3b3e4c'], ':': ['floors', 3, '#8a877c'], 'hall': ['floors', 4, '#9a5a44'],
+};
 function buildFloor() {
   const g = floorC.getContext('2d'), m = maskC.getContext('2d');
+  const useTex = !!(IMG.floors && IMG.floors2);
+  g.imageSmoothingEnabled = true;
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     let c = at(x, y);
     if (c === 'f' || c === 'P') c = x < 17 && y < 37 ? ',' : '.';
     if (c === 'D') c = y === 8 || y === 12 ? ':' : '_';
     if (c === '#' || c === 'X') continue;
-    if (c === '.') { diamond(g, x, y, ['#17221a', '#19251b', '#152019'][(x * 7 + y * 3) % 3]); speck(g, x, y, ['#22332a', '#0f1711', '#1e2e22'], 9); }
+    const key = c === ':' && x >= 22 && x <= 33 ? 'hall' : c;
+    if (useTex && FLOORTEX[key]) { const [im, i, b] = FLOORTEX[key]; texTile(g, IMG[im], i, x, y, b); }
+    else if (useTex && c === '_') { diamond(g, x, y, (x % 2) ? '#6a4c34' : '#62462f'); const [sx, sy] = isoW(x, y + .5); g.fillStyle = '#47321f'; for (let k = -14; k < 14; k += 2) g.fillRect(sx + k, sy + k / 2 | 0, 1, 1); }
+    else if (c === '.') { diamond(g, x, y, ['#17221a', '#19251b', '#152019'][(x * 7 + y * 3) % 3]); speck(g, x, y, ['#22332a', '#0f1711', '#1e2e22'], 9); }
     else if (c === ',') { diamond(g, x, y, (x + y) % 2 ? '#352d25' : '#382f27'); speck(g, x, y, ['#433628', '#2a221b'], 7); }
     else if (c === '=') { diamond(g, x, y, (x + y) % 2 ? '#303137' : '#2d2e34'); const [sx, sy] = isoW(x, y); g.strokeStyle = 'rgba(0,0,0,.35)'; g.beginPath(); g.moveTo(sx + 16, sy + 8); g.lineTo(sx, sy + 16); g.lineTo(sx - 16, sy + 8); g.stroke(); speck(g, x, y, ['#3b3c43'], 3); }
     else if (c === 'r') { diamond(g, x, y, '#18191e'); speck(g, x, y, ['#222329', '#121317'], 6); }
@@ -198,6 +218,8 @@ function buildFloor() {
     else if (c === ':') { diamond(g, x, y, (x + y) % 2 ? '#262a2f' : '#2b3035'); speck(g, x, y, ['#30353b'], 2); }
     if (INDOOR.has(at(x, y)) || c === '_' || c === ':') diamond(m, x, y, 'rgba(0,0,0,.62)');
   }
+  // 夜色：整片地面乘上冷色調
+  if (useTex) { g.globalCompositeOperation = 'multiply'; g.fillStyle = '#4a5268'; g.fillRect(0, 0, FW, FH); g.globalCompositeOperation = 'source-over'; }
   // 操場跑道
   g.strokeStyle = 'rgba(210,200,180,.22)'; g.lineWidth = 1;
   for (const k of [0, 1.1]) {
@@ -349,9 +371,12 @@ const sfx = {
 /* ---------- UI ---------- */
 function layout() {
   const w = innerWidth, h = innerHeight, wrap = $('#wrap');
-  const tall = isTouch && h > w && w >= 600;
-  const nvh = tall ? Math.min(1100, Math.round(VW * h / w)) : 360;
-  if (nvh !== VH) { VH = nvh; cvs.height = VH; ctx.imageSmoothingEnabled = false; }
+  const small = isTouch && Math.min(w, h) < 540;          // 手機：鏡頭拉近、字放大
+  const tall = isTouch && h > w && w >= 600;               // 平板直向：往下延伸
+  let nvw = 640, nvh = 360;
+  if (small) { nvh = 270; nvw = h > w ? 480 : clamp(Math.round(270 * w / h), 480, 600); }
+  if (tall) nvh = Math.min(1100, Math.round(640 * h / w));
+  if (nvw !== VW || nvh !== VH) { VW = nvw; VH = nvh; cvs.width = VW; cvs.height = VH; ctx.imageSmoothingEnabled = false; }
   const s = Math.min(w / VW, h / VH);
   wrap.style.width = VW * s + 'px'; wrap.style.height = VH * s + 'px';
   document.documentElement.style.setProperty('--u', s + 'px');
@@ -472,7 +497,7 @@ function nearestInteract() {
     const o = OBJAT[tx + ',' + ty];
     if (!o || (o.t === 'statue' && o.gone && G.flags.statueSeenGone)) continue;
     if (o.act === 'keybox' && G.inv.key) continue;
-    if (o.act) { bd = d; best = { kind: 'obj', o, label: { vend: '調查販賣機', statue: '調查雕像', log: '看值班日誌', keybox: '打開器材箱', shoe: '看看鞋箱' }[o.act] }; }
+    if (o.act) { bd = d; best = { kind: 'obj', o, label: { vend: '調查販賣機', statue: '調查雕像', log: '看值班日誌', keybox: '打開器材箱', shoe: '看看鞋箱', board: '看公告欄', fount: '看看噴水池' }[o.act] }; }
     else if (HIDE[o.t] && o.hide !== false) { bd = d; best = { kind: 'hide', o, label: HIDE[o.t] }; }
   }
   return best;
@@ -561,6 +586,8 @@ async function objAction(o) {
     return;
   }
   if (o.act === 'log') return readLog();
+  if (o.act === 'board') { await says(['公告欄。運動會的照片、社團招生、校外教學通知……', '角落有一張褪色的尋人啟事。', '「二年級　澄香　2004年2月起下落不明」', '……照片上的臉，被人用紅筆整個塗掉了。']); return; }
+  if (o.act === 'fount') { await says(['乾掉的噴水池，池底積著一層黑色的水。', '水面映出的路燈……比實際上多了一盞。', '那一盞燈下，好像站著一個人。']); return; }
 }
 async function readLog() {
   if (G.flags.log) { await says(['值班日誌。最後一行的墨水……還是濕的。']); return; }
@@ -917,6 +944,28 @@ const dctx = dark.getContext('2d');
 const grain = [0, 1, 2].map(() => { const c = document.createElement('canvas'); c.width = 160; c.height = 90; const g = c.getContext('2d'); const d = g.createImageData(160, 90); for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = v; d.data[i + 3] = 255; } g.putImageData(d, 0, 0); return c; });
 const RAIN = Array.from({ length: 140 }, () => ({ x: Math.random() * VW, y: Math.random() * VH, s: 380 + Math.random() * 200 }));
 
+/* 牆面貼圖（walls.png：0 磚 1 窗 2 門 3 灰泥 4 灰泥漏水 5 爬藤），斜切貼到方塊左面(+y)或右面(+x) */
+function texFace(x, y, side, idx, shade, h = WALLH, inset = 0) {
+  const img = IMG.walls; if (!img) return;
+  const [sx, sy] = side === 'L' ? iso(x + inset, y + 1 - inset) : iso(x + 1 - inset, y + 1 - inset);
+  const k = 1 - 2 * inset;
+  ctx.setTransform(.5 * k, side === 'L' ? .25 * k : -.25 * k, 0, h / 34, sx, sy - h);
+  ctx.drawImage(img, idx * 32, 0, 32, 34, 0, 0, 32, 34);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  if (shade) {
+    const p = side === 'L' ? [iso(x + inset, y + 1 - inset), iso(x + 1 - inset, y + 1 - inset)] : [iso(x + 1 - inset, y + 1 - inset), iso(x + 1 - inset, y + inset)];
+    poly([p[0], p[1], [p[1][0], p[1][1] - h], [p[0][0], p[0][1] - h]], shade);
+  }
+}
+const isExt = (x, y) => y === 1 || y === 12 || x === 1 || x === 38 || (x >= 3 && x <= 7 && y >= 32) || (x >= 31 && x <= 34 && y >= 32);
+function wallTex(x, y, side) {
+  const hsh = (x * 73 + y * 31 + (side === 'R' ? 7 : 0)) % 23;
+  if (isExt(x, y)) {
+    if ((side === 'L' && (y === 12 || y === 35) && x % 3 === 1) || (side === 'R' && x === 38 && y % 3 === 1)) return 1;
+    return hsh === 5 ? 5 : 0;
+  }
+  return hsh % 7 === 0 ? 4 : hsh === 11 ? 5 : 3;
+}
 function wallColors(x, y) {
   const ext = y === 1 || y === 12 || x === 1 || x === 38 || (x >= 3 && x <= 7 && y >= 32) || (x >= 31 && x <= 34 && y >= 32);
   return ext ? ['#4b4f49', '#343833', '#2b2e2a'] : ['#6a6352', '#4a4538', '#3e3a30'];
@@ -924,6 +973,7 @@ function wallColors(x, y) {
 function drawWall(x, y, alpha) {
   ctx.globalAlpha = alpha;
   const c = at(x, y);
+  if (c === 'P' && IMG.walls) { texFace(x, y, 'L', 0, 'rgba(0,0,0,.1)', 46, .1); texFace(x, y, 'R', 0, 'rgba(0,0,0,.4)', 46, .1); box(x + .1, y + .1, .8, .8, 46, '#8d8475', null, null); if (x === 25) { faceRect(x, y, 'L', .2, .8, 14, 36, '#2a2722'); } ctx.globalAlpha = 1; return; }
   if (c === 'P') { box(x + .1, y + .1, .8, .8, 46, '#5a5852', '#3e3c37', '#33312d'); if (x === 25) { faceRect(x, y, 'L', .2, .8, 14, 36, '#2a2722'); } ctx.globalAlpha = 1; return; }
   if (c === 'D') {
     const dr = DOORS[x + ',' + y];
@@ -931,8 +981,16 @@ function drawWall(x, y, alpha) {
       box(x, y, 1, 1, 6, '#3a3328', null, null, WALLH - 6); ctx.globalAlpha = 1; return;
     }
     const [t, l, r] = wallColors(x, y);
-    box(x, y, 1, 1, WALLH, t, l, r);
     const side = y === 8 || y === 12 || y === 32 ? 'L' : 'R';
+    if (IMG.walls) {
+      texFace(x, y, 'L', side === 'L' && isExt(x, y) ? 2 : wallTex(x, y, 'L'), 'rgba(0,0,0,.12)');
+      texFace(x, y, 'R', side === 'R' && isExt(x, y) ? 2 : wallTex(x, y, 'R'), 'rgba(0,0,0,.4)');
+      box(x, y, 1, 1, WALLH, isExt(x, y) ? '#8d8475' : '#7c7466', null, null);
+      if (!isExt(x, y)) { faceRect(x, y, side, .12, .88, 0, 26, '#4a3a2a'); faceRect(x, y, side, .25, .75, 14, 23, 'rgba(20,24,30,.9)'); }
+      if (dr.chain) { ctx.strokeStyle = '#a5a5a0'; ctx.lineWidth = 1; const [sx, sy] = iso(x, y + 1); ctx.beginPath(); ctx.moveTo(sx + 2, sy - 22); ctx.lineTo(sx + 14, sy - 4); ctx.moveTo(sx + 14, sy - 16); ctx.lineTo(sx + 2, sy - 2); ctx.stroke(); }
+      ctx.globalAlpha = 1; return;
+    }
+    box(x, y, 1, 1, WALLH, t, l, r);
     faceRect(x, y, side, .12, .88, 0, 26, dr.chain ? '#3a2c22' : '#4a3a2a');
     faceRect(x, y, side, .25, .75, 14, 23, 'rgba(20,24,30,.9)');
     if (dr.chain) { ctx.strokeStyle = '#8a8a86'; ctx.lineWidth = 1; const [sx, sy] = iso(x, y + 1); ctx.beginPath(); ctx.moveTo(sx + 2, sy - 22); ctx.lineTo(sx + 14, sy - 4); ctx.moveTo(sx + 14, sy - 16); ctx.lineTo(sx + 2, sy - 2); ctx.stroke(); }
@@ -940,9 +998,13 @@ function drawWall(x, y, alpha) {
   }
   const [t, l, r] = wallColors(x, y);
   const L = !['#', 'D'].includes(at(x, y + 1)) ? l : null, Rr = !['#', 'D'].includes(at(x + 1, y)) ? r : null;
-  box(x, y, 1, 1, WALLH, t, L, Rr);
+  if (IMG.walls) {
+    if (L) texFace(x, y, 'L', wallTex(x, y, 'L'), 'rgba(0,0,0,.12)');
+    if (Rr) texFace(x, y, 'R', wallTex(x, y, 'R'), 'rgba(0,0,0,.4)');
+    box(x, y, 1, 1, WALLH, isExt(x, y) ? '#8d8475' : '#7c7466', null, null);
+  } else box(x, y, 1, 1, WALLH, t, L, Rr);
   // 窗戶（外牆）、黑板、班牌、時鐘
-  if (L && y === 12 && x % 3 === 1) { faceRect(x, y, 'L', .18, .82, 13, 28, '#141a24'); faceRect(x, y, 'L', .2, .45, 15, 26, 'rgba(90,110,140,.25)'); }
+  if (!IMG.walls && L && y === 12 && x % 3 === 1) { faceRect(x, y, 'L', .18, .82, 13, 28, '#141a24'); faceRect(x, y, 'L', .2, .45, 15, 26, 'rgba(90,110,140,.25)'); }
   if (L && y === 1 && ((x >= 15 && x <= 19) || (x >= 4 && x <= 9) || (x >= 25 && x <= 29))) faceRect(x, y, 'L', 0, 1, 10, 27, '#1f3327');
   if (L && y === 1 && x === 17) { ctx.fillStyle = 'rgba(220,220,210,.55)'; const [sx, sy] = iso(x, y + 1); ctx.fillRect(sx + 3, sy - 22, 9, 1); ctx.fillRect(sx + 5, sy - 18, 6, 1); }
   if (L && y === 8 && DOORS[(x + 1) + ',8'] && DOORS[(x + 1) + ',8'].sign) { faceRect(x, y, 'L', .3, 1, 27, 32, '#c9c2ae'); }
@@ -967,6 +1029,16 @@ function drawObj(o, alpha) {
   const { x, y } = o; ctx.globalAlpha = alpha;
   const [cx, cy] = iso(x + .5, y + .5);
   const shaking = P.hidden === o && G.danger > .5 && Math.sin(G.t * 40) > 0 ? 1 : 0;
+  const spr = (n, dy = 0) => { const im = IMG[n]; if (im) ctx.drawImage(im, Math.round(cx - im.width / 2), Math.round(cy - im.height + dy)); return !!im; };
+  const v = (x * 7 + y * 13) % 4;
+  if (o.t === 'tree' && spr(v < 2 ? 't_tree' : v === 2 ? 't_dead1' : 't_dead2', 5)) { ctx.globalAlpha = 1; return; }
+  if (o.t === 'bush' && spr(['t_bush1', 't_bush2', 't_bush3'][(x + y) % 3], 4 + shaking)) { ctx.globalAlpha = 1; return; }
+  if (o.t === 'lamp' && IMG.t_lamp) { spr('t_lamp', 3); o.on = !(o.x === 8 && o.y === 16) || Math.sin(G.t * 17) + Math.sin(G.t * 5.3) > -.6; if (!o.on) { ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(cx - 5, cy - 54, 10, 10); } ctx.globalAlpha = 1; return; }
+  if (o.t === 'trash' && spr('t_trash', 3 + shaking)) { ctx.globalAlpha = 1; return; }
+  if (o.t === 'bike' && IMG.t_rack) { if (x === 35) spr('t_rack', 6); else if (x === 33 || x === 37) spr('t_bike', 4); ctx.globalAlpha = 1; return; }
+  if (o.t === 'bench') { spr(o.v ? 't_bench2' : 't_bench1', 5); ctx.globalAlpha = 1; return; }
+  if (o.t === 'board') { spr('t_board', 4); ctx.globalAlpha = 1; return; }
+  if (o.t === 'fount') { spr('t_fount', 6); ctx.globalAlpha = 1; return; }
   switch (o.t) {
     case 'tree': {
       ctx.fillStyle = '#2a1e16'; ctx.fillRect(cx - 2, cy - 22, 4, 22);
@@ -1014,7 +1086,7 @@ function drawSprite(img, x, y, dir, opt = {}) {
   ctx.globalAlpha = 1;
 }
 function render() {
-  if (dark.height !== VH) dark.height = VH;
+  if (dark.height !== VH || dark.width !== VW) { dark.width = VW; dark.height = VH; }
   // 鏡頭
   const [px, py] = isoW(P.x, P.y);
   const tx = px - VW / 2, ty = py - VH / 2 - 14;
@@ -1040,7 +1112,7 @@ function render() {
     const dep = x + y + 1;
     if (c === 'f') list.push({ d: dep, f: () => drawFence(x, y) });
     else if (c === '#' || c === 'P' || c === 'D') list.push({ d: dep, f: a => drawWall(x, y, a), tall: 40, sx, sy });
-    if (o) list.push({ d: dep + .01, f: a => drawObj(o, a), tall: o.t === 'tree' ? 56 : o.t === 'locker' || o.t === 'shoe' || o.t === 'vend' ? 34 : 0, sx, sy });
+    if (o) list.push({ d: dep + .01, f: a => drawObj(o, a), tall: o.t === 'tree' ? 56 : o.t === 'locker' || o.t === 'shoe' || o.t === 'vend' || o.t === 'board' || o.t === 'lamp' ? 34 : 0, sx, sy });
   }
   for (const it of ITEMS) if (!it.taken) list.push({ d: it.x + it.y - .3, f: () => { const [sx, sy] = iso(it.x, it.y); const on = Math.sin(G.t * 4 + it.x) > .3; ctx.fillStyle = on ? 'rgba(255,240,200,.9)' : 'rgba(255,240,200,.35)'; ctx.fillRect(sx - 1, sy - (it.id === 'phone' ? 13 : 3), 2, 2); if (on) { ctx.fillRect(sx - 3, sy - (it.id === 'phone' ? 12 : 2), 6, 0.6); } } });
   for (const p of G.projs) list.push({ d: p.x + p.y, f: () => { const [sx, sy] = iso(p.x, p.y); ctx.fillStyle = p.kind === 'can' ? '#9aa' : '#d99a2b'; ctx.fillRect(sx - 2, sy - 10 - Math.sin((.5 - p.life) / .5 * Math.PI) * 12, 4, 3); } });
@@ -1123,6 +1195,17 @@ function resetWorld() {
 $('#bStart').onclick = () => { audioInit(); resetWorld(); $('#title').classList.add('hide'); intro(); };
 $('#bCont').onclick = () => { audioInit(); let s = null; try { s = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { } if (!s) return; resetWorld(); G.cp = s; loadCP(s); startPlay(); };
 $('#bHelp').onclick = () => $('#help').classList.remove('hide');
+// 手機在部落格裡（iframe）畫面太小：提供全螢幕／新分頁開啟
+if (Q.get('embed') && isTouch) {
+  const bf = $('#bFull'); bf.classList.remove('hide');
+  bf.onclick = () => {
+    audioInit();
+    const de = document.documentElement, req = de.requestFullscreen || de.webkitRequestFullscreen;
+    if (req && (document.fullscreenEnabled || document.webkitFullscreenEnabled)) {
+      const r = req.call(de); if (r && r.then) r.then(() => { try { screen.orientation.lock('landscape').catch(() => { }); } catch (e) { } }).catch(() => window.open(location.pathname, '_blank'));
+    } else window.open(location.pathname, '_blank');
+  };
+}
 $('#bHelpBack').onclick = () => $('#help').classList.add('hide');
 $('#bRetry').onclick = () => { $('#over').classList.add('hide'); loadCP(G.cp); startPlay(); };
 const toTitle = () => { location.href = location.pathname + location.search; };
@@ -1131,8 +1214,8 @@ try { if (localStorage.getItem(SAVE_KEY)) $('#bCont').classList.remove('hide'); 
 const BLOG = 'https://cashkingw.blogspot.com/2026/10/444.html';
 if (!Q.get('embed')) $('#foot').innerHTML = `戴上耳機遊玩效果最佳　｜　<a href="${Q.get('blog') || BLOG}" target="_top" style="pointer-events:auto">Cash城部落格</a>`;
 
-buildFloor();
-loadImages(['mi', 'kuchisake', 'ninomiya']).then(() => {
+loadImages(['mi', 'kuchisake', 'ninomiya', 'floors', 'floors2', 'walls', 't_tree', 't_dead1', 't_dead2', 't_dead3', 't_bush1', 't_bush2', 't_bush3', 't_cypress', 't_lamp', 't_rack', 't_bike', 't_bench1', 't_bench2', 't_trash', 't_fount', 't_board']).then(() => {
+  buildFloor();
   if (TEST && TEST !== 'shot') { setInterval(() => { update(1 / 30); }, 8); setInterval(render, 200); runTest(TEST); }
   else { requestAnimationFrame(loop); if (TEST) runTest(TEST); }
 });
