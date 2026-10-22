@@ -59,6 +59,7 @@ function buildCh2() {
   LIGHTS.push({ x: 2.6, y: 11.4, r: 1.7, c: '90,255,140' }, { x: 37.4, y: 11.4, r: 1.7, c: '90,255,140' });
   LIGHTS.push({ x: 15.5, y: 5.5, r: 3.4, c: '255,230,190' });        // 保健室的燈還亮著
   LIGHTS.push({ x: 35.5, y: 21.2, r: 2.6, c: '255,200,130' });       // 二宮的檯燈
+  LIGHTS.push({ x: 35.5, y: 15.8, r: 2.4, c: '255,215,150' });       // 櫃台的檯燈
   LIGHTS.push({ x: 12.5, y: 21.5, r: 3.6, c: '255,190,120' });       // 中庭路燈
   LIGHTS.push({ x: 4, y: 24.5, r: 2, c: '150,170,230' });             // 玄關玻璃門透進的月光
   // 道具
@@ -386,7 +387,15 @@ function sceneDrawObj(o, cx, cy, shaking) {
       if (o.act && !G.flags.bookPlaced && !G.inv.book) faceRect(x, y, 'L', .4, .55, 12, 18, '#c8b27a');   // 那本《報德記》
       break;
     }
-    case 'counter': box(x, y + .25, 1, .5, 14, '#6a5038', '#4a3826', '#3e2f20'); if (o.act && G.flags.bookPlaced) { ctx.fillStyle = '#c8b27a'; ctx.fillRect(cx - 4, cy - 17, 8, 3); } break;
+    case 'counter': {   // 借還書櫃台：淺色木頭、加高，中間那格有檯燈和「借還書」牌子（10/22 使用者反映找不到）
+      box(x, y + .2, 1, .6, 22, '#a7835a', '#7c5f3e', '#6b5234'); box(x, y + .2, 1, .08, 24, '#c39a68', '#8d6b45', null);
+      if (o.act) {
+        faceRect(x, y, 'L', .25, .75, 9, 17, '#e6dcc0'); faceRect(x, y, 'L', .3, .7, 11, 15, '#7a2f2a');   // 牌子
+        ctx.fillStyle = '#2e2a24'; ctx.fillRect(cx + 5, cy - 34, 1, 9); ctx.fillStyle = '#d8b25a'; ctx.fillRect(cx + 2, cy - 36, 7, 3); ctx.fillStyle = '#fff2c0'; ctx.fillRect(cx + 3, cy - 33, 5, 1);   // 檯燈
+        if (G.flags.bookPlaced) { ctx.fillStyle = '#c8b27a'; ctx.fillRect(cx - 4, cy - 26, 8, 3); }
+      }
+      break;
+    }
     case 'rdesk': box(x + .1, y + .2, .8, .6, 12, '#6a5038', '#4a3826', '#3e2f20'); ctx.fillStyle = '#ffe0a0'; ctx.fillRect(cx + 5, cy - 22, 4, 3); ctx.fillStyle = '#3a3a3a'; ctx.fillRect(cx + 6, cy - 19, 1, 6); break;
     case 'bed': box(x + .05, y + .1, .9, .8, 10 + shaking, '#d8d6d0', '#a9a7a1', '#96948e'); box(x + .05, y + .1, .9, .2, 26, '#cfd6d2', '#9fb0a8', null); break;
     case 'medcab': box(x + .1, y + .2, .8, .6, 30, '#d0d4d2', '#a6aaa8', '#8f9391'); faceRect(x, y, 'L', .4, .6, 20, 24, '#b83232'); faceRect(x, y, 'L', .47, .53, 18, 26, '#b83232'); break;

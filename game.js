@@ -223,7 +223,7 @@ function buildFloor() {
     else if (c === 'r') { diamond(g, x, y, '#18191e'); speck(g, x, y, ['#222329', '#121317'], 6); }
     else if (c === '_') { diamond(g, x, y, (x % 2) ? '#30231a' : '#2d2118'); const [sx, sy] = isoW(x, y + .5); g.fillStyle = '#231a13'; for (let k = -14; k < 14; k += 2) g.fillRect(sx + k, sy + k / 2 | 0, 1, 1); }
     else if (c === ':') { diamond(g, x, y, (x + y) % 2 ? '#262a2f' : '#2b3035'); speck(g, x, y, ['#30353b'], 2); }
-    if (INDOOR.has(at(x, y)) || c === '_' || c === ':') diamond(m, x, y, 'rgba(0,0,0,.38)');   // 室內額外暗度
+    if (INDOOR.has(at(x, y)) || c === '_' || c === ':') diamond(m, x, y, 'rgba(0,0,0,.26)');   // 室內額外暗度（10/22 由 .38 調亮，佈景要看得清楚）
   }
   // 夜色：整片地面乘上冷色調
   if (useTex) {
@@ -487,7 +487,7 @@ function chapter(sub, title) {
   e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 3200);
 }
 let OBJTEXT = '';
-function setObj(t) { OBJTEXT = t; updateHUD(); }
+function setObj(t) { OBJTEXT = t; updateHUD(); for (const o of OBJ) o.seen = false; }   // 目標換了，可調查的東西重新閃光
 function updateHUD() {
   $('#hearts').innerHTML = Array.from({ length: 5 }, (_, i) => `<i class="${i < G.hearts ? '' : 'off'}"></i>`).join('');
   $('#obj').innerHTML = OBJTEXT ? `<small>目標</small>${OBJTEXT}` : '';
@@ -663,6 +663,7 @@ async function useDoor(dr) {
   await says([dr.msg]);
 }
 async function objAction(o) {
+  o.seen = true;
   if (G.scene !== 1 && typeof sceneAction === 'function' && await sceneAction(o) !== false) return;
   if (o.act === 'vend') {
     if (G.flags.vend) { await says(['販賣機的燈一閃一閃的。已經沒有東西掉出來了。']); return; }
@@ -903,19 +904,19 @@ async function intro() {
     { p: 2, nar: '手機殼裡還夾著定期票。沒有它，明天連學校都去不了。' },
     { p: 3, nar: '她在下一站下車，沿著來時的路走回學校。' },
   ]);
-  startPlay();
+  startPlay(true);   // 新遊戲：主題曲繼續，走進校門才淡出
   chapter('序章', '放學後');
   setObj('回學校，到二年B班拿手機');
   saveCP('start');
   $('#hint').innerHTML = isTouch ? '左下搖桿移動　調查：撿東西／開門／躲藏' : 'WASD／方向鍵 移動　Shift 跑　C 蹲<br>E／空白鍵 調查・躲藏　F 手電筒　1・2 丟東西';
   setTimeout(() => $('#hint').innerHTML = '', 16000);
 }
-function startPlay() {
-  themeStop(8);
+function startPlay(keepTheme) {
+  if (!keepTheme) themeStop(8);
   G.mode = 'play'; $('#hud').classList.remove('hide'); $('#touch').classList.toggle('hide', !isTouch); $('#title').classList.add('hide'); updateHUD();
 }
 const TRIG = [
-  { id: 'gate', when: () => P.y < 36.6, run: async () => { await says(['校門……沒有鎖。', '整棟校舍黑漆漆的。只有警衛室好像還亮著燈。']); setObj('去亮著燈的警衛室看看'); } },
+  { id: 'gate', when: () => P.y < 36.6, run: async () => { themeStop(6); await says(['校門……沒有鎖。', '整棟校舍黑漆漆的。只有警衛室好像還亮著燈。']); setObj('去亮著燈的警衛室看看'); } },
   { id: 'shadow', when: () => dist(P.x, P.y, 26.5, 20.6) < .9 || dist(P.x, P.y, 27.4, 20.4) < .9, run: async () => { shadowScare(); } },
   { id: 'clock', when: () => P.y < 16 && P.x > 20, run: async () => { await says(['校舍正面的時鐘……停在四點四十四分。', '今天放學的時候，它明明還在走。']); } },
   { id: 'statueGone', when: () => STATUE.gone && dist(P.x, P.y, 32.5, 17.5) < 3.2, run: async () => { await says(['……咦？', '二宮金次郎像……不見了？']); } },
@@ -1227,7 +1228,7 @@ function drawSprite(img, x, y, dir, frame, opt) {
   } else ctx.drawImage(img, dir * fw, fy, fw, fh, Math.round(sx - w / 2 + (opt.jit || 0)), Math.round(sy - h + 1 - bob), w, h);
   ctx.globalAlpha = 1;
 }
-const DARK = .6;
+const DARK = .5;
 function render() {
   if (dark.height !== VH || dark.width !== VW) { dark.width = VW; dark.height = VH; }
   // 鏡頭
@@ -1265,7 +1266,7 @@ function render() {
   if (G.scene !== 1 && typeof sceneSprites === 'function') sceneSprites(list);
   list.sort((a, b) => a.d - b.d);
   for (const l of list) l.f(l.tall && l.d > pd + .2 && near(l.sx, l.sy, l.tall) && !P.hidden ? .3 : 1);
-  // 光照（DARK＝整體暗幕濃度，太暗玩起來很累 → 2026-10-21 由 .8 調到 .6）
+  // 光照（DARK＝整體暗幕濃度，太暗玩起來很累 → 2026-10-21 由 .8 調到 .6，10/22 再調到 .5）
   const fl = G.flash;
   dctx.globalCompositeOperation = 'source-over'; dctx.clearRect(0, 0, VW, VH);
   dctx.fillStyle = `rgba(3,4,10,${DARK - fl * .4})`; dctx.fillRect(0, 0, VW, VH);
@@ -1278,7 +1279,7 @@ function render() {
     const [sx, sy] = iso(l.x, l.y); if (sx < -150 || sx > VW + 150 || sy < -150 || sy > VH + 150) continue;
     glow(sx, sy - 4, l.r * 22, .92);
   }
-  if (!P.hidden) glow(psx, psy - 18, 52, .7);   // 咪醬周圍的微光（看得到腳邊）
+  if (!P.hidden) glow(psx, psy - 18, 64, .75);   // 咪醬周圍的微光（看得到腳邊）
   if (P.light && !P.hidden) {
     const [fx, fy] = SCR[P.dir], ang = Math.atan2(fy * .55, fx), len = 200, spread = .48;
     const g = dctx.createRadialGradient(psx, psy - 14, 6, psx, psy - 14, len);
@@ -1296,6 +1297,15 @@ function render() {
     g.addColorStop(0, `rgba(${l.c},.13)`); g.addColorStop(1, `rgba(${l.c},0)`); ctx.fillStyle = g; ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
   }
   ctx.globalCompositeOperation = 'source-over';
+  // 附近可以調查、還沒看過的東西：一閃一閃的星光（畫在暗幕之上，暗處也找得到）
+  for (const o of OBJ) {
+    if (!o.act || o.seen || (o.t === 'statue' && o.gone) || (o.act === 'keybox' && G.inv.key)) continue;
+    const d = dist(P.x, P.y, o.x + .5, o.y + .5); if (d > 8) continue;
+    const [sx, sy] = iso(o.x + .5, o.y + .5), top = { locker: 36, shoe: 34, vend: 38, board: 36, shelf: 40, cabinet: 34, medcab: 32 }[o.t] || 24;
+    const tw = (Math.sin(G.t * 3.2 + o.x * 1.7 + o.y) + 1) / 2, a = (.35 + .65 * tw) * Math.min(1, (8 - d) / 2.5), r = 2 + tw * 2.5, y0 = sy - top - 4;
+    ctx.fillStyle = `rgba(255,236,170,${a * .25})`; ctx.beginPath(); ctx.arc(sx, y0, r + 3, 0, 7); ctx.fill();
+    ctx.fillStyle = `rgba(255,246,210,${a})`; ctx.fillRect(sx - r, y0 - .5, r * 2, 1); ctx.fillRect(sx - .5, y0 - r, 1, r * 2); ctx.fillRect(sx - 1, y0 - 1, 2, 2);
+  }
   // 鬼的剪影（在黑暗中隱約可見）與狀態符號
   if (GH.active && G.mode === 'play') {
     const d = dist(GH.x, GH.y, P.x, P.y);
