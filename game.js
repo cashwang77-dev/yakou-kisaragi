@@ -384,6 +384,46 @@ const sfx = {
   vend() { tone(330, .08, 'square', .05); noise(.25, .15, 'lowpass', 400, 1, 0, .1); },
 };
 
+/* ---------- 主題曲《帰れない放課後》（Gemini 生成，3:00）：標題畫面＋開場漫畫播放、進入遊戲淡出、結局畫面再播 ---------- */
+const LYRICS = [[16, '午前四時四十四分'], [18.6, '止まった時計'], [21.3, '誰もいない廊下'], [26.7, '闇に溶ける足音'], [32, '金次郎の目が動く'],
+  [37.3, '赤い靴の少女'], [42.7, 'マスクの女'], [48, '「わたし、きれい？」'], [53.3, 'ハナコさんの声が'], [58.7, '奥の扉から'], [64, '裂けた口の奥に'],
+  [69.3, '呑み込まれる夜'], [74.7, '鳴り続ける電話'], [112, 'メリーさんの囁き'], [117.3, '帰れない放課後'], [122.7, '迷い込んだ迷路'], [128, '非常口を抜けても'],
+  [133.3, 'また同じ四時四十四分'], [138.7, 'マスクの女'], [144, '「わたし、きれい？」'], [149.3, '逃げ場のない校舎'], [154.7, '四の呪いに満ちて'],
+  [160, 'ハナコさんの笑いが'], [165.3, '木霊する闇へ'], [170.7, '如月']];
+const THEME = { el: null, g: null, t: 0, on: true };
+try { THEME.on = localStorage.getItem('kisaragi_theme') !== 'off'; } catch (e) { }
+function themePlay(restart) {
+  if (!THEME.on || TEST) return;
+  audioInit(); if (!A.ctx) return;
+  if (!THEME.el) {
+    const e = THEME.el = new Audio('assets/theme.mp3'); e.loop = true; e.preload = 'auto';
+    // 走 Web Audio 才能淡出（iPhone 不支援改 audio.volume）
+    try { THEME.g = A.ctx.createGain(); THEME.g.gain.value = 0; A.ctx.createMediaElementSource(e).connect(THEME.g).connect(A.master); } catch (er) { THEME.g = null; }
+  }
+  clearTimeout(THEME.t);
+  if (restart) THEME.el.currentTime = 0;
+  THEME.el.play().catch(() => { });
+  themeVol(.9, 1.2);
+}
+function themeVol(v, sec) {
+  if (!THEME.el) return;
+  if (THEME.g) { const g = THEME.g.gain, t = A.ctx.currentTime; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(v, t + sec); }
+  else THEME.el.volume = Math.min(1, v);
+}
+function themeStop(sec = 4) {
+  if (!THEME.el || THEME.el.paused) return;
+  themeVol(0, sec); clearTimeout(THEME.t); THEME.t = setTimeout(() => THEME.el.pause(), sec * 1000 + 150);
+}
+// 標題／結局畫面顯示目前唱到的歌詞
+setInterval(() => {
+  const box = $('#lyric'); if (!box) return;
+  const e = THEME.el, scr = !$('#title').classList.contains('hide') ? $('#title') : !$('#end').classList.contains('hide') ? $('#end') : null;
+  let line = '';
+  if (e && !e.paused && scr) { const ct = e.currentTime; for (let i = LYRICS.length - 1; i >= 0; i--) if (ct >= LYRICS[i][0]) { if (ct - LYRICS[i][0] < 5.6) line = LYRICS[i][1]; break; } }
+  if (scr && box.parentNode !== scr) scr.appendChild(box);
+  if (box.dataset.t !== line) { box.dataset.t = line; box.classList.remove('show'); if (line) setTimeout(() => { box.textContent = line; box.classList.add('show'); }, 250); }
+}, 200);
+
 /* ---------- UI ---------- */
 function layout() {
   const w = innerWidth, h = innerHeight, wrap = $('#wrap');
@@ -855,6 +895,7 @@ async function intro() {
   setTimeout(() => $('#hint').innerHTML = '', 16000);
 }
 function startPlay() {
+  themeStop(4);
   G.mode = 'play'; $('#hud').classList.remove('hide'); $('#touch').classList.toggle('hide', !isTouch); $('#title').classList.add('hide'); updateHUD();
 }
 const TRIG = [
@@ -1282,6 +1323,15 @@ const fsOnStart = () => { if (isTouch && !Q.get('embed')) goFS().catch(() => { }
 $('#bStart').onclick = () => { audioInit(); fsOnStart(); resetWorld(); $('#title').classList.add('hide'); intro(); };
 $('#bCont').onclick = () => { audioInit(); fsOnStart(); let s = null; try { s = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { } if (!s) return; resetWorld(); G.cp = s; loadCP(s); startPlay(); };
 $('#bHelp').onclick = () => $('#help').classList.remove('hide');
+$('#title').addEventListener('pointerdown', () => themePlay());
+addEventListener('keydown', () => { if (!$('#title').classList.contains('hide')) themePlay(); });
+const themeBtn = () => { const b = $('#bTheme'); b.textContent = THEME.on ? '♪ 主題曲 ON' : '♪ 主題曲 OFF'; b.classList.toggle('off', !THEME.on); };
+$('#bTheme').addEventListener('pointerdown', e => {
+  e.stopPropagation(); THEME.on = !THEME.on; try { localStorage.setItem('kisaragi_theme', THEME.on ? 'on' : 'off'); } catch (er) { }
+  THEME.on ? themePlay() : themeStop(.6); themeBtn();
+});
+themeBtn();
+new MutationObserver(() => { if (!$('#end').classList.contains('hide')) themePlay(true); }).observe($('#end'), { attributes: true, attributeFilter: ['class'] });
 $('#bA2hsBack').onclick = () => $('#a2hs').classList.add('hide');
 // 手機在部落格裡（iframe）畫面太小：提供全螢幕／新分頁開啟；iPhone 直接開網頁時教加入主畫面
 if (Q.get('embed') && isTouch) {

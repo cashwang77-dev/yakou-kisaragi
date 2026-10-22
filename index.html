@@ -18,7 +18,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta property="og:description" content="放學後，咪醬回到學校拿手機。時鐘停在 4:44，操場上有個戴口罩的女人……">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Noto+Serif+TC:wght@600;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&family=Noto+Serif+TC:wght@600;900&family=Noto+Serif+JP:wght@600&display=swap" rel="stylesheet">
 <style>
 :root{--u:1px;--red:#c8323c;--ink:#e8e4da;--dim:#8d8a84}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -170,6 +170,13 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
 .phone #a2hs .hb{font-size:calc(var(--u)*11)}
 #a2hs h2{font-size:calc(var(--u)*15);margin-bottom:calc(var(--u)*4)}
 .phone #a2hs .btns button,#a2hs .btns button{font-size:calc(var(--u)*12);padding:calc(var(--u)*3)}
+/* 主題曲 */
+#bTheme{position:absolute;right:calc(var(--u)*10);top:calc(var(--u)*10);pointer-events:auto;background:rgba(0,0,0,.45);border:1px solid #5b554c;color:#cfc6b6;font:inherit;font-size:calc(var(--u)*9);padding:calc(var(--u)*3) calc(var(--u)*7);cursor:pointer}
+#bTheme.off{color:#6d675f}
+#lyric{position:absolute;left:0;right:0;bottom:calc(var(--u)*30);text-align:center;font-family:"Noto Serif JP","Noto Serif TC",serif;font-weight:600;font-size:calc(var(--u)*13);letter-spacing:.25em;color:#e9dccb;text-shadow:0 0 8px #000,0 0 3px #5a0c12;opacity:0;transition:opacity .6s}
+#lyric.show{opacity:.92}
+.phone #bTheme{font-size:calc(var(--u)*10)}
+.phone #lyric{font-size:calc(var(--u)*13);bottom:calc(var(--u)*22)}
 #rot{inset:0;background:#000;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:9;pointer-events:auto;text-align:center;line-height:2}
 </style>
 </head>
@@ -208,6 +215,8 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
       <button id="bHelp">操作說明</button>
     </div>
     <div class="foot" id="foot">戴上耳機遊玩效果最佳</div>
+    <button id="bTheme">♪ 主題曲 ON</button>
+    <div id="lyric" class="ui"></div>
   </div>
   <div id="help" class="ui full hide">
     <div class="hb">
