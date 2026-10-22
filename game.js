@@ -405,7 +405,7 @@ function themeEl() {
   return THEME.el;
 }
 function themePlay(restart) {
-  if (!THEME.on || TEST) return Promise.resolve(false);
+  if (!THEME.on || TEST || G.mode === 'play') return Promise.resolve(false);   // 遊戲中不播（避免點擊冒泡把淡出取消）
   const e = themeEl(); clearTimeout(THEME.t); clearInterval(THEME.f);
   if (restart) e.currentTime = 0;
   e.volume = VOL.m;
@@ -1390,7 +1390,7 @@ $('#gate').addEventListener('click', gateOpen);
 // 每次打開都先顯示入口畫面（測試模式除外）；瀏覽器允許的話主題曲先在入口畫面後面響起，點擊進入時一定會播
 if (!TEST || Q.get('gate')) { $('#gate').classList.remove('hide'); setTimeout(gateFit, 0); }
 if (!TEST && THEME.on) themePlay();
-$('#title').addEventListener('click', () => { audioInit(); themePlay(); });
+$('#title').addEventListener('click', () => { audioInit(); if (!$('#title').classList.contains('hide')) themePlay(); });
 // 保險：標題畫面上任何一次放開手指／點擊，音樂沒在播就補播（也順便解鎖音效）
 const themeRetry = () => { audioInit(); if (THEME.on && !$('#title').classList.contains('hide') && $('#gate').classList.contains('hide') && (!THEME.el || THEME.el.paused)) themePlay(); };
 addEventListener('touchend', themeRetry, { passive: true }); addEventListener('pointerup', themeRetry);
