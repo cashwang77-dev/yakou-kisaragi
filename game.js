@@ -336,6 +336,8 @@ const KEY = isTouch ? { flash: '按「燈」', act: '按「調查」', can: '點
 const A = { ctx: null };
 function audioInit() {
   if (A.ctx) { if (A.ctx.state === 'suspended') A.ctx.resume(); return; }
+  // iPhone 靜音開關打開時 Web Audio 預設會被靜音（主題曲也走 Web Audio）→ 宣告成「播放」類，靜音模式也有聲音
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { }
   try { A.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
   const c = A.ctx; A.master = c.createGain(); A.master.gain.value = .85; A.master.connect(c.destination);
   const len = c.sampleRate * 2, b = c.createBuffer(1, len, c.sampleRate), d = b.getChannelData(0);
@@ -398,7 +400,11 @@ function themePlay(restart) {
   if (!THEME.el) {
     const e = THEME.el = new Audio('assets/theme.mp3'); e.loop = true; e.preload = 'auto';
     // 走 Web Audio 才能淡出（iPhone 不支援改 audio.volume）
-    try { THEME.g = A.ctx.createGain(); THEME.g.gain.value = 0; A.ctx.createMediaElementSource(e).connect(THEME.g).connect(A.master); } catch (er) { THEME.g = null; }
+    // 前奏只有很輕的八音盒（峰值 0.37，全曲峰值 1.0）：boost 在前 15 秒放大，之後回到 1
+    try {
+      THEME.g = A.ctx.createGain(); THEME.g.gain.value = 0; THEME.boost = A.ctx.createGain(); THEME.boost.gain.value = 2.2;
+      A.ctx.createMediaElementSource(e).connect(THEME.boost).connect(THEME.g).connect(A.master);
+    } catch (er) { THEME.g = null; }
   }
   clearTimeout(THEME.t);
   if (restart) THEME.el.currentTime = 0;
@@ -416,6 +422,7 @@ function themeStop(sec = 4) {
 }
 // 標題／結局畫面顯示目前唱到的歌詞
 setInterval(() => {
+  if (THEME.boost && THEME.el && !THEME.el.paused) THEME.boost.gain.setTargetAtTime(THEME.el.currentTime < 15 ? 2.2 : 1, A.ctx.currentTime, .6);
   const box = $('#lyric'); if (!box) return;
   const e = THEME.el, scr = !$('#title').classList.contains('hide') ? $('#title') : !$('#end').classList.contains('hide') ? $('#end') : null;
   let line = '';
@@ -895,7 +902,7 @@ async function intro() {
   setTimeout(() => $('#hint').innerHTML = '', 16000);
 }
 function startPlay() {
-  themeStop(4);
+  themeStop(8);
   G.mode = 'play'; $('#hud').classList.remove('hide'); $('#touch').classList.toggle('hide', !isTouch); $('#title').classList.add('hide'); updateHUD();
 }
 const TRIG = [
