@@ -57,6 +57,7 @@ function buildCh2b() {
   item('organ_heart', 10, 7, '心臟模型'); item('organ_lung', 23, 8, '肺臟模型'); item('organ_stomach', 30, 23, '胃的模型');
   item('can', 12, 11, '空罐'); item('can', 33, 11, '空罐');
   item('bandage', 15, 11, '繃帶'); item('drink', 4, 15, '能量飲料'); item('charm', 32, 12, '護身符');   // 加在最後：舊存檔的道具順序不變
+  item('shinai', 10, 11, '竹刀'); item('eraser', 3, 6, '板擦');
 }
 
 /* ---------- 開場（從第二章（上）接過來） ---------- */

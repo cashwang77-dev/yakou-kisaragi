@@ -49,6 +49,7 @@ function buildCh4() {
   LIGHTS.push({ x: 31.5, y: 4.5, r: 3.6, c: '255,230,180' }, { x: 21.5, y: 4.5, r: 2.2, c: '200,210,230' }, { x: 33.5, y: 17.5, r: 1.8, c: '255,60,60', id: 'tunnelLamp' });
   item('can', 10, 10, '空罐'); item('can', 15, 17, '空罐');
   item('bandage', 23, 4, '繃帶'); item('charm', 10, 17, '護身符'); item('drink', 4, 9, '能量飲料');
+  item('ext', 19, 4, '滅火器'); item('eraser', 31, 7, '板擦');
   ch4Reset();
 }
 // 軌道、月台黃線、碎石：畫在地板層

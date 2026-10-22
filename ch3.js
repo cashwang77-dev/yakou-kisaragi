@@ -52,6 +52,7 @@ function buildCh3() {
   LIGHTS.push({ x: HK_SEAT[0], y: HK_SEAT[1] - 1, r: 2.8, c: '255,190,110', id: 'bulb' }, { x: 0, y: 0, r: 0, c: '230,240,255', id: 'mflash' });
   item('can', 11, 21, '空罐'); item('can', 30, 17, '空罐'); item('can', 24, 27, '空罐');
   item('bandage', 21, 21, '繃帶'); item('charm', 17, 21, '護身符'); item('drink', 18, 27, '能量飲料');   // 加在最後：舊存檔的道具順序不變
+  item('ext', 30, 21, '滅火器'); item('shinai', 5, 13, '竹刀');
 }
 
 /* ---------- 開場（第二章結束後接過來） ---------- */
