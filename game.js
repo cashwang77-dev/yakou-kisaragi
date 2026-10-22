@@ -1344,12 +1344,9 @@ addEventListener('resize', () => setTimeout(gateFit, 50));
 })();
 // 手機觸控的 pointerdown 不算「使用者操作」（要手指放開才算），在 pointerdown 裡 play() 會被擋 → 一律用 click
 $('#gate').addEventListener('click', gateOpen);
-if (Q.get('gate')) { $('#gate').classList.remove('hide'); setTimeout(gateFit, 0); }   // 預覽入口畫面
-else if (!TEST && THEME.on) {
-  const showGate = () => { if (THEME.el.paused && !$('#title').classList.contains('hide')) { $('#gate').classList.remove('hide'); gateFit(); } };
-  themePlay().then(ok => { if (!ok) showGate(); });
-  setTimeout(showGate, 1500);   // 有些手機擋自動播放時 play() 不回應也不報錯
-}
+// 每次打開都先顯示入口畫面（測試模式除外）；瀏覽器允許的話主題曲先在入口畫面後面響起，點擊進入時一定會播
+if (!TEST || Q.get('gate')) { $('#gate').classList.remove('hide'); setTimeout(gateFit, 0); }
+if (!TEST && THEME.on) themePlay();
 $('#title').addEventListener('click', () => { audioInit(); themePlay(); });
 // 保險：標題畫面上任何一次放開手指／點擊，音樂沒在播就補播（也順便解鎖音效）
 const themeRetry = () => { audioInit(); if (THEME.on && !$('#title').classList.contains('hide') && $('#gate').classList.contains('hide') && (!THEME.el || THEME.el.paused)) themePlay(); };
