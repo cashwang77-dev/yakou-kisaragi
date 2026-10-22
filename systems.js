@@ -8,6 +8,7 @@ function threats() {
   if (G.scene === 3 && typeof AM === 'object' && !['off', 'frozen', 'toStand'].includes(AM.state)) t.push({ e: AM, chase: AM.state === 'chase', stun: s => { AM.stunT = G.t + s; } });
   if (G.scene === 4 && typeof HK === 'object' && !['off', 'seat'].includes(HK.state)) t.push({ e: HK, chase: HK.state === 'chase', stun: s => { HK.stunT = G.t + s; } });
   if (G.scene === 5 && typeof TK === 'object' && TK.state !== 'gone') t.push({ e: TK, chase: TK.state === 'chase', stun: s => { TK.stunT = G.t + s; } });
+  if (G.scene === 6 && typeof BABA === 'object' && BABA.state !== 'off' && BABA.state !== 'idle') t.push({ e: BABA, chase: BABA.state === 'charge', stun: s => { BABA.stunT = G.t + s; BABA.state = 'return'; } });
   if (G.scene === 5 && typeof PAX === 'object') for (const p of PAX) if (p.state === 'follow') t.push({ e: p, chase: true, stun: s => { p.stunT = G.t + s; } });
   return t;
 }
@@ -34,6 +35,7 @@ function weaponBlock(e, stun) {
 if (typeof amHit === 'function') { const _f = amHit; amHit = async function () { if (weaponBlock(AM, s => { AM.stunT = G.t + s; })) return; return _f(); }; }
 if (typeof hkDrag === 'function') { const _f = hkDrag; hkDrag = async function () { if (weaponBlock(HK, s => { HK.stunT = G.t + s; HK.state = 'patrol'; HK.path = null; })) return; return _f(); }; }
 if (typeof tkCatch === 'function') { const _f = tkCatch; tkCatch = async function () { if (weaponBlock(TK, s => { TK.stunT = G.t + s; TK.state = 'track'; })) return; return _f(); }; }
+if (typeof babaHit === 'function') { const _f = babaHit; babaHit = async function () { if (weaponBlock(BABA, s => { BABA.stunT = G.t + s; BABA.state = 'return'; })) return; return _f(); }; }
 if (typeof paxCatch === 'function') { const _f = paxCatch; paxCatch = async function (p) { if (weaponBlock(p, s => { p.stunT = G.t + s; p.state = 'back'; })) return; return _f(p); }; }
 
 /* ---------- 板擦：落地／打中的地方 1.6 格內的鬼看不見 4 秒 ---------- */
@@ -69,8 +71,8 @@ function fearUpdate(dt) {
   const calm = P.hidden || (GH.active && GH.mode === 'script');   // 躲著（摀住嘴）或腳本演出中：不會尖叫
   G.fear = FEAR.lock != null ? FEAR.lock : clamp(f0 + df * dt, 0, calm ? 95 : 100);   // lock：截圖用
   // 腿軟：恐懼值滿了 → 尖叫（引鬼過來）、2 秒動不了
-  if (G.fear >= 100 && G.t > FEAR.panicT) {
-    FEAR.panicT = G.t + 12; G.fear = 72; P.stun = G.t + 1.8; setPose('hurt', 1.8);
+  if (G.fear >= 100 && G.t > FEAR.panicT && !(nt && nt.chase && d < 6)) {   // 正在被追的時候不腿軟（不然一定被抓）
+    FEAR.panicT = G.t + 12; G.fear = 72; P.stun = G.t + 1; setPose('hurt', 1);
     addNoise(P.x, P.y, 7); tone(620, .6, 'sawtooth', .05, 300); toast('受不了了——忍不住叫出聲來！');
   }
   G.fearSlow = (P.stun || 0) > G.t ? 0 : G.fear > 75 ? .82 : 1;
@@ -163,7 +165,7 @@ loadCP = function (cp) { G.fear = 0; G.smoke = null; G.puffs = []; FEAR.breath =
 // ?test=items：每個場景的每個道具都放在走得到的格子上（不是牆、不是家具）
 async function testItems() {
   const bad = [];
-  for (const n of [1, 2, 3, 4, 5]) {
+  for (const n of [1, 2, 3, 4, 5, 6]) {
     loadScene(n);
     for (const it of ITEMS) { if (it.id === 'phone') continue;   // 手機本來就放在課桌抽屜裡
       const x = Math.floor(it.x), y = Math.floor(it.y); if (solidTile(x, y) || OBJAT[x + ',' + y]) bad.push(`${n}:${it.id}@${x},${y}`); }
@@ -232,6 +234,11 @@ const LORE = [
   ['tv', '電視裡的女人', '電視一台台亮起，她會慢慢爬出來。', '在她爬出來之前拔掉插頭。', () => (G.flags.tvOff || 0) > 0],
   ['broadcast', '4:44 的放學廣播', '2004 年的廣播，點名還留在校內的學生。', '最後叫到的名字，是妳。', () => G.flags.broadcast],
   ['hikiko', '妃姬子', '拖著麻袋在舊校舍巡行的女生。', '她怕鏡子——讓她看見自己。', () => G.triggers.oldIn],
+  ['conv', '不打烊的便利商店', '鐵捲門的商店街上，只有這間一直開著。', '收銀機吐出的收據：4:44，「定期票　一張」。', () => G.flags.receipt],
+  ['jinmen', '人面犬', '巷子裡長著中年男人臉的狗。', '牠說的話一半是真的、一半是謊話。理牠太多次會被跟著。', () => G.scene === 6 && dist(DOG.x, DOG.y, P.x, P.y) < 4],
+  ['babaa', '高速婆婆', '從背後用驚人的速度追上來的老婆婆。', '躲進公車亭或水溝，她會跑過頭，再慢慢走回來。', () => G.scene === 6 && BABA.state === 'charge'],
+  ['kune', '扭來扭去', '田裡白色的、一直扭動的東西。', '不要用燈照著它看。', () => G.flags.kuneSeen],
+  ['hachi', '八尺大人', '從圍牆上探頭、戴白色大帽子的女人。「ぽぽぽ」。', '她會學家人的聲音叫妳——不要回應。鹽可以逼退她。', () => G.flags.hachi0],
   ['plist', '末班車乘客名單', '候車室的名單，列著歷年放學後返校的學生。', '最後一行是妳的名字，墨水還沒乾。', () => G.flags.plistSeen],
   ['sumika', '澄香', '在如月車站等了二十年的女生。', '她在等的人，叫妃姬子。', () => G.flags.metSumi],
   ['passenger', '黑影乘客', '月台上排隊等車的黑色人影。', '不要用燈照他們，也不要在他們旁邊跑。', () => G.triggers.p1In],

@@ -194,7 +194,7 @@ async function ch3Final() {
   F.trueEnd = b === 0;
   if (F.trueEnd) {
     await says([[name, '「……是嗎。」'], '她第一次抬起頭。頭髮後面，是一張很普通的、哭紅了眼睛的臉。', [name, '「那我們一起去。」'], [name, '「4:44 的末班車……要來了。」'],
-      '遠遠地，傳來電車進站的聲音。', '——在這間學校的地底下。']);
+      '遠遠地，傳來電車進站的聲音。', '——從校門外，那條沒有盡頭的路的另一邊。']);
   } else {
     await says([[name, '「……是嗎。」'], '她慢慢低下頭，頭髮遮住了臉。', [name, '「那我，就再等一下。」'], '燈泡熄了。等眼睛習慣黑暗的時候，她已經不見了。', '……只剩下麻袋，和遠方隱約的電車聲。']);
   }
@@ -305,6 +305,6 @@ async function testCh3() {
     TEST_CHOICE = o => Math.max(0, o.findIndex(t => /舉起鏡子|她還在等/.test(t)));
     tp(32.5, 25); await wait(50); tp(32.5, 26.2); await wait(80);
     let t0 = performance.now(); while (G.mode === 'play' && G.scene === 4 && performance.now() - t0 < 20000) await wait(100);
-    document.title = ((G.mode === 'end' || G.scene === 5) && G.inv.pages.length === 7 && G.flags.trueEnd ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());
+    document.title = ((G.mode === 'end' || G.scene >= 5) && G.inv.pages.length === 7 && G.flags.trueEnd ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());
   } catch (e) { document.title = 'ERR ' + e + ' ' + JSON.stringify(stateSummary()); }
 }

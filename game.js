@@ -1420,9 +1420,9 @@ async function startFrom(ch) {
   G.inv.flashlight = true; G.inv.phone = true;   // 第一章結束時身上一定有的東西
   if (ch === 3) G.inv.pages = [1, 2];             // 第二章（上）拿到的兩頁日記
   if (ch === 4) { G.inv.pages = [1, 2, 3, 4, 5, 6]; G.inv.mirror = true; }   // 第二章結束：六頁日記＋鏡子碎片
-  if (ch === 5) { G.inv.pages = [1, 2, 3, 4, 5, 6, 7]; G.inv.mirror = true; try { G.flags.trueEnd = localStorage.getItem('yakou_kisaragi_true') === '1'; } catch (e) { } }   // 第三章結束：七頁＋當時的回答
+  if (ch >= 5) { G.inv.pages = [1, 2, 3, 4, 5, 6, 7]; G.inv.mirror = true; try { G.flags.trueEnd = localStorage.getItem('yakou_kisaragi_true') === '1'; } catch (e) { } }   // 第三章結束：七頁＋當時的回答
   startPlay();
-  if (ch === 2) await startCh2(); else if (ch === 3) await startCh2b(); else if (ch === 4) await startCh3(); else await startCh4();
+  if (ch === 2) await startCh2(); else if (ch === 3) await startCh2b(); else if (ch === 4) await startCh3(); else if (ch === 5) await startRoad(); else await startCh4();
 }
 $('#bChap').onclick = () => { refreshChapBtn(); $('#chapSel').classList.remove('hide'); };
 $('#bChapBack').onclick = () => $('#chapSel').classList.add('hide');
@@ -1514,6 +1514,7 @@ async function runTest(kind) {
     if (kind === 'ch2b') return testCh2b();
     if (kind === 'ch3') return testCh3();
     if (kind === 'ch4') return testCh4();
+    if (kind === 'ch5') return testCh5();
     if (kind === 'items') return testItems();
     if (kind === 'fear') return testFear();
     if (kind === 'chap') {   // 章節選擇：直接從第二章（上）、（下）開始

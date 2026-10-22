@@ -71,8 +71,8 @@ function sceneFloor(g) {
 
 /* ---------- 開場（第三章結束後，從地下書庫再往下走） ---------- */
 async function startCh4() {
-  markReach(5);
-  await card('card_station', ['書庫最裡面，還有一道往下的樓梯。', '樓梯的盡頭，是一個不該出現在學校底下的地方。', '月台的站牌上寫著——「きさらぎ」。']);
+  markReach(6);
+  await card('card_station', G.flags.ending4 ? ['車站裡沒有站務員。', '候車室的燈，是這條路上唯一亮著的燈。', '時刻表上，所有的班次都是 4:44。'] : ['書庫最裡面，還有一道往下的樓梯。', '樓梯的盡頭，是一個不該出現在學校底下的地方。', '月台的站牌上寫著——「きさらぎ」。']);
   loadScene(5);
   Object.assign(P, { x: 35.5, y: 7.4, dir: 1, hidden: null, crouch: false, pose: null });
   GH.active = false; ch4Reset();
