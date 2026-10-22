@@ -1200,13 +1200,15 @@ function ghSpr() {
   if (t < .56 && IMG.kuchisake_atk) return [IMG.kuchisake_atk, GH.x, GH.y, GH.dir, Math.floor(t / .14)];
   return [GH.state === 'chase' && IMG.kuchisake_chase || IMG.kuchisake, GH.x, GH.y, GH.dir, GH.moving ? GH.frame : 0];
 }
+// 咪醬是高中女生，圖原本跟大人鬼一樣高（56px）→ 畫小一點
+const MI_SC = .84;
 // 咪醬：動作姿勢 ＞ 蹲 ＞ 拿手電筒站著 ＞ 一般走跑
 function drawMi() {
   const k = P.pose && NOW() < P.pose.until ? P.pose.k : null, img = k && IMG['mi_' + k];
-  if (img) return drawSprite(img, P.x, P.y, P.dir, { frame: k === 'hurt' ? Math.floor(NOW() * 6) : k === 'throw' ? +(NOW() - P.pose.t0 > .12) : 0, noShadow: k === 'down' });
-  if (P.crouch && IMG.mi_crouch) return drawSprite(IMG.mi_crouch, P.x, P.y, P.dir, P.moving ? P.frame % 4 : 0);
-  if (P.light && !P.moving && IMG.mi_light) return drawSprite(IMG.mi_light, P.x, P.y, P.dir);
-  drawSprite(IMG.mi, P.x, P.y, P.dir, { frame: P.moving ? (P.run ? 4 : 0) + P.frame : 0 });
+  if (img) return drawSprite(img, P.x, P.y, P.dir, { sc: MI_SC, frame: k === 'hurt' ? Math.floor(NOW() * 6) : k === 'throw' ? +(NOW() - P.pose.t0 > .12) : 0, noShadow: k === 'down' });
+  if (P.crouch && IMG.mi_crouch) return drawSprite(IMG.mi_crouch, P.x, P.y, P.dir, P.moving ? P.frame % 4 : 0, { sc: MI_SC });
+  if (P.light && !P.moving && IMG.mi_light) return drawSprite(IMG.mi_light, P.x, P.y, P.dir, { sc: MI_SC });
+  drawSprite(IMG.mi, P.x, P.y, P.dir, { sc: MI_SC, frame: P.moving ? (P.run ? 4 : 0) + P.frame : 0 });
 }
 function drawSprite(img, x, y, dir, frame, opt) {
   if (typeof frame === 'object') { opt = frame; frame = undefined; }   // drawSprite(img,x,y,dir,opt) 或 (img,x,y,dir,frame,opt)
@@ -1217,12 +1219,12 @@ function drawSprite(img, x, y, dir, frame, opt) {
   const bob = opt.bob || 0;
   ctx.globalAlpha = opt.alpha ?? 1;
   if (!opt.noShadow) { ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.ellipse(sx, sy, 9, 4, 0, 0, 7); ctx.fill(); }
-  const h = opt.crouch ? fh * .78 : fh;
+  const sc = opt.sc || 1, h = (opt.crouch ? fh * .78 : fh) * sc, w = fw * sc;
   if (opt.tint) {
     const t = drawSprite.tc || (drawSprite.tc = document.createElement('canvas')); t.width = fw; t.height = fh;
     const g = t.getContext('2d'); g.clearRect(0, 0, fw, fh); g.drawImage(img, dir * fw, fy, fw, fh, 0, 0, fw, fh); g.globalCompositeOperation = 'source-atop'; g.fillStyle = opt.tint; g.fillRect(0, 0, fw, fh); g.globalCompositeOperation = 'source-over';
-    ctx.drawImage(t, 0, 0, fw, fh, Math.round(sx - fw / 2), Math.round(sy - h + 1 - bob), fw, h);
-  } else ctx.drawImage(img, dir * fw, fy, fw, fh, Math.round(sx - fw / 2 + (opt.jit || 0)), Math.round(sy - h + 1 - bob), fw, h);
+    ctx.drawImage(t, 0, 0, fw, fh, Math.round(sx - w / 2), Math.round(sy - h + 1 - bob), w, h);
+  } else ctx.drawImage(img, dir * fw, fy, fw, fh, Math.round(sx - w / 2 + (opt.jit || 0)), Math.round(sy - h + 1 - bob), w, h);
   ctx.globalAlpha = 1;
 }
 const DARK = .6;
@@ -1258,7 +1260,7 @@ function render() {
   for (const it of ITEMS) if (!it.taken) list.push({ d: it.x + it.y - .3, f: () => { const [sx, sy] = iso(it.x, it.y); const on = Math.sin(G.t * 4 + it.x) > .3; ctx.fillStyle = on ? 'rgba(255,240,200,.9)' : 'rgba(255,240,200,.35)'; ctx.fillRect(sx - 1, sy - (it.id === 'phone' ? 13 : 3), 2, 2); if (on) { ctx.fillRect(sx - 3, sy - (it.id === 'phone' ? 12 : 2), 6, 0.6); } } });
   for (const p of G.projs) list.push({ d: p.x + p.y, f: () => { const [sx, sy] = iso(p.x, p.y); ctx.fillStyle = p.kind === 'can' ? '#9aa' : '#d99a2b'; ctx.fillRect(sx - 2, sy - 10 - Math.sin((.5 - p.life) / .5 * Math.PI) * 12, 4, 3); } });
   if (!P.hidden) list.push({ d: pd, f: drawMi });
-  if (G.shadow) { const s = G.shadow; list.push({ d: s.x + s.y, f: () => drawSprite(IMG.mi, s.x, s.y, s.dir, { tint: 'rgba(0,0,0,1)', alpha: .85 * (s.a ?? 1), noShadow: true }) }); }
+  if (G.shadow) { const s = G.shadow; list.push({ d: s.x + s.y, f: () => drawSprite(IMG.mi, s.x, s.y, s.dir, { sc: MI_SC, tint: 'rgba(0,0,0,1)', alpha: .85 * (s.a ?? 1), noShadow: true }) }); }
   if (GH.active) list.push({ d: GH.x + GH.y, f: () => drawSprite(...ghSpr(), { bob: GH.moving && GH.frame % 2 ? -1 : 0, jit: GH.state === 'chase' ? (Math.random() - .5) * 2 : 0 }) });
   if (G.scene !== 1 && typeof sceneSprites === 'function') sceneSprites(list);
   list.sort((a, b) => a.d - b.d);
