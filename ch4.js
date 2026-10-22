@@ -48,6 +48,7 @@ function buildCh4() {
   for (const x of [6.5, 12.5, 18.5]) LIGHTS.push({ x, y: 18.2, r: 2.4, c: '200,215,235' });
   LIGHTS.push({ x: 31.5, y: 4.5, r: 3.6, c: '255,230,180' }, { x: 21.5, y: 4.5, r: 2.2, c: '200,210,230' }, { x: 33.5, y: 17.5, r: 1.8, c: '255,60,60', id: 'tunnelLamp' });
   item('can', 10, 10, '空罐'); item('can', 15, 17, '空罐');
+  item('bandage', 23, 4, '繃帶'); item('charm', 10, 17, '護身符'); item('drink', 4, 9, '能量飲料');
   ch4Reset();
 }
 // 軌道、月台黃線、碎石：畫在地板層
@@ -162,7 +163,7 @@ async function sumikaTalk() {
 
 /* ---------- 黑影乘客：不要用手電筒照、不要跑 ---------- */
 function paxProvoked(p) {
-  const d = dist(p.x, p.y, P.x, P.y); if (P.hidden) return false;
+  const d = dist(p.x, p.y, P.x, P.y); if (P.hidden || pInvis()) return false;
   if (P.run && P.moving && d < 3.6) return '跑';
   if (P.light && d < 5.5) { const [fx, fy] = DIRV[P.dir]; if ((fx * (p.x - P.x) + fy * (p.y - P.y)) / d > .82) return '照'; }
   return false;
@@ -178,7 +179,7 @@ function paxUpdate(dt) {
     }
     if (p.state === 'follow') {
       p.timer -= dt;
-      if (P.hidden || p.timer <= 0) { p.state = 'back'; p.path = null; continue; }
+      if (P.hidden || pInvis() || p.timer <= 0) { p.state = 'back'; p.path = null; continue; }
       walker(p, P.x, P.y, .95, dt);
       if (dist(p.x, p.y, P.x, P.y) < .6 && P.inv <= 0 && !G.lock) paxCatch(p);
     } else if (p.state === 'back') { if (walker(p, p.hx, p.hy, .9, dt)) p.state = 'wait'; }
@@ -194,7 +195,7 @@ async function paxCatch(p) {
 
 /* ---------- Teke Teke：在軌道上爬，看到人就爬上月台追過來 ---------- */
 function tkSees() {
-  if (P.hidden || G.mode !== 'play') return false;
+  if (P.hidden || G.mode !== 'play' || pInvis()) return false;
   const d = dist(TK.x, TK.y, P.x, P.y); let range = P.crouch ? 3.5 : 6; if (P.light) range += 2;
   return (onP2(P.x, P.y) || (P.y > 11 && P.x > 21 && P.x < 25)) && d < range;
 }
@@ -208,7 +209,7 @@ function tkUpdate(dt) {
     tkMove(TK.x + TK.vx, TRACK2, 2.1, dt);
     if (tkSees()) { TK.state = 'chase'; sfx.sting(); shake = 5; toast('テケ、テケ、テケ——！'); }
   } else if (TK.state === 'chase') {
-    if (P.hidden && !TK.sawHide) { TK.timer = (TK.timer || 0) + dt; if (TK.timer > 1.6) { TK.state = 'track'; TK.timer = 0; } tkMove(TK.x, TRACK2, 1.5, dt); }
+    if ((P.hidden && !TK.sawHide) || pInvis()) { TK.timer = (TK.timer || 0) + dt; if (TK.timer > 1.6) { TK.state = 'track'; TK.timer = 0; } tkMove(TK.x, TRACK2, 1.5, dt); }
     else { TK.timer = 0; tkMove(P.x, P.y, 3.5, dt); if (!onP2(P.x, P.y) && !(P.x > 21 && P.x < 25 && P.y > 11) && d > 4) TK.state = 'track'; }
     if (P.inv <= 0 && !G.lock && ((d < .6 && !P.hidden) || (P.hidden && TK.sawHide && d < 1.3))) tkCatch();
   }

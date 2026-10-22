@@ -51,6 +51,7 @@ function buildCh3() {
   LIGHTS.push({ x: 19.5, y: 27, r: 2.4, c: '150,170,220' }, { x: 20.5, y: 13, r: 2.2, c: '255,200,120' }, { x: 2.6, y: 21.4, r: 1.6, c: '90,255,140' });
   LIGHTS.push({ x: HK_SEAT[0], y: HK_SEAT[1] - 1, r: 2.8, c: '255,190,110', id: 'bulb' }, { x: 0, y: 0, r: 0, c: '230,240,255', id: 'mflash' });
   item('can', 11, 21, '空罐'); item('can', 30, 17, '空罐'); item('can', 24, 27, '空罐');
+  item('bandage', 21, 21, '繃帶'); item('charm', 17, 21, '護身符'); item('drink', 18, 27, '能量飲料');   // 加在最後：舊存檔的道具順序不變
 }
 
 /* ---------- 開場（第二章結束後接過來） ---------- */
@@ -87,10 +88,9 @@ async function ch3Action(o) {
       if (I.archkey) { await says(['失物招領箱。生鏽的鑰匙已經拿走了。']); return; }
       I.archkey = true; sfx.pick(); updateHUD(); toast('得到【地下書庫的鑰匙】');
       await says(['失物招領箱。褪色的髮夾、一隻手套、寫著名字的直笛……', F.dutylog ? '箱底壓著一把生鏽的鑰匙，名條寫著「地下書庫」。' : '箱底壓著一把生鏽的鑰匙，名條寫著「地下書庫」。……為什麼會在這裡？']);
-      saveCP('archkey');
+      setObj('打開走廊盡頭的地下書庫'); saveCP('archkey');   // 先改目標再存檔
       await wait(TEST ? 10 : 700);
-      await phoneCall(['我是瑪莉。', '我現在……在地下書庫的門口。', '她在下面等你哦。']);
-      setObj('打開走廊盡頭的地下書庫'); return;
+      await phoneCall(['我是瑪莉。', '我現在……在地下書庫的門口。', '她在下面等你哦。']); return;
     case 'photo': await says(['牆上掛著一張合照。「2004 年度　二年B班」。', '照片裡有兩個女生的臉，被人用指甲刮掉了。', '……刮痕旁邊，有人用紅筆圈起第三個人。', '那是——我。']); sfx.sting(); shake = 5; return;
   }
   return false;
@@ -108,7 +108,7 @@ useDoor = async function (dr) {
 
 /* ---------- 妃姬子 ---------- */
 function hkSees() {
-  if (P.hidden || G.mode !== 'play') return false;
+  if (P.hidden || G.mode !== 'play' || pInvis()) return false;
   const d = dist(HK.x, HK.y, P.x, P.y);
   let range = 5 + (P.light ? 2.5 : 0); if (P.crouch) range *= .6;
   if (d > range) return false;

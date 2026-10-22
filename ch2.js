@@ -67,6 +67,7 @@ function buildCh2() {
   item('lid', 16, 24, '垃圾桶蓋');
   item('broom', 26, 7, '掃把');
   item('can', 21, 11, '空罐'); item('can', 33, 12, '空罐'); item('can', 4, 15, '空罐');
+  item('drink', 22, 11, '能量飲料'); item('charm', 5, 24, '護身符');   // 加在最後：舊存檔的道具順序不變
 }
 
 /* ---------- 開場 ---------- */
@@ -174,9 +175,8 @@ async function staffPhone() {
   await says([[V, '……全對。好久沒有人答對了。'], [V, '抽屜裡的東西，給你。'], [V, '那孩子……也是這樣一題一題答完，才去了圖書室的。'], '（嘟——）']);
   sfx.pick(); toast('得到【鑰匙串】');
   await getPage(2);
-  saveCP('quiz');
+  setObj(G.flags.slip ? '用鑰匙打開圖書室' : '用鑰匙打開圖書室（先去中庭看看台座？）'); saveCP('quiz');   // 先改目標再存檔
   await phoneCall(['我是瑪莉。', '我現在……在圖書室門口。', '裡面有人在看書。要安靜哦。']);
-  setObj(G.flags.slip ? '用鑰匙打開圖書室' : '用鑰匙打開圖書室（先去中庭看看台座？）');
 }
 
 /* ---------- 門（鑰匙串） ---------- */
@@ -231,7 +231,7 @@ function nmWalk(tx, ty, speed, dt) {
   return false;
 }
 function nmNotice() {   // 回傳：注意到玩家的位置，或 null
-  if (!inRoom('lib', P.x, P.y) || P.hidden) return null;
+  if (!inRoom('lib', P.x, P.y) || P.hidden || pInvis()) return null;
   const d = dist(NM.x, NM.y, P.x, P.y);
   if (P.light && d < 6.5) {   // 被手電筒照到
     const [fx, fy] = DIRV[P.dir], vx = (NM.x - P.x) / d, vy = (NM.y - P.y) / d;
@@ -332,7 +332,7 @@ function sceneOnLoad(cp) {
 
 /* ---------- 玄關的平面圖：斜角投影跟遊戲畫面同方向，紅點是現在位置 ---------- */
 const MAP2_LABEL = { staff: '教職員室', nurse: '保健室', c2b: '2年B組', hall: '走廊', genkan: '玄關', court: '中庭', stairs: '樓梯', lib: '圖書室' };
-function showFloorMap() {
+function showFloorMap(R = ROOM2, L = MAP2_LABEL, title = '校舍一樓　平面圖', mark = 'nurse', markTx = '在這裡哦', note = '※ 二樓以上請由中央樓梯') {
   return new Promise(res => {
     G.lock++; sfx.click();
     const ov = document.createElement('div');
@@ -346,24 +346,25 @@ function showFloorMap() {
     g.fillStyle = '#d9d0b8'; g.fillRect(W * .02, H * .035, W * .96, H * .93);
     g.fillStyle = 'rgba(120,95,60,.1)'; for (let i = 0; i < 30; i++) { g.beginPath(); g.arc((i * 137) % W, (i * 89) % H, 8 + (i * 7) % 30, 0, 7); g.fill(); }
     // 斜角投影（跟遊戲同方向）
-    const pr = (x, y) => [x - y, (x + y) / 2], rs = Object.values(ROOM2);
+    const pr = (x, y) => [x - y, (x + y) / 2], rs = Object.values(R);
     let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
     for (const [a, b, c, d] of rs) for (const [x, y] of [[a, b], [c + 1, b], [c + 1, d + 2], [a, d + 2]]) { const [u, v] = pr(x, y); x0 = Math.min(x0, u); x1 = Math.max(x1, u); y0 = Math.min(y0, v); y1 = Math.max(y1, v); }
     const k = Math.min(W * .86 / (x1 - x0), H * .74 / (y1 - y0)), ox = W / 2 - (x0 + x1) / 2 * k, oy = H * .17 - y0 * k;
     const P2 = (x, y) => { const [u, v] = pr(x, y); return [ox + u * k, oy + v * k]; };
     const quad = (a, b, c, d, fill, line) => { g.beginPath(); [[a, b], [c, b], [c, d], [a, d]].forEach(([x, y], i) => { const [sx, sy] = P2(x, y); i ? g.lineTo(sx, sy) : g.moveTo(sx, sy); }); g.closePath(); g.fillStyle = fill; g.fill(); if (line) { g.strokeStyle = line; g.lineWidth = 2; g.stroke(); } };
-    for (const [r, [a, b, c, d]] of Object.entries(ROOM2)) quad(a, b, c + 1, d + 1, r === 'hall' || r === 'genkan' ? '#ece5d0' : r === 'court' ? '#c9d0b0' : '#f3eedf', '#4a3f33');
+    for (const [r, [a, b, c, d]] of Object.entries(R)) quad(a, b, c + 1, d + 1, r === 'hall' || r === 'genkan' || r === 'landing' ? '#ece5d0' : r === 'court' ? '#c9d0b0' : '#f3eedf', '#4a3f33');
     for (const dr of Object.values(DOORS)) quad(dr.x + .1, dr.y + .1, dr.x + .9, dr.y + .9, dr.chain ? '#7a2a2a' : '#f3eedf', null);
     g.textAlign = 'center'; g.textBaseline = 'middle';
     const fs = Math.max(13, Math.min(W / 48, H / 26));
-    for (const [r, [a, b, c, d]] of Object.entries(ROOM2)) { const [sx, sy] = P2((a + c + 1) / 2, (b + d + 1) / 2); g.fillStyle = '#2a241d'; g.font = `600 ${fs}px "Noto Serif TC",serif`; g.fillText(MAP2_LABEL[r], sx, sy); }
+    for (const [r, [a, b, c, d]] of Object.entries(R)) { const here = P.x >= a && P.x < c + 1 && P.y >= b && P.y < d + 1, [sx, sy0] = P2((a + c + 1) / 2, (b + d + 1) / 2), sy = sy0 + (here ? fs * 1.3 : 0); g.fillStyle = '#2a241d';   // 現在所在的房間：名稱往下挪，讓出紅點的位置
+      g.font = `600 ${fs}px "Noto Serif TC",serif`; g.fillText(L[r], sx, sy); }
     // 不知道是誰用紅筆圈起來的保健室
-    { const [a, b, c, d] = ROOM2.nurse, [sx, sy] = P2((a + c + 1) / 2, (b + d + 1) / 2); g.strokeStyle = 'rgba(180,20,20,.85)'; g.lineWidth = 2.5; g.beginPath(); g.ellipse(sx, sy, fs * 3.4, fs * 1.5, -.12, .3, 6.5); g.stroke(); g.fillStyle = 'rgba(170,20,20,.9)'; g.font = `${fs * .9}px "Noto Serif TC",serif`; g.fillText('在這裡哦', sx + fs * 3.6, sy - fs * 1.8); }
+    if (mark) { const [a, b, c, d] = R[mark], [sx, sy] = P2((a + c + 1) / 2, (b + d + 1) / 2); g.strokeStyle = 'rgba(180,20,20,.85)'; g.lineWidth = 2.5; g.beginPath(); g.ellipse(sx, sy, fs * 3.4, fs * 1.5, -.12, .3, 6.5); g.stroke(); g.fillStyle = 'rgba(170,20,20,.9)'; g.font = `${fs * .9}px "Noto Serif TC",serif`; g.fillText(markTx, sx + fs * 3.6, sy - fs * 1.8); }
     // 標題、現在地、方位
-    g.fillStyle = '#2a241d'; g.font = `900 ${fs * 1.5}px "Noto Serif TC",serif`; g.textAlign = 'left'; g.fillText('校舍一樓　平面圖', W * .05, H * .1);
+    g.fillStyle = '#2a241d'; g.font = `900 ${fs * 1.5}px "Noto Serif TC",serif`; g.textAlign = 'left'; g.fillText(title, W * .05, H * .1);
     const [px, py] = P2(P.x, P.y); g.fillStyle = '#c81e1e'; g.beginPath(); g.arc(px, py, fs * .45, 0, 7); g.fill();
-    g.font = `700 ${fs}px "Noto Serif TC",serif`; g.textAlign = 'right'; g.fillText('現在地 ●', px - fs * .7, py);
-    g.fillStyle = '#5a5045'; g.font = `${fs * .8}px "Noto Serif TC",serif`; g.textAlign = 'right'; g.fillText('※ 二樓以上請由中央樓梯　　（點擊關閉）', W * .96, H * .93);
+    g.font = `700 ${fs}px "Noto Serif TC",serif`; g.textAlign = 'center'; g.strokeStyle = '#efe7d2'; g.lineWidth = 4; g.strokeText('現在地', px, py - fs * 1.1); g.fillText('現在地', px, py - fs * 1.1);   // 寫在紅點上方，不壓到房間名
+    g.fillStyle = '#5a5045'; g.font = `${fs * .8}px "Noto Serif TC",serif`; g.textAlign = 'right'; g.fillText(note + '　　（點擊關閉）', W * .96, H * .93);
     const close = () => { if (!ov.parentNode) return; ov.remove(); advanceFn = null; G.lock--; res(); };
     advanceFn = close; ov.addEventListener('click', close);
     if (TEST && TEST !== 'shot') setTimeout(close, 30);
@@ -407,7 +408,7 @@ function sceneDrawObj(o, cx, cy, shaking) {
     case 'floormap': {   // 畫在左牆面上：木框、紙、幾塊房間色塊
       faceRect(x - 1, y, 'R', .08, .92, 12, 34, '#4a3a2a'); faceRect(x - 1, y, 'R', .14, .86, 14, 32, '#d9d0b8');
       faceRect(x - 1, y, 'R', .2, .45, 24, 30, '#a99c80'); faceRect(x - 1, y, 'R', .52, .8, 24, 30, '#a99c80'); faceRect(x - 1, y, 'R', .2, .8, 19, 22, '#a99c80');
-      if (!G.flags.sawMap && Math.sin(G.t * 4) > 0) faceRect(x - 1, y, 'R', .6, .66, 26, 28, '#ff3030');
+      if (!G.flags[G.scene === 3 ? 'sawMap3' : 'sawMap'] && Math.sin(G.t * 4) > 0) faceRect(x - 1, y, 'R', .6, .66, 26, 28, '#ff3030');
       break;
     }
     case 'barricade': box(x + .05, y + .1, .9, .8, 18, '#5a4632', '#3e3022', '#33281c'); box(x + .25, y + .3, .5, .4, 12, '#6a553b', '#3b2f22', '#33291d', 18); break;

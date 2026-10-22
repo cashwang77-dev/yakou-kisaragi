@@ -9,6 +9,7 @@ const ROOM3 = {
   music: [2, 2, 11, 8], bio: [13, 2, 21, 8], av: [23, 2, 31, 8], bc: [33, 2, 37, 8],
   hall: [2, 10, 37, 12], landing: [2, 14, 6, 19], stair3: [34, 14, 37, 15], wc: [26, 17, 37, 24],
 };
+const MAP3_LABEL = { music: '音樂教室', bio: '生物教室', av: '視聽教室', bc: '廣播室', hall: '走廊', landing: '樓梯（往一樓）', stair3: '往三樓', wc: '三樓女廁' };
 const in3 = (r, x, y) => { const [x0, y0, x1, y1] = ROOM3[r]; return x >= x0 && x < x1 + 1 && y >= y0 && y < y1 + 1; };
 const AM_PATROL = [[18.5, 5.5], [17.5, 10.5], [30.5, 11.5], [36.5, 11.5], [24.5, 11.5], [10.5, 11.5], [3.5, 11.5], [12.5, 11.5], [17.5, 10.5]];
 const AM = { x: 18.5, y: 5.5, dir: 4, state: 'patrol', wp: 0, frame: 0, animD: 0, path: null, timer: 0, r: .27 };
@@ -39,6 +40,8 @@ function buildCh2b() {
   // 走廊、樓梯
   for (const x of [8, 9, 24, 30]) obj('locker', x, 12);
   obj('cabinet', 20, 10); obj('downstair', 3, 18, { act: 'downstair', label: '往一樓的樓梯' });
+  obj('floormap', 2, 16, { act: 'floormap3', label: '看牆上的平面圖' });   // 樓梯口牆上的平面圖（使用者反映找不到往三樓的路）
+  obj('stairsign', 34, 12, { act: 'stairsign', label: '看指示牌', solid: false });
   // 三樓女廁
   [27, 29, 31, 33].forEach((x, i) => obj('stall', x, 18, { act: 'stall', label: '敲敲廁所門', n: i + 1 }));
   obj('sink', 37, 20); obj('mirror', 37, 21, { act: 'mirror', label: '看鏡子' }); obj('sink', 37, 22);
@@ -46,12 +49,14 @@ function buildCh2b() {
   // 光源（電視的光由 tvLights 控制）
   LIGHTS.push({ x: 2.6, y: 11.4, r: 1.7, c: '90,255,140' }, { x: 37.4, y: 11.4, r: 1.7, c: '90,255,140' });
   LIGHTS.push({ x: 31.5, y: 21, r: 2.6, c: '220,230,255', id: 'wc' });
+  LIGHTS.push({ x: 35.5, y: 13.6, r: 2.2, c: '255,225,160' });   // 往三樓樓梯口的燈
   LIGHTS.push({ x: 36.5, y: 3.5, r: 1.6, c: '255,60,60' });
   LIGHTS.push({ x: 6.5, y: 3, r: 0, c: '255,40,40', id: 'eyes' });
   TVS.forEach((tv, i) => LIGHTS.push({ x: tv.o.x + .5, y: tv.o.y + 1, r: 0, c: '170,200,255', id: 'tv' + i }));
   // 道具：三個器官模型
   item('organ_heart', 10, 7, '心臟模型'); item('organ_lung', 23, 8, '肺臟模型'); item('organ_stomach', 30, 23, '胃的模型');
   item('can', 12, 11, '空罐'); item('can', 33, 11, '空罐');
+  item('bandage', 15, 11, '繃帶'); item('drink', 4, 15, '能量飲料'); item('charm', 32, 12, '護身符');   // 加在最後：舊存檔的道具順序不變
 }
 
 /* ---------- 開場（從第二章（上）接過來） ---------- */
@@ -65,6 +70,7 @@ async function startCh2b() {
   saveCP('ch2b');
   await wait(TEST ? 10 : 1600);
   await phoneCall(['我是瑪莉。', '我現在……在音樂教室。', '那個人，一直在哭哦。']);
+  await says(['（樓梯口的牆上，也掛著一張平面圖。）']);
   setObj('二樓還有四頁日記（音樂教室、生物教室、視聽教室、三樓女廁）');
 }
 
@@ -75,10 +81,10 @@ Object.assign(PAGE_TEXT, {
   5: ['生物教室的人體模型少了心臟、肺和胃。', '我把保健室的模型偷來放回去，它就讓我過去了。', '……它是不是也在找自己少掉的東西？'],
   6: ['還差一頁。', '最後一頁，我藏在舊校舍的地下書庫。', '今晚 4:44，我要打開那扇門。', '澄香，等我。'],
 });
-async function ch2bCheck() {
+async function ch2bCheck(cp) {   // cp：要存的檢查點名稱——一定要在更新目標「之後」才存，不然讀檔會顯示舊目標
   const p = G.inv.pages || [];
   const left = [3, 4, 5, 6].filter(n => !p.includes(n));
-  if (left.length) { setObj(`樓上還有 ${left.length} 頁日記`); return; }
+  if (left.length) { setObj(`樓上還有 ${left.length} 頁日記`); if (cp) saveCP(cp); return; }
   await wait(TEST ? 10 : 900);
   await phoneCall(['我是瑪莉。', '我現在……在舊校舍。', '最後一頁，在「她」那裡哦。']);
   await says(['六頁了。', '……窗外，校園後面那棟早就封起來的舊校舍，亮起了一盞燈。']);
@@ -125,8 +131,10 @@ async function ch2bAction(o) {
       await says(['……廣播設備自己開始運作了。', ['廣播', '（叮咚——）'], ['廣播', '現在時間，下午四點四十四分。'], ['廣播', '還留在校內的同學，請注意。'],
         ['廣播', '二年B班，澄香同學。'], ['廣播', '二年B班，妃姬子同學。'], ['廣播', '……二年B班，咪醬同學。'], ['廣播', '請立刻到——舊校舍。'], ['廣播', '（叮咚——）'],
         '……是 2004 年的放學廣播。', '為什麼會叫到我的名字？', '……桌上的點名簿裡，夾著一張紙。']);
-      sfx.sting(); shake = 6; await getPage(6); saveCP('p6'); return ch2bCheck();
+      sfx.sting(); shake = 6; await getPage(6); return ch2bCheck('p6');
     }
+    case 'floormap3': G.flags.sawMap3 = true; return showFloorMap(ROOM3, MAP3_LABEL, '校舍二樓　平面圖（附三樓女廁）', 'stair3', '往三樓↑', '※ 三樓女廁：走廊最東邊（廣播室旁）的樓梯上去');
+    case 'stairsign': await says(['指示牌：「↑ 三樓　女廁」', '……樓梯就在走廊的盡頭，廣播室的旁邊。']); return;
     case 'downstair': await says(['往一樓的樓梯。……樓下的走廊，傳來剪刀的聲音。不回去了。']); return;
     case 'graffiti': F.graffiti = true; await says(['廁所牆上的塗鴉被刷過好幾次油漆，還是透出來：', ['塗鴉', '「花子さん、あそびましょ」　→ 第三間'], ['塗鴉', '「妃姬子去死」'], '……後面那行字，被人用指甲刮掉了一半。']); return;
     case 'stall': return knock(o);
@@ -158,8 +166,8 @@ async function knock(o) {
   F.hanako = true;
   await says([['花子', '「……嗯。那這個給你。」', face], ['花子', '「她留下來的。還有，把洗手台那面鏡子帶走吧。拖麻袋的那個女生……很怕鏡子。」', face]]);
   F.hanakoOut = false;
-  await getPage(3); saveCP('p3');
-  setObj('拿走洗手台的鏡子');
+  await getPage(3);
+  setObj('拿走洗手台的鏡子'); saveCP('p3');
 }
 async function mirror() {
   const F = G.flags, I = G.inv;
@@ -170,8 +178,8 @@ async function mirror() {
   }
   I.mirror = true; sfx.pick(); updateHUD(); toast('得到【鏡子碎片】');
   await says(['把鏡子從牆上拆下來……', '鏡子拆下來了。', '可是，牆上的鏡框裡，鏡中的咪醬還站在那裡——', '對我揮了揮手。']);
-  sfx.sting(); shake = 6; saveCP('mirror');
-  return ch2bCheck();
+  sfx.sting(); shake = 6;
+  return ch2bCheck('mirror');
 }
 
 /* ---------- 電視 ---------- */
@@ -214,7 +222,7 @@ function walker(e, tx, ty, speed, dt) {
   return false;
 }
 function amSees() {
-  if (P.hidden || G.mode !== 'play') return false;
+  if (P.hidden || G.mode !== 'play' || pInvis()) return false;
   const d = dist(AM.x, AM.y, P.x, P.y);
   let range = 5 + (P.light ? 2.5 : 0); if (P.crouch) range *= .6;
   if (d > range) return false;
@@ -263,7 +271,7 @@ takeItem = async function (it) {
     return;
   }
   const m = it.id.match(/^page(\d)$/);
-  if (m) { it.taken = true; await getPage(+m[1]); saveCP(it.id); return ch2bCheck(); }
+  if (m) { it.taken = true; await getPage(+m[1]); return ch2bCheck(it.id); }
   return _takeItem2(it);
 };
 
@@ -325,6 +333,12 @@ sceneDrawObj = function (o, cx, cy, shaking) {
       break;
     }
     case 'piano': box(x - .1, y + .1, 1.2, .8, 16, '#1a1a1e', '#0e0e12', '#0a0a0d'); box(x - .05, y + .1, 1.1, .25, 12, '#e8e4dc', null, null, 16); break;
+    case 'stairsign': {   // 往三樓的指示牌：走廊東端、樓梯門旁的立牌
+      ctx.fillStyle = '#2a2a2e'; ctx.fillRect(cx - 1, cy - 26, 2, 26);
+      ctx.fillStyle = '#e8e2c8'; ctx.fillRect(cx - 9, cy - 38, 18, 12); ctx.fillStyle = '#2f6a3c'; ctx.fillRect(cx - 7, cy - 36, 14, 8);
+      ctx.fillStyle = '#fff'; ctx.fillRect(cx - 1, cy - 35, 2, 6); ctx.fillRect(cx - 3, cy - 33, 6, 1); ctx.fillRect(cx - 2, cy - 34, 4, 1);   // ↑
+      break;
+    }
     case 'chalk': {   // 掛在後牆上的黑板（橫跨 3 格）：木框、綠板、粉筆五線譜（10/22 使用者說看不到黑板）
       for (const dx of [-1, 0, 1]) {
         faceRect(x + dx, y - 1, 'L', 0, 1, 10, 36, '#5a4330');

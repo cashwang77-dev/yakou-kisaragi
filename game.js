@@ -114,6 +114,7 @@ item('can', 29, 23, '空罐');
 item('can', 11, 17, '空罐');
 item('can', 9, 10, '空罐');
 item('phone', 18, 6, '手機');
+item('drink', 12, 10, '能量飲料'); item('charm', 3, 29, '護身符');
 }
 buildCh1(); indexObjs();   // 開機先建第一章（這時 G 還沒建立，不能呼叫 loadScene）
 
@@ -273,7 +274,7 @@ function faceRect(x, y, side, u0, u1, v0, v1, col) {
 
 /* ---------- 狀態 ---------- */
 const G = {
-  mode: 'title', lock: 0, t: 0, flags: {}, inv: { cans: 0, candy: 0, weapon: null, key: false, flashlight: false, phone: false, bandage: 0 },
+  mode: 'title', lock: 0, t: 0, flags: {}, inv: { cans: 0, candy: 0, weapon: null, key: false, flashlight: false, phone: false, bandage: 0, drink: 0, charm: 0 },
   scene: 1, hearts: 5, cp: null, noises: [], projs: [], candies: [], flash: 0, nextBolt: 12, triggers: {}, shadow: null
 };
 const P = { x: 27.5, y: 38.7, dir: 0, vx: 0, vy: 0, r: .26, stam: 100, tired: false, crouch: false, run: false, light: false, hidden: null, hiddenSeen: false, step: 0, inv: 0, moving: false };
@@ -294,6 +295,9 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyC' || e.code === 'ControlLeft') press('crouch');
   if (e.code === 'Digit1') press('throwCan');
   if (e.code === 'Digit2') press('throwCandy');
+  if (e.code === 'Digit3') press('useBandage');
+  if (e.code === 'Digit4') press('useDrink');
+  if (e.code === 'Digit5') press('useCharm');
   if (/^Digit[1-5]$/.test(e.code) && DLG.choices) DLG.pick(+e.code.slice(5) - 1);
 });
 addEventListener('keyup', e => { if (KEYMAP[e.code]) K[KEYMAP[e.code]] = false; });
@@ -306,6 +310,9 @@ function press(k) {
   else if (k === 'crouch') { P.crouch = !P.crouch; }
   else if (k === 'throwCan') throwItem('can');
   else if (k === 'throwCandy') throwItem('candy');
+  else if (k === 'useBandage') useItem('bandage');
+  else if (k === 'useDrink') useItem('drink');
+  else if (k === 'useCharm') useItem('charm');
   updateHUD();
 }
 /* 觸控 */
@@ -488,7 +495,7 @@ function chapter(sub, title) {
   e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 3200);
 }
 let OBJTEXT = '';
-function setObj(t) { OBJTEXT = t; updateHUD(); for (const o of OBJ) o.seen = false; }   // 目標換了，可調查的東西重新閃光
+function setObj(t) { OBJTEXT = t; updateHUD(); G.seenAct = {}; }   // 目標換了，可調查的東西重新閃光
 function updateHUD() {
   $('#hearts').innerHTML = Array.from({ length: 5 }, (_, i) => `<i class="${i < G.hearts ? '' : 'off'}"></i>`).join('');
   $('#obj').innerHTML = OBJTEXT ? `<small>目標</small>${OBJTEXT}` : '';
@@ -497,13 +504,32 @@ function updateHUD() {
   if (I.weapon) s.push(`<div class="s">${I.weapon.name}<em>耐久 ${I.weapon.dur}</em></div>`);
   if (I.cans) s.push(`<div class="s tap" data-k="throwCan">空罐×${I.cans}<em>${isTouch ? '點按丟出' : '1 丟出'}</em></div>`);
   if (I.candy) s.push(`<div class="s tap" data-k="throwCandy">鼈甲糖×${I.candy}<em>${isTouch ? '點按丟出' : '2 丟出'}</em></div>`);
-  if (I.bandage) s.push(`<div class="s">繃帶×${I.bandage}</div>`);
+  const tip = (k, t) => `<em>${isTouch ? t : k + ' ' + t.replace('點按', '')}</em>`;
+  if (I.bandage) s.push(`<div class="s tap" data-k="useBandage">繃帶×${I.bandage}${tip(3, '點按使用')}</div>`);
+  if (I.drink || P.fastT > G.t) s.push(`<div class="s tap ${P.fastT > G.t ? 'on' : ''}" data-k="useDrink">能量飲料×${I.drink || 0}${P.fastT > G.t ? `<em>加速中 ${Math.ceil(P.fastT - G.t)}</em>` : tip(4, '點按喝')}</div>`);
+  if (I.charm || pInvis()) s.push(`<div class="s tap ${pInvis() ? 'on' : ''}" data-k="useCharm">護身符×${I.charm || 0}${pInvis() ? `<em>隱身中 ${Math.ceil(P.invisT - G.t)}</em>` : tip(5, '點按使用')}</div>`);
   if (I.key) s.push(`<div class="s">側門鑰匙</div>`);
   if (I.phone) s.push(`<div class="s">手機</div>`);
   if (typeof sceneHUD === 'function') sceneHUD(s);
   if (P.crouch) s.push(`<div class="s on">蹲下中<em>${isTouch ? '' : 'C'}</em></div>`);
   $('#inv').innerHTML = s.join('');
   $('#inv').querySelectorAll('.tap').forEach(e => e.addEventListener('pointerdown', ev => { ev.preventDefault(); press(e.dataset.k); }));
+}
+/* 消耗道具：繃帶（回 2 心）、能量飲料（10 秒加速、體力不減）、護身符（8 秒鬼看不到） */
+const pInvis = () => (P.invisT || 0) > G.t;
+function useItem(k) {
+  if (G.mode !== 'play' || G.lock) return;
+  const I = G.inv;
+  if (!I[k]) return;
+  if (k === 'bandage') {
+    if (G.hearts >= 5) { toast('現在不需要繃帶'); return; }
+    I.bandage--; G.hearts = Math.min(5, G.hearts + 2); sfx.pick(); toast('包紮好了（＋2 心）');
+  } else if (k === 'drink') {
+    I.drink--; P.fastT = G.t + 10; P.stam = 100; P.tired = false; sfx.pick(); toast('喝下能量飲料——腳步變輕了（10 秒）');
+  } else if (k === 'charm') {
+    I.charm--; P.invisT = G.t + 8; sfx.pick(); tone(880, .8, 'sine', .05, 1320); toast('握緊護身符……身體變得好淡（8 秒內鬼看不到妳）');
+  }
+  updateHUD();
 }
 /* 對話 */
 const DLG = {
@@ -641,7 +667,9 @@ async function takeItem(it) {
   it.taken = true; sfx.pick();
   if (it.id === 'flashlight') { I.flashlight = true; P.light = true; toast('得到【手電筒】　' + KEY.flash + '開關'); }
   else if (it.id === 'can') { I.cans++; toast('得到【空罐】　' + KEY.can + '丟出去，可以引開注意'); }
-  else if (it.id === 'bandage') { I.bandage++; toast('得到【繃帶】　受傷時會自動使用'); }
+  else if (it.id === 'bandage') { I.bandage++; toast(`得到【繃帶】　${isTouch ? '點道具欄' : '按 3'}使用，回 2 顆心`); }
+  else if (it.id === 'drink') { I.drink = (I.drink || 0) + 1; toast(`得到【能量飲料】　${isTouch ? '點道具欄' : '按 4'}喝下，10 秒內跑更快`); }
+  else if (it.id === 'charm') { I.charm = (I.charm || 0) + 1; toast(`得到【護身符】　${isTouch ? '點道具欄' : '按 5'}使用，8 秒內鬼看不到妳`); }
   else if (it.id === 'broom') { toast('拿起【掃把】　被抓住時可以反擊（2 次）'); }
   else if (it.id === 'lid') { toast('拿起【垃圾桶蓋】　被抓住時可以擋一下（3 次）'); }
   updateHUD();
@@ -664,7 +692,7 @@ async function useDoor(dr) {
   await says([dr.msg]);
 }
 async function objAction(o) {
-  o.seen = true;
+  (G.seenAct = G.seenAct || {})[o.act] = true;   // 同一種東西（例如一排鞋箱）看過一個就不再閃
   if (G.scene !== 1 && typeof sceneAction === 'function' && await sceneAction(o) !== false) return;
   if (o.act === 'vend') {
     if (G.flags.vend) { await says(['販賣機的燈一閃一閃的。已經沒有東西掉出來了。']); return; }
@@ -736,7 +764,7 @@ function spawnGhost(x = 9.5, y = 33.5) { Object.assign(GH, { x, y, active: true,
 function investigate(x, y) { GH.state = 'investigate'; GH.target = [x, y]; GH.path = null; }
 function ghostFacing() { return DIRV[GH.dir]; }
 function canSeePlayer() {
-  if (P.hidden || G.mode !== 'play') return false;
+  if (P.hidden || G.mode !== 'play' || pInvis()) return false;
   if (typeof sceneSafe === 'function' && sceneSafe(P.x, P.y)) return false;   // 安全屋（第二章保健室）
   const d = dist(GH.x, GH.y, P.x, P.y);
   let range = 5.2;
@@ -1000,13 +1028,13 @@ function update(dt) {
     const sx = ix / Math.max(1, im), sy = iy / Math.max(1, im);
     let wx = sx / 32 + sy / 16, wy = sy / 16 - sx / 32; const wm = Math.hypot(wx, wy); wx /= wm; wy /= wm;
     const running = K.run && !P.tired && !P.crouch;
-    const sp = (running ? 4.3 : P.crouch ? 1.4 : 2.5) * Math.min(1, im);
+    const sp = (running ? 4.3 : P.crouch ? 1.4 : 2.5) * Math.min(1, im) * (P.fastT > G.t ? 1.45 : 1);   // 能量飲料：加速
     const ox = P.x, oy = P.y;
     moveEnt(P, wx * sp * dt, wy * sp * dt);
     const moved = Math.hypot(P.x - ox, P.y - oy);
     P.dir = dirFromWorld(wx, wy); P.moving = moved > .001; P.run = running && P.moving;
     P.animD = (P.animD || 0) + moved; P.frame = 1 + Math.floor(P.animD / (P.run ? .5 : P.crouch ? .26 : .34)) % 4;
-    if (P.run) { P.stam -= 26 * dt; if (P.stam <= 0) { P.stam = 0; P.tired = true; } }
+    if (P.run && !(P.fastT > G.t)) { P.stam -= 26 * dt; if (P.stam <= 0) { P.stam = 0; P.tired = true; } }
     P.step += moved;
     const stride = P.run ? .62 : P.crouch ? .5 : .55;
     if (P.step > stride) {
@@ -1031,6 +1059,8 @@ function update(dt) {
   G.noises = G.noises.filter(n => G.t - n.t < .1);
   ghostUpdate(dt);
   if (G.scene !== 1 && typeof sceneUpdate === 'function') sceneUpdate(dt);
+  const buff = (P.fastT || 0) > G.t - .5 || (P.invisT || 0) > G.t - .5;   // 加速／隱身中（含剛結束）：道具欄倒數
+  if (buff && Math.floor(G.t * 2) !== Math.floor((G.t - dt) * 2)) updateHUD();
   // 影子
   if (G.shadow) { const s = G.shadow; s.t += dt; if (s.turn && !s.turned) { s.turned = true; s.dir = dirFromWorld(P.x - s.x, P.y - s.y); } if (s.leave) { s.a = (s.a ?? 1) - dt * .35; s.x -= dt * .5; s.y -= dt * .5; s.dir = 1; if (s.a <= 0) G.shadow = null; } }
   // 雷
@@ -1207,10 +1237,10 @@ const MI_SC = .84;
 // 咪醬：動作姿勢 ＞ 蹲 ＞ 拿手電筒站著 ＞ 一般走跑
 function drawMi() {
   const k = P.pose && NOW() < P.pose.until ? P.pose.k : null, img = k && IMG['mi_' + k];
-  if (img) return drawSprite(img, P.x, P.y, P.dir, { sc: MI_SC, frame: k === 'hurt' ? Math.floor(NOW() * 6) : k === 'throw' ? +(NOW() - P.pose.t0 > .12) : 0, noShadow: k === 'down' });
-  if (P.crouch && IMG.mi_crouch) return drawSprite(IMG.mi_crouch, P.x, P.y, P.dir, P.moving ? P.frame % 4 : 0, { sc: MI_SC });
-  if (P.light && !P.moving && IMG.mi_light) return drawSprite(IMG.mi_light, P.x, P.y, P.dir, { sc: MI_SC });
-  drawSprite(IMG.mi, P.x, P.y, P.dir, { sc: MI_SC, frame: P.moving ? (P.run ? 4 : 0) + P.frame : 0 });
+  if (img) return drawSprite(img, P.x, P.y, P.dir, { sc: MI_SC, alpha: pInvis() ? .4 : 1, frame: k === 'hurt' ? Math.floor(NOW() * 6) : k === 'throw' ? +(NOW() - P.pose.t0 > .12) : 0, noShadow: k === 'down' });
+  if (P.crouch && IMG.mi_crouch) return drawSprite(IMG.mi_crouch, P.x, P.y, P.dir, P.moving ? P.frame % 4 : 0, { sc: MI_SC, alpha: pInvis() ? .4 : 1 });
+  if (P.light && !P.moving && IMG.mi_light) return drawSprite(IMG.mi_light, P.x, P.y, P.dir, { sc: MI_SC, alpha: pInvis() ? .4 : 1 });
+  drawSprite(IMG.mi, P.x, P.y, P.dir, { sc: MI_SC, alpha: pInvis() ? .4 : 1, frame: P.moving ? (P.run ? 4 : 0) + P.frame : 0 });
 }
 function drawSprite(img, x, y, dir, frame, opt) {
   if (typeof frame === 'object') { opt = frame; frame = undefined; }   // drawSprite(img,x,y,dir,opt) 或 (img,x,y,dir,frame,opt)
@@ -1299,9 +1329,13 @@ function render() {
   }
   ctx.globalCompositeOperation = 'source-over';
   // 附近可以調查、還沒看過的東西：一閃一閃的星光（畫在暗幕之上，暗處也找得到）
+  const sparkle = {};   // 每一種（act）只閃最近的那一個
   for (const o of OBJ) {
-    if (!o.act || o.seen || (o.t === 'statue' && o.gone) || (o.act === 'keybox' && G.inv.key)) continue;
+    if (!o.act || (G.seenAct && G.seenAct[o.act]) || (o.t === 'statue' && o.gone) || (o.act === 'keybox' && G.inv.key)) continue;
     const d = dist(P.x, P.y, o.x + .5, o.y + .5); if (d > 8) continue;
+    if (!sparkle[o.act] || sparkle[o.act][1] > d) sparkle[o.act] = [o, d];
+  }
+  for (const [o, d] of Object.values(sparkle)) {
     const [sx, sy] = iso(o.x + .5, o.y + .5), top = { locker: 36, shoe: 34, vend: 38, board: 36, shelf: 40, cabinet: 34, medcab: 32 }[o.t] || 24;
     const tw = (Math.sin(G.t * 3.2 + o.x * 1.7 + o.y) + 1) / 2, a = (.35 + .65 * tw) * Math.min(1, (8 - d) / 2.5), r = 2 + tw * 2.5, y0 = sy - top - 4;
     ctx.fillStyle = `rgba(255,236,170,${a * .25})`; ctx.beginPath(); ctx.arc(sx, y0, r + 3, 0, 7); ctx.fill();
@@ -1342,7 +1376,7 @@ function loop(now) {
 function stateSummary() { return { mode: G.mode, x: +P.x.toFixed(2), y: +P.y.toFixed(2), hearts: G.hearts, inv: G.inv, ghost: GH.active ? GH.state : 'off', gx: +GH.x.toFixed(1), gy: +GH.y.toFixed(1), flags: G.flags, trig: Object.keys(G.triggers), lock: G.lock, path: GH.path && GH.path.length, scr: GH.script, t: +G.t.toFixed(1) }; }
 function resetWorld() {
   if (G.scene !== 1) loadScene(1);
-  G.flags = {}; G.triggers = {}; G.inv = { cans: 0, candy: 0, weapon: null, key: false, flashlight: false, phone: false, bandage: 0 }; G.hearts = 5;
+  G.flags = {}; G.triggers = {}; G.inv = { cans: 0, candy: 0, weapon: null, key: false, flashlight: false, phone: false, bandage: 0, drink: 0, charm: 0 }; G.hearts = 5;
   ITEMS.forEach(i => i.taken = false); STATUE.gone = false;
   Object.values(DOORS).forEach(d => { d.locked = !!(d.msg || d.key); });
   Object.assign(P, { x: 27.5, y: 38.7, dir: 0, hidden: null, light: false, crouch: false, stam: 100 });
@@ -1473,7 +1507,7 @@ async function runTest(kind) {
       document.title = (a && b ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary()); return;
     }
     if (kind === 'comic') { intro(); document.title = 'COMIC'; return; }
-    if (kind === 'shot') { if (Q.get('scene')) loadScene(+Q.get('scene')); tp(Number(Q.get('x') || 27.5), Number(Q.get('y') || 30)); P.dir = 0; G.inv.flashlight = true; P.light = true; if (Q.get('ghost')) { const ch = Q.get('ghost') === 'chase'; spawnGhost(P.x - (ch ? 6 : 2), P.y - (ch ? 6 : 2)); GH.state = ch ? 'chase' : 'pause'; GH.timer = 99; GH.dir = 4; } if (Q.get('crouch')) P.crouch = true; if (Q.get('pose')) setPose(Q.get('pose')); if (Q.get('atk')) GH.atkLoop = true; if (Q.get('dir')) P.dir = +Q.get('dir'); if (Q.get('hk') && typeof HK === 'object') Object.assign(HK, { x: P.x + 1.5, y: P.y - 1.5, state: 'search', timer: 99, dir: 4 }); if (Q.get('hold')) { G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 }; G.inv.candy = 2; catchPlayer(false); } if (Q.get('map') && typeof showFloorMap === 'function') showFloorMap(); document.title = 'SHOT'; return; }
+    if (kind === 'shot') { if (Q.get('scene')) loadScene(+Q.get('scene')); tp(Number(Q.get('x') || 27.5), Number(Q.get('y') || 30)); P.dir = 0; G.inv.flashlight = true; P.light = true; if (Q.get('ghost')) { const ch = Q.get('ghost') === 'chase'; spawnGhost(P.x - (ch ? 6 : 2), P.y - (ch ? 6 : 2)); GH.state = ch ? 'chase' : 'pause'; GH.timer = 99; GH.dir = 4; } if (Q.get('crouch')) P.crouch = true; if (Q.get('pose')) setPose(Q.get('pose')); if (Q.get('atk')) GH.atkLoop = true; if (Q.get('dir')) P.dir = +Q.get('dir'); if (Q.get('hk') && typeof HK === 'object') Object.assign(HK, { x: P.x + 1.5, y: P.y - 1.5, state: 'search', timer: 99, dir: 4 }); if (Q.get('hold')) { G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 }; G.inv.candy = 2; catchPlayer(false); } if (Q.get('items')) { Object.assign(G.inv, { bandage: 1, drink: 2, charm: 1 }); if (Q.get('items') === 'on') { P.fastT = G.t + 99; P.invisT = G.t + 99; } updateHUD(); } if (Q.get('map')) { const fm = OBJ.find(o => o.t === 'floormap'); if (fm) objAction(fm); } document.title = 'SHOT'; return; }
     if (kind === 'chase') {
       G.flags.log = true; G.inv.flashlight = true; P.light = true; G.inv.candy = 1; G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 };
       spawnGhost(9.5, 20.5); tp(9.5, 24.5); P.dir = 0; GH.state = 'pauseLook'; GH.timer = 9; GH.look = -9; GH.dir = dirFromWorld(P.x - GH.x, P.y - GH.y);
