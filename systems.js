@@ -185,3 +185,31 @@ async function testFear() {
 }
 // 截圖：&fear=0-100（看恐懼效果）、&smoke=1（滅火器煙霧）
 if (typeof TEST !== 'undefined' && TEST === 'shot') setTimeout(() => { if (Q.get('fear')) { FEAR.lock = G.fear = +Q.get('fear'); FEAR.need = !!Q.get('breath'); fearBar(); } if (Q.get('smoke')) G.smoke = { x: P.x + 1, y: P.y, end: G.t + 99 }; }, 300);
+
+/* ---------- 環境音（Gemini 生成的循環音檔）：戶外雨聲／校舍走廊／如月車站，依位置淡入淡出 ---------- */
+const AMB = { rain: { f: 'assets/amb_rain.mp3', v: .55 }, hall: { f: 'assets/amb_hall.mp3', v: .5 }, station: { f: 'assets/amb_station.mp3', v: .55 } };
+for (const k in AMB) AMB[k].el = null;
+function ambWant() {
+  if (G.mode !== 'play') return null;
+  if (G.scene === 5) return 'station';
+  return isInside(P.x, P.y) ? 'hall' : 'rain';
+}
+function ambUpdate(dt) {
+  if (!A.ctx || TEST) return;                // 還沒有使用者操作（瀏覽器不准出聲）或在測試
+  const want = ambWant(), vs = typeof VOL === 'object' ? VOL.s : 1;
+  for (const [k, a] of Object.entries(AMB)) { if (!a || !a.f) continue;
+    const target = k === want ? a.v * vs : 0;
+    if (target > 0 && !a.el) { a.el = new Audio(a.f); a.el.loop = true; a.el.volume = 0; if (a.el.volume !== 0) AMB.fixedVol = true; a.el.play().catch(() => { }); }   // iPhone：音量改不動
+    if (!a.el) continue;
+    if (AMB.fixedVol) { if (target > 0 && a.el.paused) a.el.play().catch(() => { }); if (target === 0 && !a.el.paused) a.el.pause(); continue; }
+    const v = a.el.volume + Math.sign(target - a.el.volume) * Math.min(Math.abs(target - a.el.volume), dt * .6);
+    a.el.volume = clamp(v, 0, 1);
+    if (target > 0 && a.el.paused) a.el.play().catch(() => { });
+    if (target === 0 && a.el.volume < .01 && !a.el.paused) a.el.pause();
+  }
+  if (A.rain && AMB.rain.el && !AMB.rain.el.paused) A.rain.gain.setTargetAtTime(.008, A.ctx.currentTime, .5);   // 有真的雨聲時，合成雨聲調小
+}
+const _updateA = update;
+update = function (dt) { _updateA(dt); ambUpdate(dt); };
+// 回到標題、結束畫面、暫停聲音設定時停掉
+setInterval(() => { if (G.mode !== 'play') for (const a of Object.values(AMB)) if (a && a.el && !a.el.paused) { if (AMB.fixedVol) { a.el.pause(); continue; } a.el.volume = Math.max(0, a.el.volume - .1); if (a.el.volume < .02) a.el.pause(); } }, 100);
