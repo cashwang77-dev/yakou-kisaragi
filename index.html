@@ -176,7 +176,18 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
 .phone #a2hs .btns button,#a2hs .btns button{font-size:calc(var(--u)*12);padding:calc(var(--u)*3)}
 /* 主題曲 */
 #bTheme{position:absolute;right:calc(var(--u)*10);top:calc(var(--u)*10);pointer-events:auto;background:rgba(0,0,0,.45);border:1px solid #5b554c;color:#cfc6b6;font:inherit;font-size:calc(var(--u)*9);padding:calc(var(--u)*3) calc(var(--u)*7);cursor:pointer}
-#bTheme.off{color:#6d675f}
+#bSnd{position:absolute;display:none;right:calc(var(--u)*8);top:calc(var(--u)*72);z-index:8;width:calc(var(--u)*26);height:calc(var(--u)*26);background:rgba(0,0,0,.5);border:1px solid #5b554c;color:#ddd;font-size:calc(var(--u)*13);line-height:1;cursor:pointer;pointer-events:auto}
+#hud:not(.hide)~#bSnd{display:block}
+.phone #bSnd{width:calc(var(--u)*30);height:calc(var(--u)*30);font-size:calc(var(--u)*15);top:calc(var(--u)*80)}
+#snd{z-index:12;background:rgba(0,0,0,.9)}
+#snd .hb{text-align:center;width:calc(var(--u)*300)}
+#snd h2{font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*16);margin-bottom:calc(var(--u)*12);letter-spacing:.2em}
+#snd label{display:flex;align-items:center;gap:calc(var(--u)*10);margin:calc(var(--u)*8) 0;font-size:calc(var(--u)*11)}
+#snd label span{width:calc(var(--u)*34);text-align:left}
+#snd label b{width:calc(var(--u)*26);text-align:right;font-weight:400;color:var(--dim)}
+#snd input[type=range]{flex:1;accent-color:var(--red);height:calc(var(--u)*16)}
+#snd .cnote{font-size:calc(var(--u)*8.5);color:var(--dim);margin-top:calc(var(--u)*6)}
+.phone #snd .hb{width:calc(var(--u)*320)}
 #lyric{position:absolute;left:0;right:0;bottom:calc(var(--u)*30);text-align:center;font-family:"Noto Serif JP","Noto Serif TC",serif;font-weight:600;font-size:calc(var(--u)*13);letter-spacing:.25em;color:#e9dccb;text-shadow:0 0 8px #000,0 0 3px #5a0c12;opacity:0;transition:opacity .6s}
 #lyric.show{opacity:.92}
 .phone #bTheme{font-size:calc(var(--u)*10)}
@@ -235,6 +246,7 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
   </div>
   <div id="toast" class="ui"></div>
   <button id="fs" class="hide" title="全螢幕">⛶</button>
+  <button id="bSnd" title="聲音設定">⚙</button>
   <div id="chap" class="ui"><span></span><b></b></div>
   <div id="dlg" class="ui hide"><div class="face none"></div><div class="body"><div class="nm"></div><div class="tx"></div><div class="ch"></div><div class="timer hide"></div></div><div class="more">▼</div></div>
   <div id="phone" class="ui hide"><img src="assets/mary.png" alt=""><div class="pb"><div class="who">來電</div><div class="num">未知號碼</div><div class="ptx"></div></div></div>
@@ -251,8 +263,17 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
       <button id="bHelp">操作說明</button>
     </div>
     <div class="foot" id="foot">戴上耳機遊玩效果最佳</div>
-    <button id="bTheme">♪ 主題曲 ON</button>
+    <button id="bTheme">⚙ 聲音</button>
     <div id="lyric" class="ui"></div>
+  </div>
+  <div id="snd" class="ui full hide">
+    <div class="hb">
+      <h2>聲音設定</h2>
+      <label><span>音樂</span><input id="volM" type="range" min="0" max="100" step="5"><b id="volMv"></b></label>
+      <label><span>音效</span><input id="volS" type="range" min="0" max="100" step="5"><b id="volSv"></b></label>
+      <p class="cnote">拉到最左邊＝關閉。iPhone 不能調音樂大小聲，只能開或關。</p>
+      <div class="btns" style="margin-top:calc(var(--u)*10)"><button id="bSndClose">關閉</button></div>
+    </div>
   </div>
   <div id="chapSel" class="ui full hide">
     <div class="hb">
@@ -315,7 +336,7 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
   </div>
   <div id="rot" class="ui hide">請將手機轉為橫向遊玩<br>↻</div>
 </div>
-<script src="game.js?v=d7b0bcf6"></script>
+<script src="game.js?v=0cf1ba87"></script>
 <script src="ch2.js?v=b17b3204"></script>
 <script src="ch2b.js?v=2f85f872"></script>
 </body>

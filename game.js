@@ -339,7 +339,7 @@ function audioInit() {
   // iPhone 靜音開關打開時 Web Audio 預設會被靜音（主題曲也走 Web Audio）→ 宣告成「播放」類，靜音模式也有聲音
   try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) { }
   try { A.ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
-  const c = A.ctx; A.master = c.createGain(); A.master.gain.value = .85; A.master.connect(c.destination);
+  const c = A.ctx; A.master = c.createGain(); A.master.gain.value = .85 * VOL.s; A.master.connect(c.destination);
   const len = c.sampleRate * 2, b = c.createBuffer(1, len, c.sampleRate), d = b.getChannelData(0);
   for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
   A.noise = b;
@@ -393,7 +393,11 @@ const LYRICS = [[16, '午前四時四十四分'], [18.6, '止まった時計'], 
   [133.3, 'また同じ四時四十四分'], [138.7, 'マスクの女'], [144, '「わたし、きれい？」'], [149.3, '逃げ場のない校舎'], [154.7, '四の呪いに満ちて'],
   [160, 'ハナコさんの笑いが'], [165.3, '木霊する闇へ'], [170.7, '如月']];
 const THEME = { el: null, t: 0, f: 0, on: true };
-try { THEME.on = localStorage.getItem('kisaragi_theme') !== 'off'; } catch (e) { }
+// 音量設定（音樂 VOL.m、音效 VOL.s，0～1）；舊版的「主題曲 OFF」換成音樂 0
+const VOL = { m: .9, s: 1 };
+try { const v = JSON.parse(localStorage.getItem('kisaragi_vol')); if (v) Object.assign(VOL, v); else if (localStorage.getItem('kisaragi_theme') === 'off') VOL.m = 0; } catch (e) { }
+THEME.on = VOL.m > 0;
+function saveVol() { try { localStorage.setItem('kisaragi_vol', JSON.stringify(VOL)); } catch (e) { } }
 // 直接用 <audio> 播（不經 Web Audio：任何環節沒接上就整個無聲，iPhone 靜音開關下 <audio> 也照樣出聲）
 // 前奏放大 2.2 倍已經做進音檔（ffmpeg，見 主題曲_帰れない放課後.txt）
 function themeEl() {
@@ -404,7 +408,7 @@ function themePlay(restart) {
   if (!THEME.on || TEST) return Promise.resolve(false);
   const e = themeEl(); clearTimeout(THEME.t); clearInterval(THEME.f);
   if (restart) e.currentTime = 0;
-  e.volume = .9;
+  e.volume = VOL.m;
   return e.play().then(() => true, () => false);
 }
 // 淡出用 audio.volume；iPhone 不能改音量 → 時間到直接停
@@ -413,7 +417,7 @@ function themeStop(sec = 4) {
   clearInterval(THEME.f); const v0 = e.volume, t0 = performance.now();
   THEME.f = setInterval(() => {
     const k = (performance.now() - t0) / (sec * 1000);
-    if (k >= 1) { clearInterval(THEME.f); e.pause(); e.volume = .9; } else e.volume = v0 * (1 - k);
+    if (k >= 1) { clearInterval(THEME.f); e.pause(); e.volume = VOL.m; } else e.volume = v0 * (1 - k);
   }, 50);
 }
 // 標題／結局畫面顯示目前唱到的歌詞
@@ -1377,12 +1381,29 @@ $('#title').addEventListener('click', () => { audioInit(); themePlay(); });
 const themeRetry = () => { audioInit(); if (THEME.on && !$('#title').classList.contains('hide') && $('#gate').classList.contains('hide') && (!THEME.el || THEME.el.paused)) themePlay(); };
 addEventListener('touchend', themeRetry, { passive: true }); addEventListener('pointerup', themeRetry);
 addEventListener('keydown', () => { if (!$('#gate').classList.contains('hide')) gateOpen(); else if (!$('#title').classList.contains('hide')) themePlay(); });
-const themeBtn = () => { const b = $('#bTheme'); b.textContent = THEME.on ? '♪ 主題曲 ON' : '♪ 主題曲 OFF'; b.classList.toggle('off', !THEME.on); };
-$('#bTheme').addEventListener('click', e => {
-  e.stopPropagation(); THEME.on = !THEME.on; try { localStorage.setItem('kisaragi_theme', THEME.on ? 'on' : 'off'); } catch (er) { }
-  THEME.on ? themePlay() : themeStop(.6); themeBtn();
+/* 聲音設定面板：標題右上「⚙ 聲音」、遊戲中右上 ⚙（打開時遊戲暫停） */
+let sndPaused = false;
+function openSnd() {
+  $('#volM').value = Math.round(VOL.m * 100); $('#volS').value = Math.round(VOL.s * 100); sndLabels();
+  if (G.mode === 'play' && !sndPaused) { sndPaused = true; G.lock++; }
+  $('#snd').classList.remove('hide');
+}
+function closeSnd() { $('#snd').classList.add('hide'); if (sndPaused) { sndPaused = false; G.lock = Math.max(0, G.lock - 1); } }
+function sndLabels() { $('#volMv').textContent = VOL.m ? Math.round(VOL.m * 100) : '關'; $('#volSv').textContent = VOL.s ? Math.round(VOL.s * 100) : '關'; }
+$('#volM').addEventListener('input', e => {
+  VOL.m = e.target.value / 100; const was = THEME.on; THEME.on = VOL.m > 0; saveVol(); sndLabels();
+  if (THEME.el) THEME.el.volume = VOL.m;
+  const onTitle = !$('#title').classList.contains('hide') || !$('#end').classList.contains('hide');
+  if (!THEME.on) themeStop(.3); else if (!was && onTitle) themePlay();
 });
-themeBtn();
+$('#volS').addEventListener('input', e => {
+  VOL.s = e.target.value / 100; saveVol(); sndLabels();
+  if (A.master) A.master.gain.value = .85 * VOL.s;
+});
+$('#volS').addEventListener('change', () => { audioInit(); sfx.pick(); });   // 放開時試聽
+$('#bTheme').addEventListener('click', e => { e.stopPropagation(); openSnd(); });
+$('#bSnd').addEventListener('click', e => { e.stopPropagation(); openSnd(); });
+$('#bSndClose').addEventListener('click', e => { e.stopPropagation(); closeSnd(); });
 new MutationObserver(() => { if (!$('#end').classList.contains('hide')) themePlay(true); }).observe($('#end'), { attributes: true, attributeFilter: ['class'] });
 $('#bA2hsBack').onclick = () => $('#a2hs').classList.add('hide');
 // 手機在部落格裡（iframe）畫面太小：提供全螢幕／新分頁開啟；iPhone 直接開網頁時教加入主畫面
