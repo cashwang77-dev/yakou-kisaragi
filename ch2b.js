@@ -27,7 +27,7 @@ function buildCh2b() {
   door(35, 9, { locked: true, sign: '廣播室', msg: '廣播室。門鎖著，門縫透出紅色的「ON AIR」燈。', key: 'tvs' });
   door(35, 13, { sign: '往三樓' }); door(35, 16, { sign: '女廁' });
   // 音樂教室
-  obj('portrait', 6, 2); obj('piano', 5, 5, { act: 'piano', label: '彈鋼琴' }); obj('chalk', 9, 2, { act: 'score', label: '看黑板上的樂譜' });
+  obj('portrait', 6, 2); obj('piano', 5, 5, { act: 'piano', label: '彈鋼琴' }); obj('chalk', 9, 2, { act: 'score', label: '看黑板上的樂譜', solid: false });
   obj('curtain', 2, 4); obj('curtain', 2, 7);
   // 生物教室
   for (const x of [14, 16, 18]) for (const y of [4, 6]) obj('labtable', x, y);
@@ -325,7 +325,16 @@ sceneDrawObj = function (o, cx, cy, shaking) {
       break;
     }
     case 'piano': box(x - .1, y + .1, 1.2, .8, 16, '#1a1a1e', '#0e0e12', '#0a0a0d'); box(x - .05, y + .1, 1.1, .25, 12, '#e8e4dc', null, null, 16); break;
-    case 'chalk': box(x, y + .05, 1, .2, 6, '#3a3a36', '#2a2a26', '#222'); break;
+    case 'chalk': {   // 掛在後牆上的黑板（橫跨 3 格）：木框、綠板、粉筆五線譜（10/22 使用者說看不到黑板）
+      for (const dx of [-1, 0, 1]) {
+        faceRect(x + dx, y - 1, 'L', 0, 1, 10, 36, '#5a4330');
+        faceRect(x + dx, y - 1, 'L', dx === -1 ? .08 : 0, dx === 1 ? .92 : 1, 12, 34, '#3f6a52');
+        for (let k = 0; k < 5; k++) faceRect(x + dx, y - 1, 'L', dx === -1 ? .15 : 0, dx === 1 ? .85 : 1, 18 + k * 2.4, 18.6 + k * 2.4, 'rgba(235,240,230,.8)');
+      }
+      for (const [dx, u, v] of [[-1, .55, 21], [0, .2, 25], [0, .7, 28]]) faceRect(x + dx, y - 1, 'L', u, u + .14, v, v + 2.2, '#f0f0e8');   // 三個音符
+      box(x - 1, y + .02, 3, .12, 9, '#6a5038', '#4a3826', '#3e2f20');   // 粉筆槽
+      break;
+    }
     case 'curtain': box(x + .05, y + .1, .3, .8, 36 + shaking, '#5a1f24', '#3e1518', '#341215'); break;
     case 'labtable': box(x + .05, y + .2, .9, .6, 13, '#2e3236', '#1f2225', '#1a1c1f'); ctx.fillStyle = '#9aa3a6'; ctx.fillRect(cx - 2, cy - 17, 3, 2); break;
     case 'stand': box(x + .2, y + .2, .6, .6, 8, '#7a6a52', '#544836', '#4a3f30'); if (AM.state === 'frozen') break; ctx.fillStyle = '#5a1d1d'; ctx.fillRect(cx - 3, cy - 12, 6, 2); break;
