@@ -213,3 +213,58 @@ const _updateA = update;
 update = function (dt) { _updateA(dt); ambUpdate(dt); };
 // 回到標題、結束畫面、暫停聲音設定時停掉
 setInterval(() => { if (G.mode !== 'play') for (const a of Object.values(AMB)) if (a && a.el && !a.el.paused) { if (AMB.fixedVol) { a.el.pause(); continue; } a.el.volume = Math.max(0, a.el.volume - .1); if (a.el.volume < .02) a.el.pause(); } }, 100);
+
+/* ---------- 怪談筆記（圖鑑）：遇過的鬼與怪事，存在 localStorage，標題畫面「怪談筆記」查看 ---------- */
+const LORE_KEY = 'yakou_kisaragi_lore';
+const LORE = [
+  ['kuchi', '裂口女', '戴口罩的女人，會問「我美嗎？」', '回答「普普通通」她會愣住；丟鼈甲糖她會去撿。', () => GH.active],
+  ['mary', '瑪莉的電話', '整晚打來的洋娃娃，報出越來越近的位置。', '她說的地方，往往就是下一個線索。', () => G.flags.marySeen],
+  ['log', '還在寫的值班日誌', '警衛不在，日誌卻一行一行寫下去。', '最後一行：「4:44　她正在讀這本日誌。」', () => G.flags.log],
+  ['shadow', '慢一拍的影子', '路燈下，影子留在原地，轉頭看著妳。', '……然後自己走進了校舍。', () => G.triggers.shadow],
+  ['photo', '手機裡的照片', '相簿最新一張，是妳在走廊上的背影。', '拍攝時間：4:44。', () => G.inv.phone],
+  ['mareiko', '假死魔靈子', '半夜響起的內線電話，出三道題。', '問到名字要答「假面的假、死人的死、惡魔的魔」。', () => G.flags.quiz],
+  ['ninomiya', '二宮金次郎像', '深夜會去圖書室借書的銅像。', '在圖書室要蹲著走、別用燈照他；把他想借的書放在櫃台。', () => G.scene === 2 && typeof inRoom === 'function' && inRoom('lib', P.x, P.y)],
+  ['desk', '多出來的課桌', '每次回到二年B班，課桌就多一張。', '最後一張桌子上，刻著妳的名字。', () => (G.flags.c2b || 0) > 1],
+  ['hanako', '廁所的花子', '三樓女廁第三間。', '她不是可怕的那一種——她一直陪著被關在裡面的人。', () => G.flags.hanako],
+  ['mirror', '慢半拍的鏡子', '鏡子裡的妳，比妳晚一拍眨眼。', '拆下鏡子後，鏡中的妳還留在牆上揮手。', () => G.flags.mirror1 || G.inv.mirror],
+  ['beethoven', '哭泣的肖像', '音樂教室的貝多芬，眼睛發光時別被看到。', '彈出《月光》開頭的三個音，他就不哭了。', () => G.scene === 3 && typeof in3 === 'function' && in3('music', P.x, P.y)],
+  ['anatomy', '人體模型', '在走廊徘徊，胸口是空的。', '把心臟、肺、胃放回標本台，它就會回去站好。', () => G.scene === 3 && typeof AM === 'object' && AM.state !== 'off' && dist(AM.x, AM.y, P.x, P.y) < 7],
+  ['tv', '電視裡的女人', '電視一台台亮起，她會慢慢爬出來。', '在她爬出來之前拔掉插頭。', () => (G.flags.tvOff || 0) > 0],
+  ['broadcast', '4:44 的放學廣播', '2004 年的廣播，點名還留在校內的學生。', '最後叫到的名字，是妳。', () => G.flags.broadcast],
+  ['hikiko', '妃姬子', '拖著麻袋在舊校舍巡行的女生。', '她怕鏡子——讓她看見自己。', () => G.triggers.oldIn],
+  ['plist', '末班車乘客名單', '候車室的名單，列著歷年放學後返校的學生。', '最後一行是妳的名字，墨水還沒乾。', () => G.flags.plistSeen],
+  ['sumika', '澄香', '在如月車站等了二十年的女生。', '她在等的人，叫妃姬子。', () => G.flags.metSumi],
+  ['passenger', '黑影乘客', '月台上排隊等車的黑色人影。', '不要用燈照他們，也不要在他們旁邊跑。', () => G.triggers.p1In],
+  ['teke', 'Teke Teke', '在軌道上爬行的上半身女生。「テケテケ」聲變大就要躲。', '她問腳在哪裡，就告訴她：校後的平交道。', () => G.triggers.p2In],
+];
+function loreGot() { try { return JSON.parse(localStorage.getItem(LORE_KEY)) || []; } catch (e) { return []; } }
+function loreCheck() {
+  if (G.mode !== 'play' || TEST) return;
+  const got = loreGot(); let add = null;
+  for (const [id, name, , , cond] of LORE) { if (got.includes(id)) continue; let ok = false; try { ok = !!cond(); } catch (e) { } if (ok) { got.push(id); add = name; } }
+  if (add) { try { localStorage.setItem(LORE_KEY, JSON.stringify(got)); } catch (e) { } toast(`📖 怪談筆記：記下了「${add}」（${got.length} / ${LORE.length}）`); }
+}
+setInterval(loreCheck, 1000);
+// 沒有旗標可判斷的：瑪莉來電、末班車名單
+const _phoneCallL = phoneCall;
+phoneCall = function (lines, num) { if (!num || num === '未知號碼' || num === '瑪莉') G.flags.marySeen = true; return _phoneCallL.apply(this, arguments); };
+const _objActionL = objAction;
+objAction = async function (o) { if (o.act === 'plist') G.flags.plistSeen = true; return _objActionL(o); };
+function loreOpen() {
+  let el = document.getElementById('lore');
+  if (!el) {
+    el = document.createElement('div'); el.id = 'lore'; el.className = 'ui full hide';
+    const st = document.createElement('style');
+    st.textContent = '#lore{background:rgba(0,0,0,.94);z-index:12;justify-content:flex-start;overflow:auto;padding:calc(var(--u)*14) calc(var(--u)*12)}#lore h2{font-family:"Noto Serif TC",serif;letter-spacing:.2em;font-size:calc(var(--u)*16);margin-bottom:calc(var(--u)*4)}#lore .lc{color:var(--dim);font-size:calc(var(--u)*8);margin-bottom:calc(var(--u)*8)}#lore .lg{display:grid;grid-template-columns:repeat(auto-fill,minmax(calc(var(--u)*170),1fr));gap:calc(var(--u)*5);width:min(100%,calc(var(--u)*560))}#lore .le{border:1px solid #4b4540;background:rgba(30,26,24,.85);padding:calc(var(--u)*5) calc(var(--u)*7);font-size:calc(var(--u)*8);line-height:1.6}#lore .le b{display:block;font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*10);color:#e8dcc4}#lore .le.no{opacity:.45}#lore .le em{font-style:normal;color:#c9b98a}.phone #lore .le{font-size:calc(var(--u)*9.5)}.phone #lore .le b{font-size:calc(var(--u)*11)}';
+    document.head.appendChild(st); document.getElementById('wrap').appendChild(el);
+  }
+  const got = loreGot();
+  el.innerHTML = `<h2>怪談筆記</h2><div class="lc">已記下 ${got.length} / ${LORE.length}　（遇到了就會自動記下來）</div><div class="lg">` +
+    LORE.map(([id, name, desc, rule]) => got.includes(id) ? `<div class="le"><b>${name}</b>${desc}<br><em>${rule}</em></div>` : `<div class="le no"><b>？？？</b>還沒有遇到。</div>`).join('') +
+    `</div><div class="btns" style="margin-top:calc(var(--u)*12)"><button id="bLoreBack">返回</button></div>`;
+  el.classList.remove('hide');
+  document.getElementById('bLoreBack').onclick = () => el.classList.add('hide');
+}
+if (document.getElementById('bLore')) document.getElementById('bLore').onclick = loreOpen;
+// 截圖：&lore=N（假裝已記下前 N 個，打開怪談筆記）
+if (typeof TEST !== 'undefined' && TEST === 'shot' && Q.get('lore')) setTimeout(() => { try { localStorage.setItem(LORE_KEY, JSON.stringify(LORE.slice(0, +Q.get('lore')).map(x => x[0]))); } catch (e) { } loreOpen(); }, 400);
