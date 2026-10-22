@@ -470,9 +470,19 @@ const showA2hs = () => $('#a2hs').classList.remove('hide');
     b.classList.remove('hide'); b.addEventListener('click', showA2hs);
   }
 })();
+/* 匿名遊玩統計：送到使用者自己的 Apps Script（Downloads\夜校如月_統計）寫進試算表；不記個資、不用 cookie，只在正式網站送 */
+const STAT_URL = 'https://script.google.com/macros/s/AKfycbwLvOgx2so4aQKHEB3VlOg6HyVjFptfe41YJY4rgVrqvokEfMdD_9VdbFy1z6yl7hj6WA/exec';
+function stat(ev, d) {
+  if (TEST || !/github\.io$/.test(location.hostname)) return;
+  try {
+    const q = new URLSearchParams({ ev, d: d || '', m: isTouch ? 'm' : 'd', s: Q.get('embed') ? 'e' : 'w' });
+    fetch(STAT_URL + '?' + q, { mode: 'no-cors', keepalive: true }).catch(() => { });
+  } catch (e) { }
+}
 let toastT = 0;
 function toast(t) { const e = $('#toast'); e.textContent = t; e.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => e.classList.remove('show'), 2200); }
 function chapter(sub, title) {
+  stat('reach', sub + ' ' + title);
   const e = $('#chap'); e.querySelector('span').textContent = sub; e.querySelector('b').textContent = title;
   e.classList.add('show'); setTimeout(() => e.classList.remove('show'), 3200);
 }
@@ -969,6 +979,7 @@ function loadCP(cp) {
   setObj(cp.obj);
 }
 function gameOver() {
+  stat('over', '場景' + G.scene);
   G.mode = 'over'; sfx.sting(); setTimeout(() => setPose('down'), 500);
   $('#overTx').textContent = ['剪刀的聲音，就在耳邊。', '「……下次，要回答得好聽一點哦。」'][Math.floor(Math.random() * 2)];
   setTimeout(() => { $('#hud').classList.add('hide'); $('#touch').classList.add('hide'); $('#over').classList.remove('hide'); }, 1800);
@@ -1326,8 +1337,8 @@ function resetWorld() {
 }
 // 手機按開始時順便全螢幕（Android）
 const fsOnStart = () => { if (isTouch && !Q.get('embed')) goFS().catch(() => { }); };
-$('#bStart').onclick = () => { audioInit(); fsOnStart(); resetWorld(); $('#title').classList.add('hide'); intro(); };
-$('#bCont').onclick = () => { audioInit(); fsOnStart(); let s = null; try { s = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { } if (!s) return; resetWorld(); G.cp = s; loadCP(s); startPlay(); };
+$('#bStart').onclick = () => { stat('start'); audioInit(); fsOnStart(); resetWorld(); $('#title').classList.add('hide'); intro(); };
+$('#bCont').onclick = () => { stat('cont'); audioInit(); fsOnStart(); let s = null; try { s = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { } if (!s) return; resetWorld(); G.cp = s; loadCP(s); startPlay(); };
 $('#bHelp').onclick = () => $('#help').classList.remove('hide');
 /* 章節選擇：玩到哪一章才解鎖（沒玩過序章的人看不到這個按鈕） */
 const REACH_KEY = 'yakou_kisaragi_reach';
@@ -1342,6 +1353,7 @@ function refreshChapBtn() {
   document.querySelectorAll('#chapSel [data-ch]').forEach(b => b.classList.toggle('hide', +b.dataset.ch > r));
 }
 async function startFrom(ch) {
+  stat('chap', String(ch));
   audioInit(); fsOnStart(); resetWorld();
   $('#chapSel').classList.add('hide'); $('#title').classList.add('hide');
   if (ch === 1) return intro();
@@ -1354,6 +1366,7 @@ $('#bChap').onclick = () => { refreshChapBtn(); $('#chapSel').classList.remove('
 $('#bChapBack').onclick = () => $('#chapSel').classList.add('hide');
 document.querySelectorAll('#chapSel [data-ch]').forEach(b => b.onclick = () => startFrom(+b.dataset.ch));
 refreshChapBtn();
+stat('open');
 // 主題曲：一打開就自動播放；被瀏覽器擋下（還沒互動過不准出聲）才顯示「點擊畫面進入」入口
 const gateOpen = () => {
   const g = $('#gate'); if (g.classList.contains('hide') || g.classList.contains('out')) return;
@@ -1404,7 +1417,7 @@ $('#volS').addEventListener('change', () => { audioInit(); sfx.pick(); });   // 
 $('#bTheme').addEventListener('click', e => { e.stopPropagation(); openSnd(); });
 $('#bSnd').addEventListener('click', e => { e.stopPropagation(); openSnd(); });
 $('#bSndClose').addEventListener('click', e => { e.stopPropagation(); closeSnd(); });
-new MutationObserver(() => { if (!$('#end').classList.contains('hide')) themePlay(true); }).observe($('#end'), { attributes: true, attributeFilter: ['class'] });
+new MutationObserver(() => { if (!$('#end').classList.contains('hide')) { themePlay(true); stat('end', $('#end h2').textContent); } }).observe($('#end'), { attributes: true, attributeFilter: ['class'] });
 $('#bA2hsBack').onclick = () => $('#a2hs').classList.add('hide');
 // 手機在部落格裡（iframe）畫面太小：提供全螢幕／新分頁開啟；iPhone 直接開網頁時教加入主畫面
 if (Q.get('embed') && isTouch) {
