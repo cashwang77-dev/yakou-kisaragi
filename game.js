@@ -1326,11 +1326,27 @@ $('#bStart').onclick = () => { audioInit(); fsOnStart(); resetWorld(); $('#title
 $('#bCont').onclick = () => { audioInit(); fsOnStart(); let s = null; try { s = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { } if (!s) return; resetWorld(); G.cp = s; loadCP(s); startPlay(); };
 $('#bHelp').onclick = () => $('#help').classList.remove('hide');
 // 主題曲：一打開就自動播放；被瀏覽器擋下（還沒互動過不准出聲）才顯示「點擊畫面進入」入口
-const gateOpen = () => { if ($('#gate').classList.contains('hide')) return; $('#gate').classList.add('hide'); audioInit(); themePlay(); };
+const gateOpen = () => {
+  const g = $('#gate'); if (g.classList.contains('hide') || g.classList.contains('out')) return;
+  audioInit(); themePlay(); g.classList.add('out'); setTimeout(() => { g.classList.add('hide'); g.classList.remove('out'); }, 850);
+};
+// 入口畫面：場景框依畫面比例做 cover（動畫層才會對準圖上的手機、出口燈、窗戶）
+function gateFit() { const g = $('#gate'), sc = $('#gate .gscene'), r = 1376 / 768; if (!g.clientWidth) return; const w = Math.max(g.clientWidth, g.clientHeight * r); sc.style.width = w + 'px'; }
+addEventListener('resize', () => setTimeout(gateFit, 50));
+// 入口畫面的雜訊顆粒（監視器感）
+(function gateNoise() {
+  const cv = $('#gate .gnoise'), g = cv.getContext('2d'), img = g.createImageData(cv.width, cv.height);
+  setInterval(() => {
+    if ($('#gate').classList.contains('hide')) return;
+    for (let i = 0; i < img.data.length; i += 4) { const v = Math.random() * 255; img.data[i] = img.data[i + 1] = img.data[i + 2] = v; img.data[i + 3] = 255; }
+    g.putImageData(img, 0, 0);
+  }, 90);
+})();
 // 手機觸控的 pointerdown 不算「使用者操作」（要手指放開才算），在 pointerdown 裡 play() 會被擋 → 一律用 click
 $('#gate').addEventListener('click', gateOpen);
-if (!TEST && THEME.on) {
-  const showGate = () => { if (THEME.el.paused && !$('#title').classList.contains('hide')) $('#gate').classList.remove('hide'); };
+if (Q.get('gate')) { $('#gate').classList.remove('hide'); setTimeout(gateFit, 0); }   // 預覽入口畫面
+else if (!TEST && THEME.on) {
+  const showGate = () => { if (THEME.el.paused && !$('#title').classList.contains('hide')) { $('#gate').classList.remove('hide'); gateFit(); } };
   themePlay().then(ok => { if (!ok) showGate(); });
   setTimeout(showGate, 1500);   // 有些手機擋自動播放時 play() 不回應也不報錯
 }
