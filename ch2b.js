@@ -56,6 +56,7 @@ function buildCh2b() {
 
 /* ---------- 開場（從第二章（上）接過來） ---------- */
 async function startCh2b() {
+  markReach(3);   // 解鎖章節選擇
   await card('card_hall', ['堆在樓梯上的桌椅倒了一地。', '樓上很安靜。安靜到聽得見自己的心跳。', '……還有，遠遠地，一台電視沒關的沙沙聲。']);
   loadScene(3);
   Object.assign(P, { x: 4.5, y: 17, dir: 0, hidden: null, crouch: false, pose: null });

@@ -69,6 +69,7 @@ function buildCh2() {
 
 /* ---------- 開場 ---------- */
 async function startCh2() {
+  markReach(2);   // 解鎖章節選擇
   await card('card_hall', ['……鞋箱前面，一個人都沒有。', '只有咪醬的室內鞋，整整齊齊地擺在走廊正中間。', '玄關的門被鐵鍊纏死了。外面的雨聲，聽起來好遠。']);
   loadScene(2);
   Object.assign(P, { x: 4.5, y: 23.2, dir: 0, hidden: null, crouch: false, pose: null });

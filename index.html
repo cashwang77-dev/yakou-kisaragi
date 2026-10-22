@@ -97,7 +97,11 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
 .btns button:hover,.btns button:focus{border-color:var(--red);color:#fff;outline:none}
 #title .foot{position:absolute;pointer-events:auto;bottom:calc(var(--u)*10);font-size:calc(var(--u)*8);color:#77726b}
 #title .foot a{color:#a99f8e}
-#help{background:rgba(0,0,0,.92)}
+#help,#chapSel{background:rgba(0,0,0,.92)}
+#chapSel .hb{text-align:center}
+#chapSel h2{font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*16);margin-bottom:calc(var(--u)*10);letter-spacing:.2em}
+#chapSel .cnote{font-size:calc(var(--u)*9);color:var(--dim);margin-top:calc(var(--u)*8)}
+#chapSel .btns button{width:calc(var(--u)*200)}
 #help::before{display:none}
 #help .hb{width:calc(var(--u)*430);font-size:calc(var(--u)*10);line-height:1.75}
 #help h2{font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*16);margin-bottom:calc(var(--u)*8);letter-spacing:.2em}
@@ -243,11 +247,24 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
       <button id="bFull" class="hide">⛶ 全螢幕遊玩</button>
       <button id="bStart">開始遊戲</button>
       <button id="bCont" class="hide">從存檔繼續</button>
+      <button id="bChap" class="hide">章節選擇</button>
       <button id="bHelp">操作說明</button>
     </div>
     <div class="foot" id="foot">戴上耳機遊玩效果最佳</div>
     <button id="bTheme">♪ 主題曲 ON</button>
     <div id="lyric" class="ui"></div>
+  </div>
+  <div id="chapSel" class="ui full hide">
+    <div class="hb">
+      <h2>章節選擇</h2>
+      <div class="btns">
+        <button data-ch="1">序章　放學後</button>
+        <button data-ch="2">第二章（上）　七大不思議</button>
+        <button data-ch="3">第二章（下）　七大不思議</button>
+      </div>
+      <p class="cnote">玩到的章節才會出現在這裡。</p>
+      <div class="btns" style="margin-top:calc(var(--u)*10)"><button id="bChapBack">返回</button></div>
+    </div>
   </div>
   <div id="help" class="ui full hide">
     <div class="hb">
@@ -298,8 +315,8 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
   </div>
   <div id="rot" class="ui hide">請將手機轉為橫向遊玩<br>↻</div>
 </div>
-<script src="game.js?v=7311291e"></script>
-<script src="ch2.js?v=bba4c423"></script>
-<script src="ch2b.js?v=1a633be5"></script>
+<script src="game.js?v=d7b0bcf6"></script>
+<script src="ch2.js?v=b17b3204"></script>
+<script src="ch2b.js?v=2f85f872"></script>
 </body>
 </html>

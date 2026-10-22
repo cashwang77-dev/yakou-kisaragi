@@ -1325,6 +1325,31 @@ const fsOnStart = () => { if (isTouch && !Q.get('embed')) goFS().catch(() => { }
 $('#bStart').onclick = () => { audioInit(); fsOnStart(); resetWorld(); $('#title').classList.add('hide'); intro(); };
 $('#bCont').onclick = () => { audioInit(); fsOnStart(); let s = null; try { s = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { } if (!s) return; resetWorld(); G.cp = s; loadCP(s); startPlay(); };
 $('#bHelp').onclick = () => $('#help').classList.remove('hide');
+/* 章節選擇：玩到哪一章才解鎖（沒玩過序章的人看不到這個按鈕） */
+const REACH_KEY = 'yakou_kisaragi_reach';
+function getReach() {
+  let r = 1;
+  try { r = Math.max(r, +localStorage.getItem(REACH_KEY) || 1); const sv = JSON.parse(localStorage.getItem(SAVE_KEY)); if (sv && sv.scene) r = Math.max(r, sv.scene); } catch (e) { }
+  return r;
+}
+function markReach(n) { if (TEST) return; try { if (n > (+localStorage.getItem(REACH_KEY) || 1)) localStorage.setItem(REACH_KEY, String(n)); } catch (e) { } }
+function refreshChapBtn() {
+  const r = getReach(); $('#bChap').classList.toggle('hide', r < 2);
+  document.querySelectorAll('#chapSel [data-ch]').forEach(b => b.classList.toggle('hide', +b.dataset.ch > r));
+}
+async function startFrom(ch) {
+  audioInit(); fsOnStart(); resetWorld();
+  $('#chapSel').classList.add('hide'); $('#title').classList.add('hide');
+  if (ch === 1) return intro();
+  G.inv.flashlight = true; G.inv.phone = true;   // 第一章結束時身上一定有的東西
+  if (ch === 3) G.inv.pages = [1, 2];             // 第二章（上）拿到的兩頁日記
+  startPlay();
+  if (ch === 2) await startCh2(); else await startCh2b();
+}
+$('#bChap').onclick = () => { refreshChapBtn(); $('#chapSel').classList.remove('hide'); };
+$('#bChapBack').onclick = () => $('#chapSel').classList.add('hide');
+document.querySelectorAll('#chapSel [data-ch]').forEach(b => b.onclick = () => startFrom(+b.dataset.ch));
+refreshChapBtn();
 // 主題曲：一打開就自動播放；被瀏覽器擋下（還沒互動過不准出聲）才顯示「點擊畫面進入」入口
 const gateOpen = () => {
   const g = $('#gate'); if (g.classList.contains('hide') || g.classList.contains('out')) return;
@@ -1391,6 +1416,11 @@ async function runTest(kind) {
     if (kind === 'ch2') return testCh2();
     if (kind === 'ch2load') return testCh2Load();
     if (kind === 'ch2b') return testCh2b();
+    if (kind === 'chap') {   // 章節選擇：直接從第二章（上）、（下）開始
+      await startFrom(2); await waitFree(); const a = G.scene === 2 && G.inv.flashlight && G.mode === 'play';
+      await startFrom(3); await waitFree(); const b = G.scene === 3 && G.inv.pages.length === 2 && !$('#hud').classList.contains('hide');
+      document.title = (a && b ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary()); return;
+    }
     if (kind === 'comic') { intro(); document.title = 'COMIC'; return; }
     if (kind === 'shot') { if (Q.get('scene')) loadScene(+Q.get('scene')); tp(Number(Q.get('x') || 27.5), Number(Q.get('y') || 30)); P.dir = 0; G.inv.flashlight = true; P.light = true; if (Q.get('ghost')) { const ch = Q.get('ghost') === 'chase'; spawnGhost(P.x - (ch ? 6 : 2), P.y - (ch ? 6 : 2)); GH.state = ch ? 'chase' : 'pause'; GH.timer = 99; GH.dir = 4; } if (Q.get('crouch')) P.crouch = true; if (Q.get('pose')) setPose(Q.get('pose')); if (Q.get('atk')) GH.atkLoop = true; if (Q.get('dir')) P.dir = +Q.get('dir'); if (Q.get('hold')) { G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 }; G.inv.candy = 2; catchPlayer(false); } document.title = 'SHOT'; return; }
     if (kind === 'chase') {
