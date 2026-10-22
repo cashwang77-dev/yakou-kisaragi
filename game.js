@@ -1327,12 +1327,20 @@ $('#bCont').onclick = () => { audioInit(); fsOnStart(); let s = null; try { s = 
 $('#bHelp').onclick = () => $('#help').classList.remove('hide');
 // 主題曲：一打開就自動播放；被瀏覽器擋下（還沒互動過不准出聲）才顯示「點擊畫面進入」入口
 const gateOpen = () => { if ($('#gate').classList.contains('hide')) return; $('#gate').classList.add('hide'); audioInit(); themePlay(); };
-$('#gate').addEventListener('pointerdown', gateOpen);
-if (!TEST && THEME.on) themePlay().then(ok => { if (!ok && !$('#title').classList.contains('hide')) $('#gate').classList.remove('hide'); });
-$('#title').addEventListener('pointerdown', () => { audioInit(); themePlay(); });
+// 手機觸控的 pointerdown 不算「使用者操作」（要手指放開才算），在 pointerdown 裡 play() 會被擋 → 一律用 click
+$('#gate').addEventListener('click', gateOpen);
+if (!TEST && THEME.on) {
+  const showGate = () => { if (THEME.el.paused && !$('#title').classList.contains('hide')) $('#gate').classList.remove('hide'); };
+  themePlay().then(ok => { if (!ok) showGate(); });
+  setTimeout(showGate, 1500);   // 有些手機擋自動播放時 play() 不回應也不報錯
+}
+$('#title').addEventListener('click', () => { audioInit(); themePlay(); });
+// 保險：標題畫面上任何一次放開手指／點擊，音樂沒在播就補播（也順便解鎖音效）
+const themeRetry = () => { audioInit(); if (THEME.on && !$('#title').classList.contains('hide') && $('#gate').classList.contains('hide') && (!THEME.el || THEME.el.paused)) themePlay(); };
+addEventListener('touchend', themeRetry, { passive: true }); addEventListener('pointerup', themeRetry);
 addEventListener('keydown', () => { if (!$('#gate').classList.contains('hide')) gateOpen(); else if (!$('#title').classList.contains('hide')) themePlay(); });
 const themeBtn = () => { const b = $('#bTheme'); b.textContent = THEME.on ? '♪ 主題曲 ON' : '♪ 主題曲 OFF'; b.classList.toggle('off', !THEME.on); };
-$('#bTheme').addEventListener('pointerdown', e => {
+$('#bTheme').addEventListener('click', e => {
   e.stopPropagation(); THEME.on = !THEME.on; try { localStorage.setItem('kisaragi_theme', THEME.on ? 'on' : 'off'); } catch (er) { }
   THEME.on ? themePlay() : themeStop(.6); themeBtn();
 });
