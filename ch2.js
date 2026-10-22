@@ -44,6 +44,7 @@ function buildCh2() {
   // 玄關
   for (const x of [2, 3, 5, 6]) obj('shoe', x, 17, { act: 'shoe2', label: '看看鞋箱' });
   for (const x of [2, 3, 5, 6]) obj('shoe', x, 21, { act: 'shoe2', label: '看看鞋箱' });
+  obj('floormap', 2, 23, { act: 'floormap', label: '看牆上的平面圖' });   // 掛在玄關左牆上
   // 中庭
   obj('pedestal', 11, 16, { act: 'pedestal', label: '調查台座' });
   [[9, 23], [19, 15], [20, 23], [9, 15]].forEach(([x, y]) => obj('bush', x, y));
@@ -80,6 +81,7 @@ async function startCh2() {
   await wait(TEST ? 10 : 1600);
   await says(['回不去了……', '……手機在震動。']);
   await phoneCall(['我是瑪莉。', '我現在……在保健室。', '那裡很亮哦。']);
+  await says(['……保健室在哪裡？', '玄關的牆上，好像掛著一張平面圖。']);
   setObj('去走廊另一頭的保健室看看');
 }
 
@@ -114,6 +116,7 @@ async function sceneAction(o) {
       saveCP('nurse'); sfx.click(); updateHUD();
       await says(['在病床邊坐了一下。保健室的燈很暖。', '（已存檔。這裡鬼不會進來）']);
       return;
+    case 'floormap': G.flags.sawMap = true; return showFloorMap();
     case 'staffphone': return staffPhone();
     case 'history':
       await says([['校史年表', '1962　創校。　1980　新校舍落成。'], ['校史年表', '2004　（這一行被白色修正液塗掉了，底下透出「二月」兩個字）'], ['校史年表', '2005　舊校舍封閉。']]);
@@ -326,6 +329,46 @@ function sceneOnLoad(cp) {
   if (G.flags.page1Drop && !ITEMS.some(i => i.id === 'page1')) { item('page1', 36, 21, '交換日記'); if ((G.inv.pages || []).includes(1)) ITEMS.at(-1).taken = true; }
 }
 
+/* ---------- 玄關的平面圖：斜角投影跟遊戲畫面同方向，紅點是現在位置 ---------- */
+const MAP2_LABEL = { staff: '教職員室', nurse: '保健室', c2b: '2年B組', hall: '走廊', genkan: '玄關', court: '中庭', stairs: '樓梯', lib: '圖書室' };
+function showFloorMap() {
+  return new Promise(res => {
+    G.lock++; sfx.click();
+    const ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;z-index:9;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;pointer-events:auto';
+    const cv = document.createElement('canvas'), W = Math.min(innerWidth * .97, 1100), H = Math.min(innerHeight * .95, W / 1.6), dpr = devicePixelRatio || 1;
+    cv.width = W * dpr; cv.height = H * dpr; cv.style.cssText = `width:${W}px;height:${H}px;box-shadow:0 0 30px #000`;
+    ov.appendChild(cv); document.body.appendChild(ov);
+    const g = cv.getContext('2d'); g.scale(dpr, dpr);
+    // 舊紙＋框
+    g.fillStyle = '#3a2f24'; g.fillRect(0, 0, W, H);
+    g.fillStyle = '#d9d0b8'; g.fillRect(W * .02, H * .035, W * .96, H * .93);
+    g.fillStyle = 'rgba(120,95,60,.1)'; for (let i = 0; i < 30; i++) { g.beginPath(); g.arc((i * 137) % W, (i * 89) % H, 8 + (i * 7) % 30, 0, 7); g.fill(); }
+    // 斜角投影（跟遊戲同方向）
+    const pr = (x, y) => [x - y, (x + y) / 2], rs = Object.values(ROOM2);
+    let x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9;
+    for (const [a, b, c, d] of rs) for (const [x, y] of [[a, b], [c + 1, b], [c + 1, d + 2], [a, d + 2]]) { const [u, v] = pr(x, y); x0 = Math.min(x0, u); x1 = Math.max(x1, u); y0 = Math.min(y0, v); y1 = Math.max(y1, v); }
+    const k = Math.min(W * .86 / (x1 - x0), H * .74 / (y1 - y0)), ox = W / 2 - (x0 + x1) / 2 * k, oy = H * .17 - y0 * k;
+    const P2 = (x, y) => { const [u, v] = pr(x, y); return [ox + u * k, oy + v * k]; };
+    const quad = (a, b, c, d, fill, line) => { g.beginPath(); [[a, b], [c, b], [c, d], [a, d]].forEach(([x, y], i) => { const [sx, sy] = P2(x, y); i ? g.lineTo(sx, sy) : g.moveTo(sx, sy); }); g.closePath(); g.fillStyle = fill; g.fill(); if (line) { g.strokeStyle = line; g.lineWidth = 2; g.stroke(); } };
+    for (const [r, [a, b, c, d]] of Object.entries(ROOM2)) quad(a, b, c + 1, d + 1, r === 'hall' || r === 'genkan' ? '#ece5d0' : r === 'court' ? '#c9d0b0' : '#f3eedf', '#4a3f33');
+    for (const dr of Object.values(DOORS)) quad(dr.x + .1, dr.y + .1, dr.x + .9, dr.y + .9, dr.chain ? '#7a2a2a' : '#f3eedf', null);
+    g.textAlign = 'center'; g.textBaseline = 'middle';
+    const fs = Math.max(13, Math.min(W / 48, H / 26));
+    for (const [r, [a, b, c, d]] of Object.entries(ROOM2)) { const [sx, sy] = P2((a + c + 1) / 2, (b + d + 1) / 2); g.fillStyle = '#2a241d'; g.font = `600 ${fs}px "Noto Serif TC",serif`; g.fillText(MAP2_LABEL[r], sx, sy); }
+    // 不知道是誰用紅筆圈起來的保健室
+    { const [a, b, c, d] = ROOM2.nurse, [sx, sy] = P2((a + c + 1) / 2, (b + d + 1) / 2); g.strokeStyle = 'rgba(180,20,20,.85)'; g.lineWidth = 2.5; g.beginPath(); g.ellipse(sx, sy, fs * 3.4, fs * 1.5, -.12, .3, 6.5); g.stroke(); g.fillStyle = 'rgba(170,20,20,.9)'; g.font = `${fs * .9}px "Noto Serif TC",serif`; g.fillText('在這裡哦', sx + fs * 3.6, sy - fs * 1.8); }
+    // 標題、現在地、方位
+    g.fillStyle = '#2a241d'; g.font = `900 ${fs * 1.5}px "Noto Serif TC",serif`; g.textAlign = 'left'; g.fillText('校舍一樓　平面圖', W * .05, H * .1);
+    const [px, py] = P2(P.x, P.y); g.fillStyle = '#c81e1e'; g.beginPath(); g.arc(px, py, fs * .45, 0, 7); g.fill();
+    g.font = `700 ${fs}px "Noto Serif TC",serif`; g.textAlign = 'right'; g.fillText('現在地 ●', px - fs * .7, py);
+    g.fillStyle = '#5a5045'; g.font = `${fs * .8}px "Noto Serif TC",serif`; g.textAlign = 'right'; g.fillText('※ 二樓以上請由中央樓梯　　（點擊關閉）', W * .96, H * .93);
+    const close = () => { if (!ov.parentNode) return; ov.remove(); advanceFn = null; G.lock--; res(); };
+    advanceFn = close; ov.addEventListener('click', close);
+    if (TEST && TEST !== 'shot') setTimeout(close, 30);
+  });
+}
+
 /* ---------- 牆面裝飾：門牌 ---------- */
 function sceneWallDeco(x, y, L) {
   const dr = DOORS[(x + 1) + ',' + y];
@@ -352,6 +395,12 @@ function sceneDrawObj(o, cx, cy, shaking) {
     case 'plaque': box(x + .1, y + .1, .8, .3, 26, '#4a4038', '#352d27', '#2c2520'); faceRect(x, y, 'L', .2, .8, 10, 22, '#c9c2ae'); break;
     case 'cabinet': box(x + .1, y + .2, .8, .6, 32, '#6d7378', '#4f5559', '#444a4e'); ctx.fillStyle = '#2a2e31'; ctx.fillRect(cx - 1, cy - 28, 1, 24); break;
     case 'pedestal': box(x + .15, y + .15, .7, .7, 12, '#6c6a64', '#4a4843', '#403e3a'); ctx.fillStyle = '#e8e0c8'; ctx.fillRect(cx - 2, cy - 14, 5, 2); break;
+    case 'floormap': {   // 畫在左牆面上：木框、紙、幾塊房間色塊
+      faceRect(x - 1, y, 'R', .08, .92, 12, 34, '#4a3a2a'); faceRect(x - 1, y, 'R', .14, .86, 14, 32, '#d9d0b8');
+      faceRect(x - 1, y, 'R', .2, .45, 24, 30, '#a99c80'); faceRect(x - 1, y, 'R', .52, .8, 24, 30, '#a99c80'); faceRect(x - 1, y, 'R', .2, .8, 19, 22, '#a99c80');
+      if (!G.flags.sawMap && Math.sin(G.t * 4) > 0) faceRect(x - 1, y, 'R', .6, .66, 26, 28, '#ff3030');
+      break;
+    }
     case 'barricade': box(x + .05, y + .1, .9, .8, 18, '#5a4632', '#3e3022', '#33281c'); box(x + .25, y + .3, .5, .4, 12, '#6a553b', '#3b2f22', '#33291d', 18); break;
   }
 }
@@ -362,6 +411,8 @@ async function testCh2() {
   try {
     await startCh2(); await waitFree();
     if (G.scene !== 2) throw 'not in ch2';
+    tp(2.9, 23.5); P.dir = 6; await interact(); await waitFree();
+    if (!G.flags.sawMap || G.lock) throw 'floormap';
     tp(15.5, 7.2); await wait(60); await waitFree();
     tp(16.6, 6.6); P.dir = 5; await interact(); await waitFree();
     if (!G.flags.notebook) throw 'notebook';
