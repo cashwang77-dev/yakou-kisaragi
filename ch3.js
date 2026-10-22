@@ -303,7 +303,7 @@ async function testCh3() {
     if (DOORS['34,23'].locked) throw 'arch door';
     TEST_CHOICE = o => Math.max(0, o.findIndex(t => /舉起鏡子|她還在等/.test(t)));
     tp(32.5, 25); await wait(50); tp(32.5, 26.2); await wait(80);
-    let t0 = performance.now(); while (G.mode === 'play' && performance.now() - t0 < 20000) await wait(100);
-    document.title = (G.mode === 'end' && G.inv.pages.length === 7 && G.flags.trueEnd ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());
+    let t0 = performance.now(); while (G.mode === 'play' && G.scene === 4 && performance.now() - t0 < 20000) await wait(100);
+    document.title = ((G.mode === 'end' || G.scene === 5) && G.inv.pages.length === 7 && G.flags.trueEnd ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());
   } catch (e) { document.title = 'ERR ' + e + ' ' + JSON.stringify(stateSummary()); }
 }
