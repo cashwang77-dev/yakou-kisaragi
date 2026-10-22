@@ -392,37 +392,32 @@ const LYRICS = [[16, '午前四時四十四分'], [18.6, '止まった時計'], 
   [69.3, '呑み込まれる夜'], [74.7, '鳴り続ける電話'], [112, 'メリーさんの囁き'], [117.3, '帰れない放課後'], [122.7, '迷い込んだ迷路'], [128, '非常口を抜けても'],
   [133.3, 'また同じ四時四十四分'], [138.7, 'マスクの女'], [144, '「わたし、きれい？」'], [149.3, '逃げ場のない校舎'], [154.7, '四の呪いに満ちて'],
   [160, 'ハナコさんの笑いが'], [165.3, '木霊する闇へ'], [170.7, '如月']];
-const THEME = { el: null, g: null, t: 0, on: true };
+const THEME = { el: null, t: 0, f: 0, on: true };
 try { THEME.on = localStorage.getItem('kisaragi_theme') !== 'off'; } catch (e) { }
+// 直接用 <audio> 播（不經 Web Audio：任何環節沒接上就整個無聲，iPhone 靜音開關下 <audio> 也照樣出聲）
+// 前奏放大 2.2 倍已經做進音檔（ffmpeg，見 主題曲_帰れない放課後.txt）
+function themeEl() {
+  if (!THEME.el) { const e = THEME.el = new Audio('assets/theme.mp3'); e.loop = true; e.preload = 'auto'; }
+  return THEME.el;
+}
 function themePlay(restart) {
-  if (!THEME.on || TEST) return;
-  audioInit(); if (!A.ctx) return;
-  if (!THEME.el) {
-    const e = THEME.el = new Audio('assets/theme.mp3'); e.loop = true; e.preload = 'auto';
-    // 走 Web Audio 才能淡出（iPhone 不支援改 audio.volume）
-    // 前奏只有很輕的八音盒（峰值 0.37，全曲峰值 1.0）：boost 在前 15 秒放大，之後回到 1
-    try {
-      THEME.g = A.ctx.createGain(); THEME.g.gain.value = 0; THEME.boost = A.ctx.createGain(); THEME.boost.gain.value = 2.2;
-      A.ctx.createMediaElementSource(e).connect(THEME.boost).connect(THEME.g).connect(A.master);
-    } catch (er) { THEME.g = null; }
-  }
-  clearTimeout(THEME.t);
-  if (restart) THEME.el.currentTime = 0;
-  THEME.el.play().catch(() => { });
-  themeVol(.9, 1.2);
+  if (!THEME.on || TEST) return Promise.resolve(false);
+  const e = themeEl(); clearTimeout(THEME.t); clearInterval(THEME.f);
+  if (restart) e.currentTime = 0;
+  e.volume = .9;
+  return e.play().then(() => true, () => false);
 }
-function themeVol(v, sec) {
-  if (!THEME.el) return;
-  if (THEME.g) { const g = THEME.g.gain, t = A.ctx.currentTime; g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(v, t + sec); }
-  else THEME.el.volume = Math.min(1, v);
-}
+// 淡出用 audio.volume；iPhone 不能改音量 → 時間到直接停
 function themeStop(sec = 4) {
-  if (!THEME.el || THEME.el.paused) return;
-  themeVol(0, sec); clearTimeout(THEME.t); THEME.t = setTimeout(() => THEME.el.pause(), sec * 1000 + 150);
+  const e = THEME.el; if (!e || e.paused) return;
+  clearInterval(THEME.f); const v0 = e.volume, t0 = performance.now();
+  THEME.f = setInterval(() => {
+    const k = (performance.now() - t0) / (sec * 1000);
+    if (k >= 1) { clearInterval(THEME.f); e.pause(); e.volume = .9; } else e.volume = v0 * (1 - k);
+  }, 50);
 }
 // 標題／結局畫面顯示目前唱到的歌詞
 setInterval(() => {
-  if (THEME.boost && THEME.el && !THEME.el.paused) THEME.boost.gain.setTargetAtTime(THEME.el.currentTime < 15 ? 2.2 : 1, A.ctx.currentTime, .6);
   const box = $('#lyric'); if (!box) return;
   const e = THEME.el, scr = !$('#title').classList.contains('hide') ? $('#title') : !$('#end').classList.contains('hide') ? $('#end') : null;
   let line = '';
@@ -1330,8 +1325,12 @@ const fsOnStart = () => { if (isTouch && !Q.get('embed')) goFS().catch(() => { }
 $('#bStart').onclick = () => { audioInit(); fsOnStart(); resetWorld(); $('#title').classList.add('hide'); intro(); };
 $('#bCont').onclick = () => { audioInit(); fsOnStart(); let s = null; try { s = JSON.parse(localStorage.getItem(SAVE_KEY)); } catch (e) { } if (!s) return; resetWorld(); G.cp = s; loadCP(s); startPlay(); };
 $('#bHelp').onclick = () => $('#help').classList.remove('hide');
-$('#title').addEventListener('pointerdown', () => themePlay());
-addEventListener('keydown', () => { if (!$('#title').classList.contains('hide')) themePlay(); });
+// 主題曲：一打開就自動播放；被瀏覽器擋下（還沒互動過不准出聲）才顯示「點擊畫面進入」入口
+const gateOpen = () => { if ($('#gate').classList.contains('hide')) return; $('#gate').classList.add('hide'); audioInit(); themePlay(); };
+$('#gate').addEventListener('pointerdown', gateOpen);
+if (!TEST && THEME.on) themePlay().then(ok => { if (!ok && !$('#title').classList.contains('hide')) $('#gate').classList.remove('hide'); });
+$('#title').addEventListener('pointerdown', () => { audioInit(); themePlay(); });
+addEventListener('keydown', () => { if (!$('#gate').classList.contains('hide')) gateOpen(); else if (!$('#title').classList.contains('hide')) themePlay(); });
 const themeBtn = () => { const b = $('#bTheme'); b.textContent = THEME.on ? '♪ 主題曲 ON' : '♪ 主題曲 OFF'; b.classList.toggle('off', !THEME.on); };
 $('#bTheme').addEventListener('pointerdown', e => {
   e.stopPropagation(); THEME.on = !THEME.on; try { localStorage.setItem('kisaragi_theme', THEME.on ? 'on' : 'off'); } catch (er) { }
