@@ -12,7 +12,7 @@ const ROOM3 = {
 const in3 = (r, x, y) => { const [x0, y0, x1, y1] = ROOM3[r]; return x >= x0 && x < x1 + 1 && y >= y0 && y < y1 + 1; };
 const AM_PATROL = [[18.5, 5.5], [17.5, 10.5], [30.5, 11.5], [36.5, 11.5], [24.5, 11.5], [10.5, 11.5], [3.5, 11.5], [12.5, 11.5], [17.5, 10.5]];
 const AM = { x: 18.5, y: 5.5, dir: 4, state: 'patrol', wp: 0, frame: 0, animD: 0, path: null, timer: 0, r: .27 };
-const NOTES = ['ド', 'ド#', 'レ', 'ミ', 'ファ', 'ソ', 'ソ#', 'ラ', 'シ'], MOON = ['ソ#', 'ド#', 'ミ'];
+const NOTES = ['C', 'C#', 'D', 'E', 'F', 'G', 'G#', 'A', 'B'], MOON = ['G#', 'C#', 'E'];   // 音名用英文（使用者要求，原本是日文ドレミ）
 const TVS = [];   // { o, state:'idle'|'on'|'off', t }
 Object.assign(HIDE, { curtain: '躲到窗簾後', labtable: '躲到實驗桌下', specshelf: '擠進標本架之間' });
 SCENE_PATROL[3] = [[18.5, 11.5]];   // 裂口女不上樓
@@ -97,7 +97,7 @@ function ch2bEnd() {
 async function ch2bAction(o) {
   const I = G.inv, F = G.flags;
   switch (o.act) {
-    case 'score': F.score = true; await says(['黑板上留著用粉筆畫的五線譜，旁邊寫著：', ['黑板', '《月光》第一樂章　開頭：ソ#　ド#　ミ　（一直反覆）'], '……字跡跟交換日記的很像。']); return;
+    case 'score': F.score = true; await says(['黑板上留著用粉筆畫的五線譜，旁邊寫著：', ['黑板', '《月光》第一樂章　開頭：G#　C#　E　（一直反覆）'], '……字跡跟交換日記的很像。']); return;
     case 'piano': {
       if (F.piano) { await says(['鋼琴蓋闔上了。肖像安安靜靜的。']); return; }
       await says(['（掀開琴蓋……要彈哪幾個音？）']);
@@ -107,7 +107,7 @@ async function ch2bAction(o) {
         if (NOTES[i] !== MOON[k]) { F.cryT = G.t; sfx.sting(); amAlarm(7.5, 10.5); await says(['……不對。', '牆上的肖像流下了紅色的眼淚，眼睛直直瞪著這邊——', '（走廊上有腳步聲往這邊來了！）']); return; }
       }
       F.piano = true; sfx.laugh();
-      await says(['ソ#、ド#、ミ……', '琴聲在空教室裡迴盪。肖像的眼淚停了。', '……畫框裡掉出一張摺起來的紙。']);
+      await says(['G#、C#、E……', '琴聲在空教室裡迴盪。肖像的眼淚停了。', '……畫框裡掉出一張摺起來的紙。']);
       item('page4', 6, 3, '交換日記'); return;
     }
     case 'stand': {
