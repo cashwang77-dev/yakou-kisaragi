@@ -1,5 +1,5 @@
 'use strict';
-/* 夜校・如月　試玩版（序章～第二章）
+/* 夜校・如月　試玩版（序章～第三章）
    斜角像素渲染＋光照、鬼怪視線/聽覺 AI、躲藏、反擊、劇情腳本、Web Audio 合成音效。 */
 
 const TW = 32, TH = 16, WALLH = 34;
@@ -1359,8 +1359,9 @@ async function startFrom(ch) {
   if (ch === 1) return intro();
   G.inv.flashlight = true; G.inv.phone = true;   // 第一章結束時身上一定有的東西
   if (ch === 3) G.inv.pages = [1, 2];             // 第二章（上）拿到的兩頁日記
+  if (ch === 4) { G.inv.pages = [1, 2, 3, 4, 5, 6]; G.inv.mirror = true; }   // 第二章結束：六頁日記＋鏡子碎片
   startPlay();
-  if (ch === 2) await startCh2(); else await startCh2b();
+  if (ch === 2) await startCh2(); else if (ch === 3) await startCh2b(); else await startCh3();
 }
 $('#bChap').onclick = () => { refreshChapBtn(); $('#chapSel').classList.remove('hide'); };
 $('#bChapBack').onclick = () => $('#chapSel').classList.add('hide');
@@ -1434,10 +1435,10 @@ try { if (localStorage.getItem(SAVE_KEY)) $('#bCont').classList.remove('hide'); 
 const BLOG = 'https://cashkingw.blogspot.com/2026/10/444.html';
 if (!Q.get('embed')) $('#foot').innerHTML = `戴上耳機遊玩效果最佳　｜　<a href="${Q.get('blog') || BLOG}" target="_top" style="pointer-events:auto">Cash城部落格</a>`;
 
-loadImages(['anatomy', 'tvwoman', 'beethoven', 'hanako', 'ninomiya_walk', 'mi', 'mi_crouch', 'mi_hurt', 'mi_throw', 'mi_light', 'mi_down', 'kuchisake', 'kuchisake_chase', 'kuchisake_atk', 'ninomiya', 'floors', 'floors2', 'walls', 't_tree', 't_dead1', 't_dead2', 't_dead3', 't_bush1', 't_bush2', 't_bush3', 't_cypress', 't_lamp', 't_rack', 't_bike', 't_bench1', 't_bench2', 't_trash', 't_fount', 't_board']).then(() => {
+loadImages(['hikiko', 'anatomy', 'tvwoman', 'beethoven', 'hanako', 'ninomiya_walk', 'mi', 'mi_crouch', 'mi_hurt', 'mi_throw', 'mi_light', 'mi_down', 'kuchisake', 'kuchisake_chase', 'kuchisake_atk', 'ninomiya', 'floors', 'floors2', 'walls', 't_tree', 't_dead1', 't_dead2', 't_dead3', 't_bush1', 't_bush2', 't_bush3', 't_cypress', 't_lamp', 't_rack', 't_bike', 't_bench1', 't_bench2', 't_trash', 't_fount', 't_board']).then(() => {
   buildFloor();
   if (IMG.mi) IMG.mi.rows = 9;
-  for (const [k, r] of [['mi_crouch', 4], ['mi_hurt', 2], ['mi_throw', 2], ['mi_light', 1], ['mi_down', 1], ['kuchisake_atk', 4], ['ninomiya_walk', 4], ['anatomy', 4]]) if (IMG[k]) IMG[k].rows = r;
+  for (const [k, r] of [['mi_crouch', 4], ['mi_hurt', 2], ['mi_throw', 2], ['mi_light', 1], ['mi_down', 1], ['kuchisake_atk', 4], ['ninomiya_walk', 4], ['anatomy', 4], ['hikiko', 4]]) if (IMG[k]) IMG[k].rows = r;
   if (TEST && TEST !== 'shot') { setInterval(() => { update(1 / 30); }, 8); setInterval(render, 200); runTest(TEST); }
   else { requestAnimationFrame(loop); if (TEST) runTest(TEST); }
 });
@@ -1450,13 +1451,14 @@ async function runTest(kind) {
     if (kind === 'ch2') return testCh2();
     if (kind === 'ch2load') return testCh2Load();
     if (kind === 'ch2b') return testCh2b();
+    if (kind === 'ch3') return testCh3();
     if (kind === 'chap') {   // 章節選擇：直接從第二章（上）、（下）開始
       await startFrom(2); await waitFree(); const a = G.scene === 2 && G.inv.flashlight && G.mode === 'play';
       await startFrom(3); await waitFree(); const b = G.scene === 3 && G.inv.pages.length === 2 && !$('#hud').classList.contains('hide');
       document.title = (a && b ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary()); return;
     }
     if (kind === 'comic') { intro(); document.title = 'COMIC'; return; }
-    if (kind === 'shot') { if (Q.get('scene')) loadScene(+Q.get('scene')); tp(Number(Q.get('x') || 27.5), Number(Q.get('y') || 30)); P.dir = 0; G.inv.flashlight = true; P.light = true; if (Q.get('ghost')) { const ch = Q.get('ghost') === 'chase'; spawnGhost(P.x - (ch ? 6 : 2), P.y - (ch ? 6 : 2)); GH.state = ch ? 'chase' : 'pause'; GH.timer = 99; GH.dir = 4; } if (Q.get('crouch')) P.crouch = true; if (Q.get('pose')) setPose(Q.get('pose')); if (Q.get('atk')) GH.atkLoop = true; if (Q.get('dir')) P.dir = +Q.get('dir'); if (Q.get('hold')) { G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 }; G.inv.candy = 2; catchPlayer(false); } document.title = 'SHOT'; return; }
+    if (kind === 'shot') { if (Q.get('scene')) loadScene(+Q.get('scene')); tp(Number(Q.get('x') || 27.5), Number(Q.get('y') || 30)); P.dir = 0; G.inv.flashlight = true; P.light = true; if (Q.get('ghost')) { const ch = Q.get('ghost') === 'chase'; spawnGhost(P.x - (ch ? 6 : 2), P.y - (ch ? 6 : 2)); GH.state = ch ? 'chase' : 'pause'; GH.timer = 99; GH.dir = 4; } if (Q.get('crouch')) P.crouch = true; if (Q.get('pose')) setPose(Q.get('pose')); if (Q.get('atk')) GH.atkLoop = true; if (Q.get('dir')) P.dir = +Q.get('dir'); if (Q.get('hk') && typeof HK === 'object') Object.assign(HK, { x: P.x + 1.5, y: P.y - 1.5, state: 'search', timer: 99, dir: 4 }); if (Q.get('hold')) { G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 }; G.inv.candy = 2; catchPlayer(false); } document.title = 'SHOT'; return; }
     if (kind === 'chase') {
       G.flags.log = true; G.inv.flashlight = true; P.light = true; G.inv.candy = 1; G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 };
       spawnGhost(9.5, 20.5); tp(9.5, 24.5); P.dir = 0; GH.state = 'pauseLook'; GH.timer = 9; GH.look = -9; GH.dir = dirFromWorld(P.x - GH.x, P.y - GH.y);

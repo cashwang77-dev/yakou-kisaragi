@@ -380,7 +380,7 @@ async function testCh2b() {
     P.dir = 0; await interact(); await waitFree();
     if (!G.flags.hanako) throw 'hanako';
     tp(36.4, 21.5); P.dir = 6; await interact(); await waitFree();
-    t0 = performance.now(); while (G.mode === 'play' && performance.now() - t0 < 20000) await wait(100);
-    document.title = (G.mode === 'end' && G.inv.pages.length === 6 ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());
+    t0 = performance.now(); while (G.mode === 'play' && G.scene === 3 && performance.now() - t0 < 20000) await wait(100);
+    document.title = ((G.mode === 'end' || G.scene === 4) && G.inv.pages.length === 6 ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());   // 第二章結束會直接接第三章
   } catch (e) { document.title = 'ERR ' + e + ' ' + JSON.stringify(stateSummary()); }
 }
