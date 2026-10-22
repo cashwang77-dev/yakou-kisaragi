@@ -904,7 +904,7 @@ async function intro() {
     { p: 2, nar: '手機殼裡還夾著定期票。沒有它，明天連學校都去不了。' },
     { p: 3, nar: '她在下一站下車，沿著來時的路走回學校。' },
   ]);
-  startPlay(true);   // 新遊戲：主題曲繼續，走進校門才淡出
+  startPlay(true);   // 新遊戲：主題曲繼續，走進校舍室內走廊（TRIG inside）才淡出
   chapter('序章', '放學後');
   setObj('回學校，到二年B班拿手機');
   saveCP('start');
@@ -916,11 +916,11 @@ function startPlay(keepTheme) {
   G.mode = 'play'; $('#hud').classList.remove('hide'); $('#touch').classList.toggle('hide', !isTouch); $('#title').classList.add('hide'); updateHUD();
 }
 const TRIG = [
-  { id: 'gate', when: () => P.y < 36.6, run: async () => { themeStop(6); await says(['校門……沒有鎖。', '整棟校舍黑漆漆的。只有警衛室好像還亮著燈。']); setObj('去亮著燈的警衛室看看'); } },
+  { id: 'gate', when: () => P.y < 36.6, run: async () => { await says(['校門……沒有鎖。', '整棟校舍黑漆漆的。只有警衛室好像還亮著燈。']); setObj('去亮著燈的警衛室看看'); } },
   { id: 'shadow', when: () => dist(P.x, P.y, 26.5, 20.6) < .9 || dist(P.x, P.y, 27.4, 20.4) < .9, run: async () => { shadowScare(); } },
   { id: 'clock', when: () => P.y < 16 && P.x > 20, run: async () => { await says(['校舍正面的時鐘……停在四點四十四分。', '今天放學的時候，它明明還在走。']); } },
   { id: 'statueGone', when: () => STATUE.gone && dist(P.x, P.y, 32.5, 17.5) < 3.2, run: async () => { await says(['……咦？', '二宮金次郎像……不見了？']); } },
-  { id: 'inside', when: () => isInside(P.x, P.y) && P.y < 12 && P.y > 8.5, run: async () => { await says(['走廊好冷。緊急出口的綠色燈是唯一的光。', '二年B班就在前面。']); setObj('到二年B班拿回手機'); saveCP('inside'); } },
+  { id: 'inside', when: () => isInside(P.x, P.y) && P.y < 12 && P.y > 8.5, run: async () => { themeStop(6); await says(['走廊好冷。緊急出口的綠色燈是唯一的光。', '二年B班就在前面。']); setObj('到二年B班拿回手機'); saveCP('inside'); } },
   { id: 'classroom', when: () => P.x > 13 && P.x < 22 && P.y < 8 && P.y > 2, run: async () => { await says(['黑板上寫著明天的值日生……', '「值日生：澄香」……我們班有這個人嗎？']); } },
 ];
 function checkTriggers() {
