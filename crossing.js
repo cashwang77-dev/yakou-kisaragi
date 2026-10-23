@@ -71,7 +71,7 @@ function ch7Floor(g) {
 { const _w = sceneWall; sceneWall = function (x, y) {
     if (G.scene !== 7 || !IMG.walls5) return _w(x, y);
     if (at(x, y) === 'D') return false;
-    const L = !['#', 'D'].includes(at(x, y + 1)), R = !['#', 'D'].includes(at(x + 1, y)), H = 38, inner = y === 23;
+    const L = !['#', 'D'].includes(at(x, y + 1)), R = !['#', 'D'].includes(at(x + 1, y)), H = 48, inner = y === 23;
     if (L) { faceTexL(IMG.walls5, (inner ? 2 : [0, 3, 0, 7][x % 4]) * 64, 64, x, y + 1, 1, H); const [a, b] = iso(x, y + 1), [c, d] = iso(x + 1, y + 1); poly([[a, b], [c, d], [c, d - H], [a, b - H]], 'rgba(0,0,0,.12)'); }
     if (R) { const [X, Y] = iso(x + 1, y + 1); ctx.setTransform(16 / 64, -8 / 64, 0, H / 68, X, Y - H); ctx.drawImage(IMG.walls5, 0, 0, 64, 68, 0, 0, 64, 68); ctx.setTransform(1, 0, 0, 1, 0, 0); const [a, b] = iso(x + 1, y + 1), [c, d] = iso(x + 1, y); poly([[a, b], [c, d], [c, d - H], [a, b - H]], 'rgba(0,0,0,.4)'); }
     box(x, y, 1, 1, H, '#3a3430', null, null); return true; }; }

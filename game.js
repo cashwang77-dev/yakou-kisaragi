@@ -2,7 +2,8 @@
 /* 夜校・如月　試玩版（序章～第三章）
    斜角像素渲染＋光照、鬼怪視線/聽覺 AI、躲藏、反擊、劇情腳本、Web Audio 合成音效。 */
 
-const TW = 32, TH = 16, WALLH = 34;
+const TW = 32, TH = 16, WALLH = 46;   // 10/23 由 34 加高（使用者：人物太大、場景太小）
+const CHAR_SC = .8;                   // 所有角色 sprite 再縮小（八尺大人一起縮，比例不變）
 let VW = 640, VH = 360;  // 手機縮小內部解析度（＝放大畫面與文字），平板直向會拉高
 const $ = s => document.querySelector(s);
 const cvs = $('#c'), ctx = cvs.getContext('2d');
@@ -1156,7 +1157,7 @@ function drawWall(x, y, alpha) {
   ctx.globalAlpha = alpha;
   if (typeof sceneWall === 'function' && sceneWall(x, y)) { ctx.globalAlpha = 1; return; }   // 各章自己的牆（第四章：店面、圍牆）
   const c = at(x, y);
-  if (c === 'P' && IMG.walls) { texFace(x, y, 'L', 0, 'rgba(0,0,0,.1)', 46, .1); texFace(x, y, 'R', 0, 'rgba(0,0,0,.4)', 46, .1); box(x + .1, y + .1, .8, .8, 46, '#8d8475', null, null); if (x === 25) { faceRect(x, y, 'L', .2, .8, 14, 36, '#2a2722'); } ctx.globalAlpha = 1; return; }
+  if (c === 'P' && IMG.walls) { texFace(x, y, 'L', 0, 'rgba(0,0,0,.1)', 58, .1); texFace(x, y, 'R', 0, 'rgba(0,0,0,.4)', 58, .1); box(x + .1, y + .1, .8, .8, 58, '#8d8475', null, null); if (x === 25) { faceRect(x, y, 'L', .2, .8, 14, 36, '#2a2722'); } ctx.globalAlpha = 1; return; }
   if (c === 'P') { box(x + .1, y + .1, .8, .8, 46, '#5a5852', '#3e3c37', '#33312d'); if (x === 25) { faceRect(x, y, 'L', .2, .8, 14, 36, '#2a2722'); } ctx.globalAlpha = 1; return; }
   if (c === 'D') {
     const dr = DOORS[x + ',' + y];
@@ -1283,7 +1284,7 @@ function drawSprite(img, x, y, dir, frame, opt) {
   const bob = opt.bob || 0;
   ctx.globalAlpha = opt.alpha ?? 1;
   if (!opt.noShadow) { ctx.fillStyle = 'rgba(0,0,0,.45)'; ctx.beginPath(); ctx.ellipse(sx, sy, 9, 4, 0, 0, 7); ctx.fill(); }
-  const sc = opt.sc || 1, h = (opt.crouch ? fh * .78 : fh) * sc, w = fw * sc;
+  const sc = (opt.sc || 1) * (opt.noCharSc ? 1 : CHAR_SC), h = (opt.crouch ? fh * .78 : fh) * sc, w = fw * sc;
   if (opt.tint) {
     const t = drawSprite.tc || (drawSprite.tc = document.createElement('canvas')); t.width = fw; t.height = fh;
     const g = t.getContext('2d'); g.clearRect(0, 0, fw, fh); g.drawImage(img, dir * fw, fy, fw, fh, 0, 0, fw, fh); g.globalCompositeOperation = 'source-atop'; g.fillStyle = opt.tint; g.fillRect(0, 0, fw, fh); g.globalCompositeOperation = 'source-over';
@@ -1324,7 +1325,7 @@ function render() {
     if (sx < -40 || sx > VW + 40 || sy < -20 || sy > VH + 90) continue;
     const dep = x + y + 1;
     if (c === 'f') list.push({ d: dep, f: () => drawFence(x, y) });
-    else if (c === '#' || c === 'P' || c === 'D') list.push({ d: dep, f: a => drawWall(x, y, a), tall: 40, sx, sy });
+    else if (c === '#' || c === 'P' || c === 'D') list.push({ d: dep, f: a => drawWall(x, y, a), tall: WALLH + 6, sx, sy });
     if (o) list.push({ d: dep + .01, f: a => drawObj(o, a), tall: o.t === 'tree' ? 56 : o.t === 'locker' || o.t === 'shoe' || o.t === 'vend' || o.t === 'board' || o.t === 'lamp' ? 34 : 0, sx, sy });
   }
   for (const it of ITEMS) if (!it.taken && !it.off) list.push({ d: it.x + it.y - .3, f: () => { const [sx, sy] = iso(it.x, it.y); const on = Math.sin(G.t * 4 + it.x) > .3; ctx.fillStyle = on ? 'rgba(255,240,200,.9)' : 'rgba(255,240,200,.35)'; ctx.fillRect(sx - 1, sy - (it.id === 'phone' ? 13 : 3), 2, 2); if (on) { ctx.fillRect(sx - 3, sy - (it.id === 'phone' ? 12 : 2), 6, 0.6); } } });

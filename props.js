@@ -22,7 +22,8 @@ function drawProp(o, cx, cy, shaking) {
   const p = PROP[o.t]; if (!p || G.scene === 6) return false;
   const im = IMG[p[0]]; if (!im) return false;
   const sx = Math.round(cx - im.width / 2 + (shaking ? 1 : 0)), sy = Math.round(cy + p[1] - im.height);
-  ctx.drawImage(im, sx, sy);
+  const k = .88, iw = Math.round(im.width * k), ih = Math.round(im.height * k);   // 10/23 物件跟著人物比例略縮
+  ctx.drawImage(im, Math.round(cx - iw / 2 + (shaking ? 1 : 0)), Math.round(cy + p[1] * k - ih), iw, ih);
   // 狀態提示
   if (o.t === 'desk' && o.mine && !G.inv.phone) { ctx.fillStyle = Math.sin(G.t * 5) > 0 ? '#bfe0ff' : '#7aa8d8'; ctx.fillRect(cx - 2, cy - 15, 4, 2); }
   if (o.t === 'hdesk') { ctx.fillStyle = '#2a1e14'; for (let k = 0; k < 4; k++) ctx.fillRect(cx - 7 + k * 3, cy - 17 + (k % 2), 2, 1); }

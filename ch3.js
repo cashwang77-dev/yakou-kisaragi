@@ -298,7 +298,7 @@ async function testCh3() {
     HK.state = 'off';
     tp(20.5, 13.6); P.dir = 0; await interact(); await waitFree();
     if (!G.flags.dutylog) throw 'dutylog';
-    tp(11.5, 18.5); P.dir = 6; await interact(); await waitFree();
+    if (typeof testOldWing === 'function') await testOldWing(); else { tp(11.5, 18.5); P.dir = 6; await interact(); await waitFree(); }
     if (!G.inv.archkey) throw 'key';
     tp(34.5, 22.4); P.dir = 4; await interact(); await waitFree();
     if (DOORS['34,23'].locked) throw 'arch door';

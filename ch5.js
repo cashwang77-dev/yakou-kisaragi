@@ -340,7 +340,7 @@ function sceneWall(x, y) {
     return true;
   }
   if (k === 'shop') {
-    const H = 44, inner = y < 30 && x >= 7 && x <= 14;   // 便利商店裡面：白牆
+    const H = 56, inner = y < 30 && x >= 7 && x <= 14;   // 便利商店裡面：白牆
     if (L) { const sh = y === 30 ? (SHOPS6.find(([a, b]) => x >= a && x <= b) || [0, 0, 4])[2] : 4;
       if (inner) box(x, y, 1, 1, H, null, '#c9cdc8', null); else texFace6(x, y, 'L', sh, 'rgba(0,0,0,.08)', H); }
     if (R) { if (inner) box(x, y, 1, 1, H, null, null, '#a9ada8'); else texFace6(x, y, 'R', 4, 'rgba(0,0,0,.4)', H); }
@@ -351,7 +351,7 @@ function sceneWall(x, y) {
     }
     return true;
   }
-  const H = k === 'house' ? WALLH : 20;
+  const H = k === 'house' ? WALLH : 26;
   const idx = k === 'house' ? (h0 < 2 ? 7 : h0 < 4 ? 4 : 5) : (h0 === 3 ? 6 : 5);
   if (L) texFace6(x, y, 'L', idx, 'rgba(0,0,0,.1)', H);
   if (R) texFace6(x, y, 'R', idx === 7 ? 5 : idx, 'rgba(0,0,0,.4)', H);

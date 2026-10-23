@@ -38,7 +38,7 @@ const k0 = i => i % CAR;
   sceneWall = function (x, y) {
     if (G.scene !== 5 || !IMG.walls5) return _w ? _w(x, y) : false;
     if (at(x, y) === 'D') return false;
-    const L = !['#', 'D'].includes(at(x, y + 1)), R = !['#', 'D'].includes(at(x + 1, y)), H = 44;
+    const L = !['#', 'D'].includes(at(x, y + 1)), R = !['#', 'D'].includes(at(x + 1, y)), H = 56;
     const inWait = x >= 26 && x <= 37 && y <= 9, interiorN = y <= 2;   // 北牆：從室內看
     if (L) {
       const idx = interiorN ? (inWait ? 6 : 2) : x === 24 ? 1 : [0, 3, 0, 7][x % 4];
