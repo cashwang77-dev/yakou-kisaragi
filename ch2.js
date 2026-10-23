@@ -338,7 +338,7 @@ function showFloorMap(R = ROOM2, L = MAP2_LABEL, title = '校舍一樓　平面�
     G.lock++; sfx.click();
     const ov = document.createElement('div');
     ov.style.cssText = 'position:fixed;inset:0;z-index:9;background:rgba(0,0,0,.78);display:flex;align-items:center;justify-content:center;pointer-events:auto';
-    const cv = document.createElement('canvas'), W = Math.min(innerWidth * .97, 1100), H = Math.min(innerHeight * .95, W / 1.6), dpr = devicePixelRatio || 1;
+    const cv = document.createElement('canvas'), W = Math.min(innerWidth * .97, 1100), H = Math.min(innerHeight * .95, W / 1.6), dpr = Math.min(2, devicePixelRatio || 1);   // 10/23 手機：解析度上限 2 倍（省畫布記憶體）
     cv.width = W * dpr; cv.height = H * dpr; cv.style.cssText = `width:${W}px;height:${H}px;box-shadow:0 0 30px #000`;
     ov.appendChild(cv); document.body.appendChild(ov);
     const g = cv.getContext('2d'); g.scale(dpr, dpr);
@@ -366,7 +366,7 @@ function showFloorMap(R = ROOM2, L = MAP2_LABEL, title = '校舍一樓　平面�
     const [px, py] = P2(P.x, P.y); g.fillStyle = '#c81e1e'; g.beginPath(); g.arc(px, py, fs * .45, 0, 7); g.fill();
     g.font = `700 ${fs}px "Noto Serif TC",serif`; g.textAlign = 'center'; g.strokeStyle = '#efe7d2'; g.lineWidth = 4; g.strokeText('現在地', px, py - fs * 1.1); g.fillText('現在地', px, py - fs * 1.1);   // 寫在紅點上方，不壓到房間名
     g.fillStyle = '#5a5045'; g.font = `${fs * .8}px "Noto Serif TC",serif`; g.textAlign = 'right'; g.fillText(note + '　　（點擊關閉）', W * .96, H * .93);
-    const close = () => { if (!ov.parentNode) return; ov.remove(); advanceFn = null; G.lock--; res(); };
+    const close = () => { if (!ov.parentNode) return; ov.remove(); cv.width = cv.height = 0; advanceFn = null; G.lock--; res(); };   // 關掉時釋放畫布
     advanceFn = close; ov.addEventListener('click', close);
     if (TEST && TEST !== 'shot') setTimeout(close, 30);
   });

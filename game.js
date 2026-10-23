@@ -88,7 +88,7 @@ door(5, 32, {}); door(31, 33, {});
 [[24, 20], [33, 22], [19, 28], [36, 27], [22, 35], [12, 35]].forEach(p => obj('bush', p[0], p[1]));
 LAMPS = [[26, 19], [29, 26], [26, 33], [8, 16], [15, 32], [3, 24]];
 LAMPS.forEach(p => obj('lamp', p[0], p[1]));
-obj('vend', 15, 15, { act: 'vend' }); obj('vend', 16, 15, { act: 'vend' });
+obj('vend', 15, 15, { act: 'vend', flip: 1 }); obj('vend', 16, 15, { act: 'vend', flip: 1 });   // 10/23 面向前庭步道
 for (let y = 18; y <= 30; y++) if (y !== 24) { obj('bleach', 1, y); obj('bleach', 2, y, { hideOnly: true }); }
 [[10, 21], [14, 29], [6, 26]].forEach(p => obj('box', p[0], p[1]));
 obj('box', 6, 34, { act: 'keybox', hide: false });
@@ -239,7 +239,8 @@ function buildFloor() {
   }
   // 夜色：整片地面乘上冷色調
   if (useTex) {
-    const keep = document.createElement('canvas'); keep.width = FW; keep.height = FH; keep.getContext('2d').drawImage(floorC, 0, 0);
+    const keep = buildFloor.keep || (buildFloor.keep = Object.assign(document.createElement('canvas'), { width: FW, height: FH }));   // 10/23 重複使用（iPhone 的畫布記憶體有上限，每次 new 一張 2000×1100 會越積越多）
+    { const kg = keep.getContext('2d'); kg.clearRect(0, 0, FW, FH); kg.drawImage(floorC, 0, 0); }
     g.globalCompositeOperation = 'multiply'; g.fillStyle = '#727b94'; g.fillRect(0, 0, FW, FH);
     g.globalCompositeOperation = 'destination-in'; g.drawImage(keep, 0, 0);   // 相乘會把透明處也塗上顏色 → 只保留原本有地板的地方
     g.globalCompositeOperation = 'source-over';
@@ -1157,7 +1158,7 @@ function drawWall(x, y, alpha) {
   ctx.globalAlpha = alpha;
   if (typeof sceneWall === 'function' && sceneWall(x, y)) { ctx.globalAlpha = 1; return; }   // 各章自己的牆（第四章：店面、圍牆）
   const c = at(x, y);
-  if (c === 'P' && IMG.walls) { texFace(x, y, 'L', 0, 'rgba(0,0,0,.1)', 58, .1); texFace(x, y, 'R', 0, 'rgba(0,0,0,.4)', 58, .1); box(x + .1, y + .1, .8, .8, 58, '#8d8475', null, null); if (x === 25) { faceRect(x, y, 'L', .2, .8, 14, 36, '#2a2722'); } ctx.globalAlpha = 1; return; }
+  if (c === 'P' && IMG.walls) { texFace(x, y, 'L', 0, 'rgba(0,0,0,.1)', 58, .1); texFace(x, y, 'R', 0, 'rgba(0,0,0,.4)', 58, .1); box(x + .1, y + .1, .8, .8, 58, '#8d8475', null, null); if (x === 25) { faceRect(x, y, 'L', .2, .8, 14, 36, '#2a2722'); } if (typeof gateSign === 'function') gateSign(x, y); ctx.globalAlpha = 1; return; }
   if (c === 'P') { box(x + .1, y + .1, .8, .8, 46, '#5a5852', '#3e3c37', '#33312d'); if (x === 25) { faceRect(x, y, 'L', .2, .8, 14, 36, '#2a2722'); } ctx.globalAlpha = 1; return; }
   if (c === 'D') {
     const dr = DOORS[x + ',' + y];
