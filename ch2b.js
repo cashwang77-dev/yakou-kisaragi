@@ -385,7 +385,7 @@ async function testCh2b() {
     tp(5.5, 6.3); P.dir = 0; await interact(); await waitFree();
     if (!G.flags.piano) throw 'piano';
     await take('page4');
-    await take('organ_heart'); await take('organ_lung'); await take('organ_stomach');
+    await take('organ_heart'); if (typeof testHomeEc === 'function') await testHomeEc(); else await take('organ_lung'); await take('organ_stomach');
     tp(21.5, 4.4); P.dir = 0; await interact(); await waitFree();
     if (!G.flags.organsPlaced) throw 'stand';
     AM.x = 19.5; AM.y = 6.5;
