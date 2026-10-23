@@ -89,7 +89,7 @@ function fearUpdate(dt) {
   const scripted = GH.active && GH.mode === 'script';   // 第一章裂口女進教室的腳本演出：不會被發現
   const need = P.hidden && d < 4.5;
   FEAR.holding = need && (K.run || !!TEST);           // 自動測試裡一律當作有憋氣
-  if (FEAR.holding) FEAR.breath = Math.max(0, FEAR.breath - 20 * dt);
+  if (FEAR.holding) FEAR.breath = Math.max(0, FEAR.breath - 10 * dt);   // 10/23 使用者：憋氣時間加長一倍（5 秒 → 10 秒）
   else FEAR.breath = Math.min(100, FEAR.breath + 28 * dt);
   if (scripted) FEAR.exposeT = 0;
   else if (need && FEAR.breath <= 0) expose('憋不住了，咳了出來——！');
