@@ -242,7 +242,7 @@ sceneAction = async function (o) { if (G.scene === 4) return ch3Action(o); retur
 const _sceneSprites3 = sceneSprites;
 sceneSprites = function (list) {
   if (G.scene !== 4) return _sceneSprites3(list);
-  if (IMG.hikiko && HK.state !== 'off') list.push({ d: HK.x + HK.y, f: () => drawSprite(IMG.hikiko, HK.x, HK.y, HK.dir, HK.moving ? HK.frame : 0, { jit: HK.state === 'recoil' ? (Math.random() - .5) * 2 : HK.state === 'chase' ? (Math.random() - .5) : 0, alpha: HK.state === 'recoil' ? .7 : 1 }) });
+  if (IMG.hikiko && HK.state !== 'off') list.push({ d: HK.x + HK.y, f: () => drawSprite(IMG.hikiko, HK.x, HK.y, HK.dir, HK.moving ? HK.frame : 0, { lean: HK.state === 'chase' ? .14 : 0, jit: HK.state === 'recoil' ? (Math.random() - .5) * 2 : HK.state === 'chase' ? (Math.random() - .5) : 0, alpha: HK.state === 'recoil' ? .7 : 1 }) });
 };
 const _sceneHUD3 = sceneHUD;
 sceneHUD = function (s) {

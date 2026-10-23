@@ -234,7 +234,7 @@ sceneAction = async function (o) { if (G.scene === 6) return ch5Action(o); retur
 const _sceneSprites5 = sceneSprites;
 sceneSprites = function (list) {
   if (G.scene !== 6) return _sceneSprites5(list);
-  if (BABA.state !== 'off' && IMG.babaa) list.push({ d: BABA.x + BABA.y, f: () => drawSprite(IMG.babaa, BABA.x, BABA.y, BABA.dir, BABA.moving ? BABA.frame : 0, { jit: BABA.state === 'charge' ? (Math.random() - .5) * 2 : 0 }) });
+  if (BABA.state !== 'off' && IMG.babaa) list.push({ d: BABA.x + BABA.y, f: () => drawSprite(IMG.babaa, BABA.x, BABA.y, BABA.dir, BABA.moving ? BABA.frame : 0, { lean: BABA.state === 'charge' ? .22 : 0, jit: BABA.state === 'charge' ? (Math.random() - .5) * 2 : 0 }) });
   if (IMG.jinmen) list.push({ d: DOG.x + DOG.y, f: () => drawSprite(IMG.jinmen, DOG.x, DOG.y, DOG.state === 'sit' ? 4 : DOG.dir, DOG.moving ? DOG.frame : 0) });
   if (HACHI.show && IMG.hachi) { const [hx, hy] = HACHI_SPOTS[HACHI.i]; list.push({ d: hx + hy - 1, f: () => drawSprite(IMG.hachi, hx, hy - .2, 4, 0, { bob: 18 + Math.sin(G.t * 3) * 2, noShadow: true }) }); }
   list.push({ d: KUNE.x + KUNE.y, f: () => drawKune() });

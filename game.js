@@ -1208,6 +1208,7 @@ function drawObj(o, alpha) {
   const shaking = P.hidden === o && G.danger > .5 && Math.sin(G.t * 40) > 0 ? 1 : 0;
   const spr = (n, dy = 0) => { const im = IMG[n]; if (im) ctx.drawImage(im, Math.round(cx - im.width / 2), Math.round(cy - im.height + dy)); return !!im; };
   const v = (x * 7 + y * 13) % 4;
+  if (typeof drawProp === 'function' && drawProp(o, cx, cy, shaking)) { ctx.globalAlpha = 1; return; }   // 10/23 Gemini 物件圖（props.js）
   if (o.t === 'tree' && spr(v < 2 ? 't_tree' : v === 2 ? 't_dead1' : 't_dead2', 5)) { ctx.globalAlpha = 1; return; }
   if (o.t === 'bush' && spr(['t_bush1', 't_bush2', 't_bush3'][(x + y) % 3], 4 + shaking)) { ctx.globalAlpha = 1; return; }
   if (o.t === 'lamp' && IMG.t_lamp) { spr('t_lamp', 3); o.on = !(o.x === 8 && o.y === 16) || Math.sin(G.t * 17) + Math.sin(G.t * 5.3) > -.6; if (!o.on) { ctx.fillStyle = 'rgba(0,0,0,.7)'; ctx.fillRect(cx - 5, cy - 54, 10, 10); } ctx.globalAlpha = 1; return; }
@@ -1262,8 +1263,9 @@ function drawMi() {
   const k = P.pose && NOW() < P.pose.until ? P.pose.k : null, img = k && IMG['mi_' + k];
   if (img) return drawSprite(img, P.x, P.y, P.dir, { sc: MI_SC, alpha: pInvis() ? .4 : 1, frame: k === 'hurt' ? Math.floor(NOW() * 6) : k === 'throw' ? +(NOW() - P.pose.t0 > .12) : 0, noShadow: k === 'down' });
   if (P.crouch && IMG.mi_crouch) return drawSprite(IMG.mi_crouch, P.x, P.y, P.dir, P.moving ? P.frame % 4 : 0, { sc: MI_SC, alpha: pInvis() ? .4 : 1 });
-  if (P.light && !P.moving && IMG.mi_light) return drawSprite(IMG.mi_light, P.x, P.y, P.dir, { sc: MI_SC, alpha: pInvis() ? .4 : 1 });
-  drawSprite(IMG.mi, P.x, P.y, P.dir, { sc: MI_SC, alpha: pInvis() ? .4 : 1, frame: P.moving ? (P.run ? 4 : 0) + P.frame : 0 });
+  const shiver = (G.fear || 0) > 60 && !P.moving ? (Math.random() - .5) * ((G.fear - 60) / 22) : 0;   // 害怕的時候會發抖
+  if (P.light && !P.moving && IMG.mi_light) return drawSprite(IMG.mi_light, P.x, P.y, P.dir, { sc: MI_SC, alpha: pInvis() ? .4 : 1, jit: shiver });
+  drawSprite(IMG.mi, P.x, P.y, P.dir, { sc: MI_SC, alpha: pInvis() ? .4 : 1, frame: P.moving ? (P.run ? 4 : 0) + P.frame : 0, jit: shiver, lean: P.run ? .09 : 0, bob: P.moving && !P.run && P.frame % 2 ? 1 : 0 });
 }
 function drawSprite(img, x, y, dir, frame, opt) {
   if (typeof frame === 'object') { opt = frame; frame = undefined; }   // drawSprite(img,x,y,dir,opt) 或 (img,x,y,dir,frame,opt)
@@ -1279,7 +1281,13 @@ function drawSprite(img, x, y, dir, frame, opt) {
     const t = drawSprite.tc || (drawSprite.tc = document.createElement('canvas')); t.width = fw; t.height = fh;
     const g = t.getContext('2d'); g.clearRect(0, 0, fw, fh); g.drawImage(img, dir * fw, fy, fw, fh, 0, 0, fw, fh); g.globalCompositeOperation = 'source-atop'; g.fillStyle = opt.tint; g.fillRect(0, 0, fw, fh); g.globalCompositeOperation = 'source-over';
     ctx.drawImage(t, 0, 0, fw, fh, Math.round(sx - w / 2), Math.round(sy - h + 1 - bob), w, h);
-  } else ctx.drawImage(img, dir * fw, fy, fw, fh, Math.round(sx - w / 2 + (opt.jit || 0)), Math.round(sy - h + 1 - bob), w, h);
+  } else {
+    // 10/23 動作細節：站著時呼吸起伏（腳不動、頭微微上下）、追擊時身體往前傾
+    const br = !(opt.frame > 0) && !opt.still ? 1 + .022 * Math.sin(G.t * 2.4 + x * 3.1) : 1, hh = Math.round(h * br);
+    const lean = opt.lean ? opt.lean * (SCR[dir] ? Math.sign(SCR[dir][0] - SCR[dir][1] * .5) || 0 : 0) : 0;
+    if (lean) { ctx.save(); ctx.translate(Math.round(sx + (opt.jit || 0)), Math.round(sy + 1 - bob)); ctx.transform(1, 0, -lean, 1, 0, 0); ctx.drawImage(img, dir * fw, fy, fw, fh, Math.round(-w / 2), -hh, w, hh); ctx.restore(); }
+    else ctx.drawImage(img, dir * fw, fy, fw, fh, Math.round(sx - w / 2 + (opt.jit || 0)), Math.round(sy - hh + 1 - bob), w, hh);
+  }
   ctx.globalAlpha = 1;
 }
 const DARK = .5;
@@ -1316,7 +1324,7 @@ function render() {
   for (const p of G.projs) list.push({ d: p.x + p.y, f: () => { const [sx, sy] = iso(p.x, p.y); ctx.fillStyle = p.kind === 'can' ? '#9aa' : p.kind === 'eraser' ? '#e8e4d8' : '#d99a2b'; ctx.fillRect(sx - 2, sy - 10 - Math.sin((.5 - p.life) / .5 * Math.PI) * 12, 4, 3); } });
   if (!P.hidden) list.push({ d: pd, f: drawMi });
   if (G.shadow) { const s = G.shadow; list.push({ d: s.x + s.y, f: () => drawSprite(IMG.mi, s.x, s.y, s.dir, { sc: MI_SC, tint: 'rgba(0,0,0,1)', alpha: .85 * (s.a ?? 1), noShadow: true }) }); }
-  if (GH.active) list.push({ d: GH.x + GH.y, f: () => drawSprite(...ghSpr(), { bob: GH.moving && GH.frame % 2 ? -1 : 0, jit: GH.state === 'chase' ? (Math.random() - .5) * 2 : 0 }) });
+  if (GH.active) list.push({ d: GH.x + GH.y, f: () => drawSprite(...ghSpr(), { bob: GH.moving && GH.frame % 2 ? -1 : 0, jit: GH.state === 'chase' ? (Math.random() - .5) * 2 : 0, lean: GH.state === 'chase' ? .16 : 0 }) });
   if (G.scene !== 1 && typeof sceneSprites === 'function') sceneSprites(list);
   list.sort((a, b) => a.d - b.d);
   for (const l of list) l.f(l.tall && l.d > pd + .2 && near(l.sx, l.sy, l.tall) && !P.hidden ? .3 : 1);

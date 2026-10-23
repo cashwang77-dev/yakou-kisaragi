@@ -187,7 +187,7 @@ async function momCall() {
   }; }
 { const _s = sceneSprites; sceneSprites = function (list) {
     _s(list); if (G.scene !== 6) return;
-    if (HA.state !== 'off' && IMG.hachi_walk) list.push({ d: HA.x + HA.y, f: () => drawSprite(IMG.hachi_walk, HA.x, HA.y, HA.dir, HA.moving ? HA.frame : 0, { alpha: stunned(HA) ? .6 : 1, jit: HA.state === 'hunt' ? (Math.random() - .5) * 1.5 : 0 }) });
+    if (HA.state !== 'off' && IMG.hachi_walk) list.push({ d: HA.x + HA.y, f: () => drawSprite(IMG.hachi_walk, HA.x, HA.y, HA.dir, HA.moving ? HA.frame : 0, { alpha: stunned(HA) ? .6 : 1, jit: HA.state === 'hunt' ? (Math.random() - .5) * 1.5 : 0, lean: HA.state === 'hunt' || HA.state === 'chase' ? .12 : 0 }) });
   }; }
 { const _d = sceneDrawObj; sceneDrawObj = function (o, cx, cy, shaking) {
     if (G.scene !== 6) return _d(o, cx, cy, shaking);

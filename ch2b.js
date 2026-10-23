@@ -297,7 +297,7 @@ sceneAction = async function (o) { if (G.scene === 3) return ch2bAction(o); retu
 const _sceneSprites = sceneSprites;
 sceneSprites = function (list) {
   if (G.scene !== 3) return _sceneSprites(list);
-  if (IMG.anatomy && AM.state !== 'off') list.push({ d: AM.x + AM.y, f: () => drawSprite(IMG.anatomy, AM.x, AM.y, AM.dir, AM.moving ? AM.frame : 0, { jit: AM.state === 'chase' ? (Math.random() - .5) * 1.5 : 0 }) });
+  if (IMG.anatomy && AM.state !== 'off') list.push({ d: AM.x + AM.y, f: () => drawSprite(IMG.anatomy, AM.x, AM.y, AM.dir, AM.moving ? AM.frame : 0, { lean: AM.state === 'chase' ? .14 : 0, jit: AM.state === 'chase' ? (Math.random() - .5) * 1.5 : 0 }) });
   if (G.flags.hanakoOut && IMG.hanako) list.push({ d: 31.5 + 19.3, f: () => { const [sx, sy] = iso(31.5, 19.3); ctx.drawImage(IMG.hanako, Math.round(sx - IMG.hanako.width / 2), Math.round(sy - IMG.hanako.height + 1)); } });   // 單張圖，不走 8 方向的 drawSprite
   const sc = G.tvScare;
   if (sc && NOW() - sc.t < 1.4 && IMG.tvwoman) list.push({ d: sc.x + sc.y, f: () => { const im = IMG.tvwoman, fw = im.width / 4, fh = im.height / 2, k = Math.floor((NOW() - sc.t) / .2) % 4, [sx, sy] = iso(sc.x, sc.y); ctx.drawImage(im, k * fw, fh, fw, fh, Math.round(sx - fw / 2), Math.round(sy - fh + 2), fw, fh); } });
