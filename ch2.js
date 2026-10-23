@@ -433,6 +433,7 @@ async function testCh2() {
     if (!G.inv.staffkeys) throw 'quiz';
     GH.active = false;
     tp(11.5, 17.2); await interact(); await waitFree();
+    if (typeof testArtRoute === 'function') await testArtRoute();
     tp(31.5, 12.4); await interact(); await waitFree();
     if (DOORS['31,13'].locked) throw 'lib door';
     tp(31.5, 14.6); await wait(60); await waitFree();
