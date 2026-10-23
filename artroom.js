@@ -29,20 +29,25 @@ function bustLooked(b) {
   const dx = b.x + .5 - P.x, dy = b.y + .5 - P.y, d = Math.hypot(dx, dy), [fx, fy] = DIRV[P.dir];
   return d < (P.light ? 7 : 3.5) && (fx * dx + fy * dy) / d > (P.light ? .75 : .5);
 }
+// 10/23 修正：原本三尊一起轉、每 3 秒一格，不可能同時看著三尊 → 一直尖叫。
+// 現在：只有 6 格內的會轉、每 5–8 秒一格；叫過的那尊冷卻 20 秒；全部之間至少隔 12 秒；手電筒照著轉回去較快。
 function bustUpdate(dt) {
-  if (!inArt(P.x, P.y) && !G.flags.artScream) return;
+  if (!inArt(P.x, P.y)) { for (const b of BUSTS) b.turn = Math.max(0, b.turn - dt * .5); return; }
+  G.bustCD = Math.max(0, (G.bustCD || 0) - dt);
   for (const b of BUSTS) {
-    b.t -= dt;
-    if (bustLooked(b) && P.light) { if (b.t <= 0 && b.turn > 0) { b.turn--; b.t = 1; noise(.2, .05, 'lowpass', 300, 1); } continue; }
-    if (bustLooked(b)) continue;
-    if (b.t <= 0 && inArt(P.x, P.y)) {
-      b.turn++; b.t = 2.6 + Math.random() * 1.6; noise(.25, .07, 'lowpass', 260, 1);   // 石頭摩擦的聲音
+    b.t -= dt; b.cd = Math.max(0, (b.cd || 0) - dt);
+    const turnBack = bustLooked(b) && P.light;
+    if (turnBack) { if (b.t <= 0 && b.turn > 0) { b.turn = Math.max(0, Math.ceil(b.turn) - 1); b.t = .6; noise(.2, .05, 'lowpass', 300, 1); } continue; }
+    if (bustLooked(b) || b.cd > 0 || dist(b.x + .5, b.y + .5, P.x, P.y) > 6) continue;
+    if (b.t <= 0) {
+      if (b.turn >= 2 && G.bustCD > 0) { b.t = 1.5; continue; }   // 另一尊剛叫過：先忍住
+      b.turn = Math.floor(b.turn) + 1; b.t = 5 + Math.random() * 3; noise(.25, .07, 'lowpass', 260, 1);   // 石頭摩擦的聲音
       if (b.turn >= 3) bustScream(b);
     }
   }
 }
 function bustScream(b) {
-  b.turn = 0; sfx.sting(); shake = 10; addNoise(b.x + .5, b.y + .5, 14); G.fear = Math.min(100, (G.fear || 0) + 25);
+  b.turn = 0; b.cd = 20; b.t = 6; G.bustCD = 12; sfx.sting(); shake = 10; addNoise(b.x + .5, b.y + .5, 14); G.fear = Math.min(100, (G.fear || 0) + 25);
   for (let k = 0; k < 4; k++) tone(900 - k * 120, .25, 'sawtooth', .04, 400, 0, k * .08);
   toast('石膏像張開嘴——發出了刺耳的尖叫！（走廊上的腳步聲，往這邊來了）');
   if (GH.active && GH.state !== 'chase' && typeof investigate === 'function') investigate(b.x + .5, b.y + .5);
@@ -58,7 +63,7 @@ async function artAction(o) {
       if (!F.artPhoto) { await says(['畫架上是一幅還沒畫完的油畫。', '一個穿著舊式水手服的女孩，坐在椅子上，手裡拿著一把鑰匙。', '……畫得好真。好像隨時會動。', '（光線太暗，看不清楚細節。用手機的閃光燈照照看？）']); return; }
       I.libkey = 1; sfx.pick(); updateHUD(); toast('得到【圖書室的鑰匙】');
       await says(['把畫框翻過來——背面的木條上，用膠帶貼著一把鑰匙。名牌寫著「圖書室」。', '把畫轉回正面的時候……', '畫裡的女孩不見了。只剩下一張空椅子。', '——身後，三尊石膏像同時轉過了頭。']);
-      F.artKey = 1; BUSTS.forEach(b => { b.turn = 3; }); bustScream(BUSTS[1]); BUSTS.forEach(b => { b.turn = 2; b.t = 1.5; });
+      F.artKey = 1; bustScream(BUSTS[1]); BUSTS.forEach(b => { b.turn = 0; b.t = 8; b.cd = 15; }); G.bustCD = 15;   // 只叫一次，給玩家時間逃出去
       setObj('用鑰匙打開圖書室（走廊西側）'); saveCP('libkey'); return;
   }
   return false;
@@ -81,7 +86,7 @@ PHOTO_SPOTS.push({ scene: 2, x: 49.5, y: 12.5, id: 'painting', lines: ['閃光�
     switch (o.t) {
       case 'bust': {
         const b = BUSTS[o.i]; box(x + .2, y + .2, .6, .6, 16, '#7a756c', '#5a564f', '#4e4a44');
-        const [a, c] = iso(x + .5, y + .5), hy = c - 26, tw = [0, .35, .7, 1][Math.min(3, b.turn)];
+        const [a, c] = iso(x + .5, y + .5), hy = c - 26, tw = [0, .35, .7, 1][Math.min(3, Math.floor(b.turn))];
         ctx.fillStyle = '#d8d4c8'; ctx.beginPath(); ctx.ellipse(a, hy, 6, 7, 0, 0, 7); ctx.fill(); ctx.fillRect(a - 4, hy + 5, 8, 6);
         ctx.fillStyle = '#c8c4b8'; ctx.beginPath(); ctx.ellipse(a + 1, hy - 3, 5.5, 4, 0, 0, 7); ctx.fill();
         if (tw > 0) {   // 臉轉過來的程度：眼睛、嘴巴越來越清楚
@@ -116,4 +121,14 @@ async function testArtRoute() {
   tp(49.5, 13.5); P.dir = 0; await interact(); await waitFree();
   if (!G.inv.libkey) throw 'libkey';
   GH.active = false;
+}
+// 測試（?test=art）：站在美術室中央不照手電筒 40 秒，數尖叫幾次（修正前約 10 次以上）
+async function testArt() {
+  try {
+    await startCh2(); await waitFree(); GH.active = false;
+    P.x = 49.5; P.y = 11.5; P.dir = 4; P.light = false; P.inv = 9999;
+    let n = 0; const _s = bustScream; bustScream = b => { n++; _s(b); };
+    const t0 = G.t; while (G.t - t0 < 40) await wait(20);
+    document.title = (n <= 3 ? 'PASS ' : 'FAIL ') + 'screams=' + n;
+  } catch (e) { document.title = 'ERR ' + e; }
 }
