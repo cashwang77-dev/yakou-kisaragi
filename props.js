@@ -8,12 +8,16 @@ const PROP = {   // 物件類型 → [圖, 往下偏移]
   shelf: ['p_shelf', 8], oldshelf: ['p_shelf', 8], specshelf: ['p_shelf', 8],
   labtable: ['p_labtable', 8], bed: ['p_bed', 8], vend: ['p_vend', 8], box: ['p_box', 6], piano: ['p_piano', 8], trash: ['p_trash', 5],
 };
-loadImages([...new Set(Object.values(PROP).map(v => v[0])), 'walls_hd', 'floors_hd']).then(() => {
-  if (!IMG.floors_hd) return;
-  FLOORTEX['_'] = ['floors_hd', 0, '#8e6a46'];   // 教室：木地板
-  FLOORTEX[':'] = ['floors_hd', 1, '#76806f'];   // 走廊：亞麻地板（第一章的玄關大廳 'hall' 照舊）
-  if (typeof buildFloor === 'function' && IMG.floors) buildFloor();
-});
+// 地板：floors_g.png（Gemini 8 格）0 教室木板 1 走廊亞麻 2 廁所磁磚 3 體育館 4 保健室 5 磨石子 6 舊木板 7 水泥；沒有就用程式產生的 floors_hd
+loadImages([...new Set(Object.values(PROP).map(v => v[0])), 'walls_hd', 'floors_hd', 'floors_g']).then(() => { if (typeof buildFloor === 'function' && IMG.floors) buildFloor(); });
+{ const _bf = buildFloor; buildFloor = function () {
+    const g = IMG.floors_g ? 'floors_g' : IMG.floors_hd ? 'floors_hd' : null;
+    if (g && G.scene <= 4) {
+      FLOORTEX['_'] = G.scene === 4 ? [g, g === 'floors_g' ? 6 : 0, '#5a4632'] : [g, 0, '#8e6a46'];   // 舊校舍：深色舊木板
+      FLOORTEX[':'] = [g, 1, '#76806f'];
+    } else { delete FLOORTEX['_']; delete FLOORTEX[':']; }
+    return _bf();
+  }; }
 function drawProp(o, cx, cy, shaking) {
   const p = PROP[o.t]; if (!p || G.scene === 6) return false;
   const im = IMG[p[0]]; if (!im) return false;

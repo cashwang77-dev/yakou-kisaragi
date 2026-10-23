@@ -274,8 +274,8 @@ testCh5 = async function () {
     for (const [i, x, y] of [[0, 39.5, 30.4], [1, 60.4, 10.5], [2, 60.4, 31.5]]) { tp(x, y); P.dir = i === 0 ? 4 : 6; await wait(60); const n = nearestInteract(); if (!n || n.o.act !== 'jizo') throw 'no jizo ' + i; await interact(); await waitFree(); }
     if (!G.flags.kekkai) throw 'kekkai';
     tp(5, 3.5); P.dir = 2; tp(4.5, 3.5); await interact();
-    const t2 = performance.now(); while (G.scene !== 5 && performance.now() - t2 < 15000) await wait(100);
-    document.title = (G.scene === 5 ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());
+    const t2 = performance.now(); while (G.scene !== 7 && performance.now() - t2 < 15000) await wait(100);
+    document.title = (G.scene === 7 ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());
   } catch (e) { document.title = 'ERR ' + e + ' ' + JSON.stringify(stateSummary()); }
 };
 // 圍牆裡面：庭院（草地＋踏石），不能走

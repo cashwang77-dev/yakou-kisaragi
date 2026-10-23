@@ -906,8 +906,14 @@ async function catchPlayer(pulled) {
   const acts = ['beauty', 'ugly', 'normal'];
   if (G.inv.weapon) { opts.push({ broom: '用掃把打她！', shinai: '用竹刀打她！', lid: '舉起垃圾桶蓋擋住！' }[G.inv.weapon.id]); acts.push('weapon'); }
   if (G.inv.candy) { opts.push('把鼈甲糖丟向旁邊'); acts.push('candy'); }
-  const i = await choose('戴口罩的女人', '「わたし、きれい？」……我，美嗎？', opts, 7000, face);
-  const a = acts[i] || 'silent';
+  // 10/23 難度：三個回答的順序每次打亂、只剩 4.5 秒
+  const ord = [0, 1, 2].sort(() => TEST ? 0 : Math.random() - .5).concat(opts.slice(3).map((_, k) => k + 3));
+  const i0 = await choose('戴口罩的女人', '「わたし、きれい？」……我，美嗎？', ord.map(k => opts[k]), 4500, face);
+  let a = acts[ord[i0]] || 'silent';
+  if (a === 'normal' && (GH.normalN = (GH.normalN || 0) + 1) >= 3) {   // 同一招用到第三次就被識破
+    await say('戴口罩的女人', '「……又是『普通』？」口罩底下的嘴，一路裂到了耳朵。「我已經聽膩了。」', face);
+    a = 'over';
+  }
   P.inv = 2.2;
   if (a === 'normal') {
     sfx.laugh();
@@ -924,10 +930,10 @@ async function catchPlayer(pulled) {
     G.candies.push({ x: clampFree(P.x + fx * 2.5, P.y + fy * 2.5)[0], y: clampFree(P.x + fx * 2.5, P.y + fy * 2.5)[1] });
     GH.state = 'search'; GH.searchT = 0; sfx.whoosh(); toast('她轉頭去追那包糖了！');
   } else {
-    const line = a === 'beauty' ? '「……這樣也美嗎？」她扯下了口罩。' : a === 'ugly' ? '「……醜？」剪刀閃了一下。' : '沉默。剪刀「喀嚓」一聲張開了。';
+    const line = a === 'beauty' ? '「……這樣也美嗎？」她扯下了口罩。' : a === 'ugly' ? '「……醜？」剪刀閃了一下。' : a === 'over' ? '剪刀「喀嚓」一聲張開了。' : '沉默。剪刀「喀嚓」一聲張開了。';
     await say('戴口罩的女人', line, face);
     GH.atk = NOW(); await wait(260);           // 揮剪刀動畫砍到第 2 格時才受傷
-    sfx.snip(); sfx.hurt(); damage(a === 'ugly' ? 2 : 1);
+    sfx.snip(); sfx.hurt(); damage(a === 'ugly' || a === 'over' ? 2 : 1);
     GH.state = 'stun'; GH.timer = 1.3;
     const [fx, fy] = DIRV[GH.dir]; moveEnt(P, fx * .8, fy * .8);
   }
@@ -1440,7 +1446,7 @@ async function startFrom(ch) {
   if (ch === 4) { G.inv.pages = [1, 2, 3, 4, 5, 6]; G.inv.mirror = true; }   // 第二章結束：六頁日記＋鏡子碎片
   if (ch >= 5) { G.inv.pages = [1, 2, 3, 4, 5, 6, 7]; G.inv.mirror = true; try { G.flags.trueEnd = localStorage.getItem('yakou_kisaragi_true') === '1'; } catch (e) { } }   // 第三章結束：七頁＋當時的回答
   startPlay();
-  if (ch === 2) await startCh2(); else if (ch === 3) await startCh2b(); else if (ch === 4) await startCh3(); else if (ch === 5) await startRoad(); else await startCh4();
+  if (ch === 2) await startCh2(); else if (ch === 3) await startCh2b(); else if (ch === 4) await startCh3(); else if (ch === 5) await startRoad(); else if (ch === 7) await startCrossing(); else await startCh4();
 }
 $('#bChap').onclick = () => { refreshChapBtn(); $('#chapSel').classList.remove('hide'); };
 $('#bChapBack').onclick = () => $('#chapSel').classList.add('hide');
@@ -1536,6 +1542,7 @@ async function runTest(kind) {
     if (kind === 'items') return testItems();
     if (kind === 'fear') return testFear();
     if (kind === 'phone') return testPhone();
+    if (kind === 'ch7') return testCh7();
     if (kind === 'chap') {   // 章節選擇：直接從第二章（上）、（下）開始
       await startFrom(2); await waitFree(); const a = G.scene === 2 && G.inv.flashlight && G.mode === 'play';
       await startFrom(3); await waitFree(); const b = G.scene === 3 && G.inv.pages.length === 2 && !$('#hud').classList.contains('hide');
