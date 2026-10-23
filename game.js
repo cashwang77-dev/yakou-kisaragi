@@ -713,7 +713,7 @@ async function useDoor(dr) {
 }
 async function objAction(o) {
   (G.seenAct = G.seenAct || {})[o.act] = true;   // 同一種東西（例如一排鞋箱）看過一個就不再閃
-  if (G.scene !== 1 && typeof sceneAction === 'function' && await sceneAction(o) !== false) return;
+  if ((G.scene !== 1 || o.g1) && typeof sceneAction === 'function' && await sceneAction(o) !== false) return;   // g1：第一章後來加的物件（gym.js）
   if (o.act === 'vend') {
     if (G.flags.vend) { await says(['販賣機的燈一閃一閃的。已經沒有東西掉出來了。']); return; }
     G.flags.vend = true; sfx.vend(); G.inv.candy += 2; updateHUD();
@@ -729,6 +729,7 @@ async function objAction(o) {
     return;
   }
   if (o.act === 'shoe') { await says(['鞋箱。咪醬的室內鞋還好好地放在裡面。', '……旁邊那格的名牌被撕掉了，裡面放著一雙很舊的室內鞋，鞋跟寫著「2004」。']); return; }
+  if (o.act === 'keybox' && typeof gymKeybox === 'function') return gymKeybox();   // 10/23：鑰匙被借去游泳社了（gym.js）
   if (o.act === 'keybox') {
     G.inv.key = true; sfx.pick(); updateHUD(); toast('得到【側門鑰匙】');
     await says(['找到了，掛著「側門」名牌的鑰匙。']);
@@ -1565,6 +1566,7 @@ async function runTest(kind) {
     tp(32.6, 33.6); for (let k = 0; k < 3 && !G.flags.log; k++) { await interact(); await waitFree(); }
     if (!G.flags.log) throw 'log not read';
     tp(5.5, 34.4); await wait(20); await interact(); await waitFree();
+    if (typeof testGymRoute === 'function') await testGymRoute();
     if (!STATUE.gone) throw 'key not taken';
     GH.active = false;
     tp(8.5, 13.4); await wait(20); await interact(); await waitFree();
