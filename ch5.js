@@ -15,7 +15,7 @@ const HACHI = { i: -1, show: 0, dir: 4 };
 Object.assign(HIDE, { cshelf: '擠進貨架之間', busstop: '躲進公車亭', ditch: '躲進水溝' });
 SCENE_PATROL[6] = [[20.5, 37.5]];   // 裂口女不出校門
 SCENES[6] = buildCh5;
-loadImages(['jinmen', 'babaa', 'hachi']).then(() => { for (const k of ['jinmen', 'babaa']) if (IMG[k]) IMG[k].rows = 4; if (IMG.hachi) IMG.hachi.rows = 1; });
+loadImages(['jinmen', 'babaa', 'hachi', 'walls6']).then(() => { for (const k of ['jinmen', 'babaa']) if (IMG[k]) IMG[k].rows = 4; if (IMG.hachi) IMG.hachi.rows = 1; });
 
 function buildCh5() {
   // 商店街：人行道、馬路
@@ -56,6 +56,10 @@ function buildCh5() {
   for (const x of [7.5, 20.5, 28.5]) LIGHTS.push({ x, y: 33.5, r: 2.4, c: '255,200,140' });
   LIGHTS.push({ x: 35.5, y: 24.5, r: 1.8, c: '255,230,170' }, { x: 33.5, y: 16.5, r: 1.6, c: '255,230,170' });
   LIGHTS.push({ x: 3.5, y: 3.5, r: 3.2, c: '255,220,150' });
+  // 街景（10/23：原本看起來跟學校一樣）：路燈、電線桿、機車、垃圾袋（都不擋路）
+  for (const x of [7, 20, 28]) obj('lamp', x, 34, { solid: false });
+  for (const x of [3, 13, 24]) obj('pole6', x, 34, { solid: false });
+  obj('scooter', 15, 31, { solid: false }); obj('scooter', 27, 31, { solid: false, v: 1 }); obj('scooter', 3, 31, { solid: false, v: 2 });
   // 道具
   item('salt', 13, 26, '鹽包'); item('salt', 13, 29, '鹽包'); item('bandage', 22, 32, '繃帶'); item('drink', 35, 27, '能量飲料');
   item('can', 15, 34, '空罐'); item('can', 34, 18, '空罐'); item('charm', 27, 4, '護身符'); item('eraser', 6, 33, '板擦');
@@ -305,3 +309,99 @@ async function testCh5() {
     document.title = (G.scene === 5 ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());
   } catch (e) { document.title = 'ERR ' + e + ' ' + JSON.stringify(stateSummary()); }
 }
+
+/* ---------- 街景外觀（10/23）：店面、圍牆、護欄取代學校的牆；柏油路與人行道地磚 ----------
+   walls6.png（Gemini，tools/street_walls.py 切）：0 鐵捲門 1 生鏽鐵捲門 2 便利商店玻璃 3 暗櫥窗 4 磁磚牆＋鐵窗 5 水泥磚圍牆 6 圍牆＋爬藤 7 灰泥牆＋亮窗 */
+function texFace6(x, y, side, idx, shade, h, u0 = 0, u1 = 1) {
+  const img = IMG.walls6; if (!img) return;
+  const P0 = side === 'L' ? iso(x + u0, y + 1) : iso(x + 1, y + 1 - u0), P1 = side === 'L' ? iso(x + u1, y + 1) : iso(x + 1, y + 1 - u1);
+  const w = u1 - u0;
+  ctx.setTransform(.5 * w / 2, (side === 'L' ? .25 : -.25) * w / 2, 0, h / 68, P0[0], P0[1] - h);
+  ctx.drawImage(img, idx * 64 + u0 * 64, 0, 64 * w, 68, 0, 0, 64 * w * 1, 68);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  if (shade) poly([P0, P1, [P1[0], P1[1] - h], [P0[0], P0[1] - h]], shade);
+}
+const SHOPS6 = [[2, 6, 0], [7, 14, 2], [15, 22, 3], [23, 28, 1]];   // y=30 店面：x 範圍 → 貼圖
+function wall6Kind(x, y) {
+  if (y === 35 || x === 1 || (y >= 30 && x >= 32) || (x === 37 && y >= 30)) return 'rail';
+  if (y >= 25 && y <= 30 && x >= 2 && x <= 29 && !(x === 29 && y < 30)) return 'shop';
+  if (y === 2 || (y <= 4 && (x === 2 || x === 38))) return 'house';
+  return 'block';
+}
+function sceneWall(x, y) {
+  if (G.scene !== 6 || !IMG.walls6) return false;
+  const c = at(x, y); if (c === 'D' && !DOORS[x + ',' + y].locked) return false;
+  const k = wall6Kind(x, y), h0 = (x * 73 + y * 31) % 7;
+  const L = !['#', 'D'].includes(at(x, y + 1)), R = !['#', 'D'].includes(at(x + 1, y));
+  if (k === 'rail') {   // 低矮的水泥護欄＋鐵欄杆
+    box(x, y + .35, 1, .3, 7, '#8a8a84', '#6a6a66', '#5a5a56');
+    ctx.strokeStyle = '#9aa0a4'; ctx.lineWidth = 1; const [a, b] = iso(x, y + .5), [c2, d] = iso(x + 1, y + .5);
+    ctx.beginPath(); ctx.moveTo(a, b - 15); ctx.lineTo(c2, d - 15); ctx.moveTo(a, b - 7); ctx.lineTo(a, b - 15); ctx.stroke();
+    return true;
+  }
+  if (k === 'shop') {
+    const H = 44, inner = y < 30 && x >= 7 && x <= 14;   // 便利商店裡面：白牆
+    if (L) { const sh = y === 30 ? (SHOPS6.find(([a, b]) => x >= a && x <= b) || [0, 0, 4])[2] : 4;
+      if (inner) box(x, y, 1, 1, H, null, '#c9cdc8', null); else texFace6(x, y, 'L', sh, 'rgba(0,0,0,.08)', H); }
+    if (R) { if (inner) box(x, y, 1, 1, H, null, null, '#a9ada8'); else texFace6(x, y, 'R', 4, 'rgba(0,0,0,.4)', H); }
+    box(x, y, 1, 1, H, '#3b3833', null, null);
+    if (L && y === 30 && [4, 17, 25].includes(x)) {   // 直立招牌（沒有字，只有燈）
+      const col = { 4: '#c84a3a', 17: '#3a7ac8', 25: '#d8a83a' }[x], on = x !== 25 || Math.sin(G.t * 9) + Math.sin(G.t * 2.3) > -.8;
+      box(x + .45, y + 1, .1, .45, 20, '#2a2a2a', on ? col : '#3a3a3a', '#222', 16);
+    }
+    return true;
+  }
+  const H = k === 'house' ? WALLH : 20;
+  const idx = k === 'house' ? (h0 < 2 ? 7 : h0 < 4 ? 4 : 5) : (h0 === 3 ? 6 : 5);
+  if (L) texFace6(x, y, 'L', idx, 'rgba(0,0,0,.1)', H);
+  if (R) texFace6(x, y, 'R', idx === 7 ? 5 : idx, 'rgba(0,0,0,.4)', H);
+  box(x, y, 1, 1, H, k === 'house' ? '#4a3c34' : '#8c8c86', null, null);
+  return true;
+}
+// 地面：馬路＝柏油、人行道＝地磚、住宅區小巷＝較舊的柏油；田邊路肩維持原本的土
+function sceneTile(g, x, y, c) {
+  if (G.scene !== 6) return false;
+  const v = (x * 7 + y * 3) % 3;
+  if (c === '=' || (c === ',' && y < 9 && !(x === 33 || x === 36))) {
+    diamond(g, x, y, c === '=' ? ['#3c3e44', '#3a3c42', '#3e4046'][v] : ['#4a4a4c', '#47474a', '#4c4c4e'][v]);
+    speck(g, x, y, ['#55575c', '#2e3034', '#4a4c51'], 10); return true;
+  }
+  if (c === ',' && !(x === 33 || x === 36)) {   // 人行道：灰紅色方磚
+    diamond(g, x, y, (x + y) % 2 ? '#7a6660' : '#74605a');
+    g.strokeStyle = 'rgba(30,20,18,.35)'; g.lineWidth = 1; g.beginPath();
+    for (const t of [0, .5]) { let [a, b] = isoW(x + t, y), [c2, d] = isoW(x + t, y + 1); g.moveTo(a, b); g.lineTo(c2, d); [a, b] = isoW(x, y + t); [c2, d] = isoW(x + 1, y + t); g.moveTo(a, b); g.lineTo(c2, d); }
+    g.stroke(); speck(g, x, y, ['#8a7670', '#5e4c46'], 4); return true;
+  }
+  return false;
+}
+const _road6Floor0 = road6Floor;
+road6Floor = function (g) {
+  _road6Floor0(g);
+  g.fillStyle = 'rgba(200,200,190,.5)';   // 路緣石
+  for (let x = 2; x < 32; x += .25) for (const yy of [32, 34]) { const [a, b] = isoW(x, yy); g.fillRect(a | 0, b | 0, 2, 1); }
+  for (let k = 0; k < 4; k++) { const [a, b] = isoW(32.1 + k * .45, 32); const [c2, d] = isoW(32.1 + k * .45, 34); g.fillStyle = 'rgba(230,228,215,.4)'; g.beginPath(); g.moveTo(a, b); g.lineTo(a + 6, b + 3); g.lineTo(c2 + 6, d + 3); g.lineTo(c2, d); g.fill(); }   // 斑馬線
+  for (const [mx, my] of [[9.5, 32.6], [22.5, 33.4], [34.6, 19.5]]) { const [a, b] = isoW(mx, my); g.fillStyle = '#26282c'; g.beginPath(); g.ellipse(a, b, 6, 3, 0, 0, 7); g.fill(); g.strokeStyle = '#4c4e52'; g.stroke(); }   // 人孔蓋
+};
+// 街景道具
+const _sceneDrawObj6b = sceneDrawObj;
+sceneDrawObj = function (o, cx, cy, shaking) {
+  if (G.scene !== 6) return _sceneDrawObj6b(o, cx, cy, shaking);
+  const { x, y } = o;
+  if (o.t === 'pole6') {   // 電線桿＋往下一根拉的電線
+    box(x + .4, y + .4, .2, .2, 70, '#6a6660', '#55514c', '#48443f');
+    ctx.fillStyle = '#4a4640'; ctx.fillRect(cx - 9, cy - 66, 18, 2);
+    const nx = OBJ.find(p => p.t === 'pole6' && p.x > x);
+    if (nx) { const [ax, ay] = iso(nx.x + .5, nx.y + .5); ctx.strokeStyle = 'rgba(20,20,22,.8)'; ctx.lineWidth = 1;
+      for (const dx of [-8, 8]) { ctx.beginPath(); ctx.moveTo(cx + dx, cy - 66); ctx.quadraticCurveTo((cx + ax) / 2 + dx, (cy + ay) / 2 - 52, ax + dx, ay - 66); ctx.stroke(); } }
+    return true;
+  }
+  if (o.t === 'scooter') {
+    const col = ['#c8c4b8', '#3a5a8a', '#8a2a2a'][o.v || 0];
+    ctx.fillStyle = '#151515'; ctx.beginPath(); ctx.ellipse(cx - 7, cy - 2, 3, 3, 0, 0, 7); ctx.ellipse(cx + 7, cy + 2, 3, 3, 0, 0, 7); ctx.fill();
+    poly([[cx - 9, cy - 6], [cx + 4, cy], [cx + 5, cy - 8], [cx - 6, cy - 13]], col);
+    ctx.fillStyle = '#222'; ctx.fillRect(cx - 7, cy - 15, 9, 3);
+    ctx.fillStyle = col; ctx.fillRect(cx + 4, cy - 16, 3, 12); ctx.fillStyle = '#ccc'; ctx.fillRect(cx + 2, cy - 18, 8, 2);
+    return true;
+  }
+  return _sceneDrawObj6b(o, cx, cy, shaking);
+};

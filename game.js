@@ -37,13 +37,21 @@ const isInside = (x, y) => { const c = at(Math.floor(x), Math.floor(y)); return 
 const OBJ = [], OBJAT = {}, LIGHTS = [], ITEMS = [];
 const HIDE = { bush: '躲進草叢', trash: '躲進垃圾桶', box: '躲進器材箱', bleach: '躲到看台下', desk: '躲到桌子底下', tdesk: '躲到講台下', locker: '躲進置物櫃', bed: '躲到床簾後', shelf: '擠進書架縫隙', cabinet: '躲進掃除用具櫃' };
 function obj(t, x, y, o) { const b = Object.assign({ t, x, y, solid: true }, o); OBJ.push(b); return b; }
-function item(id, x, y, name) { ITEMS.push({ id, x: x + .5, y: y + .5, name, taken: false }); }
+function item(id, x, y, name) { ITEMS.push({ id, x: x + .5, y: y + .5, name, taken: false, off: ITEM_OFF.has(ITEM_SCENE + ':' + id + '@' + x + ',' + y) }); }
+// 10/23 使用者嫌道具太多：這些不再出現（不從清單刪掉，存檔用索引記錄撿過的道具）
+let ITEM_SCENE = 1;   // 開機建第一章時 G 還沒建立
+const ITEM_OFF = new Set(['1:can@9,10', '1:drink@12,10', '1:charm@3,29', '1:eraser@21,5',
+  '2:can@4,15', '2:charm@5,24', '2:eraser@24,5', '2:ext@12,11',
+  '3:can@33,11', '3:drink@4,15', '3:charm@32,12',
+  '4:can@24,27', '4:drink@18,27', '4:ext@30,21',
+  '5:can@15,17', '5:drink@4,9', '5:ext@19,4',
+  '6:can@34,18', '6:drink@35,27', '6:eraser@6,33']);
 let STATUE = {}, LAMPS = [];
 /* 場景：每章一張 40x40 地圖。loadScene 清空後重建地圖、物件、光源、道具、巡邏路線，並重畫地板 */
 const SCENES = { 1: buildCh1 };
 function resetMap() { T.fill('X'); for (const k in DOORS) delete DOORS[k]; for (const k in OBJAT) delete OBJAT[k]; OBJ.length = LIGHTS.length = ITEMS.length = 0; }
 function indexObjs() { OBJ.forEach(o => { OBJAT[o.x + ',' + o.y] = o; }); if (Object.keys(OBJAT).length !== OBJ.length) console.warn('物件重疊'); }
-function loadScene(n) { resetMap(); G.scene = n; SCENES[n](); indexObjs(); PATROL.splice(0, PATROL.length, ...SCENE_PATROL[n]); if (IMG.floors) buildFloor(); }
+function loadScene(n) { resetMap(); G.scene = ITEM_SCENE = n; SCENES[n](); indexObjs(); PATROL.splice(0, PATROL.length, ...SCENE_PATROL[n]); if (IMG.floors) buildFloor(); }
 
 /* 第一章：校園（主校舍 y1-12、操場、前庭、器材小屋、警衛室） */
 function buildCh1() {
@@ -217,6 +225,7 @@ function buildFloor() {
     if (c === 'D') c = y === 8 || y === 12 ? ':' : '_';
     if (c === '#' || c === 'X') continue;
     const key = c === ':' && x >= 22 && x <= 33 ? 'hall' : c;
+    if (typeof sceneTile === 'function' && sceneTile(g, x, y, c)) { if (INDOOR.has(at(x, y)) || c === '_') diamond(m, x, y, 'rgba(0,0,0,.26)'); continue; }   // 各章自己的地面（第四章：柏油路、人行道）
     if (useTex && FLOORTEX[key]) { const [im, i, b] = FLOORTEX[key]; texTile(g, IMG[im], i, x, y, b); }
     else if (useTex && c === '_') { diamond(g, x, y, (x % 2) ? '#6a4c34' : '#62462f'); const [sx, sy] = isoW(x, y + .5); g.fillStyle = '#47321f'; for (let k = -14; k < 14; k += 2) g.fillRect(sx + k, sy + k / 2 | 0, 1, 1); }
     else if (c === '.') { diamond(g, x, y, ['#17221a', '#19251b', '#152019'][(x * 7 + y * 3) % 3]); speck(g, x, y, ['#22332a', '#0f1711', '#1e2e22'], 9); }
@@ -623,7 +632,7 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 /* ---------- 互動 ---------- */
 function nearestInteract() {
   let best = null, bd = 1.35;
-  for (const it of ITEMS) if (!it.taken && !it.hiddenUntil) { const d = dist(P.x, P.y, it.x, it.y); if (d < bd) { bd = d; best = { kind: 'item', it, label: '撿起' + it.name }; } }
+  for (const it of ITEMS) if (!it.taken && !it.off && !it.hiddenUntil) { const d = dist(P.x, P.y, it.x, it.y); if (d < bd) { bd = d; best = { kind: 'item', it, label: '撿起' + it.name }; } }
   if (best) return best;
   bd = 1.3;
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
@@ -1138,6 +1147,7 @@ function wallColors(x, y) {
 }
 function drawWall(x, y, alpha) {
   ctx.globalAlpha = alpha;
+  if (typeof sceneWall === 'function' && sceneWall(x, y)) { ctx.globalAlpha = 1; return; }   // 各章自己的牆（第四章：店面、圍牆）
   const c = at(x, y);
   if (c === 'P' && IMG.walls) { texFace(x, y, 'L', 0, 'rgba(0,0,0,.1)', 46, .1); texFace(x, y, 'R', 0, 'rgba(0,0,0,.4)', 46, .1); box(x + .1, y + .1, .8, .8, 46, '#8d8475', null, null); if (x === 25) { faceRect(x, y, 'L', .2, .8, 14, 36, '#2a2722'); } ctx.globalAlpha = 1; return; }
   if (c === 'P') { box(x + .1, y + .1, .8, .8, 46, '#5a5852', '#3e3c37', '#33312d'); if (x === 25) { faceRect(x, y, 'L', .2, .8, 14, 36, '#2a2722'); } ctx.globalAlpha = 1; return; }
@@ -1302,7 +1312,7 @@ function render() {
     else if (c === '#' || c === 'P' || c === 'D') list.push({ d: dep, f: a => drawWall(x, y, a), tall: 40, sx, sy });
     if (o) list.push({ d: dep + .01, f: a => drawObj(o, a), tall: o.t === 'tree' ? 56 : o.t === 'locker' || o.t === 'shoe' || o.t === 'vend' || o.t === 'board' || o.t === 'lamp' ? 34 : 0, sx, sy });
   }
-  for (const it of ITEMS) if (!it.taken) list.push({ d: it.x + it.y - .3, f: () => { const [sx, sy] = iso(it.x, it.y); const on = Math.sin(G.t * 4 + it.x) > .3; ctx.fillStyle = on ? 'rgba(255,240,200,.9)' : 'rgba(255,240,200,.35)'; ctx.fillRect(sx - 1, sy - (it.id === 'phone' ? 13 : 3), 2, 2); if (on) { ctx.fillRect(sx - 3, sy - (it.id === 'phone' ? 12 : 2), 6, 0.6); } } });
+  for (const it of ITEMS) if (!it.taken && !it.off) list.push({ d: it.x + it.y - .3, f: () => { const [sx, sy] = iso(it.x, it.y); const on = Math.sin(G.t * 4 + it.x) > .3; ctx.fillStyle = on ? 'rgba(255,240,200,.9)' : 'rgba(255,240,200,.35)'; ctx.fillRect(sx - 1, sy - (it.id === 'phone' ? 13 : 3), 2, 2); if (on) { ctx.fillRect(sx - 3, sy - (it.id === 'phone' ? 12 : 2), 6, 0.6); } } });
   for (const p of G.projs) list.push({ d: p.x + p.y, f: () => { const [sx, sy] = iso(p.x, p.y); ctx.fillStyle = p.kind === 'can' ? '#9aa' : p.kind === 'eraser' ? '#e8e4d8' : '#d99a2b'; ctx.fillRect(sx - 2, sy - 10 - Math.sin((.5 - p.life) / .5 * Math.PI) * 12, 4, 3); } });
   if (!P.hidden) list.push({ d: pd, f: drawMi });
   if (G.shadow) { const s = G.shadow; list.push({ d: s.x + s.y, f: () => drawSprite(IMG.mi, s.x, s.y, s.dir, { sc: MI_SC, tint: 'rgba(0,0,0,1)', alpha: .85 * (s.a ?? 1), noShadow: true }) }); }
