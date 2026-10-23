@@ -24,10 +24,19 @@ if (typeof hkUpdate === 'function') { const _f = hkUpdate; hkUpdate = function (
 if (typeof tkUpdate === 'function') { const _f = tkUpdate; tkUpdate = function (dt) { if (stunned(TK)) { TK.moving = false; return; } return _f(dt); }; }
 if (typeof paxUpdate === 'function') { const _f = paxUpdate; paxUpdate = function (dt) { const keep = PAX.filter(stunned).map(p => [p, p.x, p.y]); _f(dt); for (const [p, x, y] of keep) { p.x = x; p.y = y; p.moving = false; } }; }
 
+/* ---------- 難度（10/23 使用者：敵人全部要再強）：追擊／巡邏變快、聽得更遠、武器暈眩時間變短、恐懼上升更快 ---------- */
+const DIFF = { chase: 1.22, walk: 1.15, hear: 1.35, stun: .7, fear: 1.3 };
+{ const sp = v => v * (v >= 2.2 ? DIFF.chase : DIFF.walk);   // 追擊速度上限 4.2（玩家跑 4.3、體力有限）；Teke Teke 例外
+  const capd = v => v >= 3.4 ? v * 1.18 : Math.min(4.2, sp(v));
+  const _wt = walkTo; walkTo = function (tx, ty, speed, dt) { return _wt(tx, ty, capd(speed), dt); };
+  if (typeof walker === 'function') { const _wk = walker; walker = function (e, tx, ty, speed, dt) { return _wk(e, tx, ty, e === DOG ? speed : capd(speed), dt); }; }
+  if (typeof tkMove === 'function') { const _tm = tkMove; tkMove = function (tx, ty, speed, dt) { return _tm(tx, ty, speed * DIFF.chase, dt); }; }
+  const _an = addNoise; addNoise = function (x, y, r) { return _an(x, y, r * DIFF.hear); }; }
+
 /* ---------- 竹刀：被任何鬼抓到都能反擊（裂口女在 catchPlayer 自己處理） ---------- */
 function weaponBlock(e, stun) {
   const w = G.inv.weapon; if (!w || G.mode !== 'play') return false;
-  w.dur--; sfx.hit(); shake = 6; stun(w.id === 'shinai' ? 5 : w.id === 'broom' ? 3.5 : 2.5); P.inv = 1.5;
+  w.dur--; sfx.hit(); shake = 6; stun((w.id === 'shinai' ? 5 : w.id === 'broom' ? 3.5 : 2.5) * DIFF.stun); P.inv = 1.5;
   toast(w.id === 'lid' ? '用垃圾桶蓋擋住了！' : `${w.name}打中了！牠退開了`);
   if (w.dur <= 0) { toast(w.name + '壞掉了'); G.inv.weapon = null; }
   updateHUD(); return true;
@@ -41,7 +50,7 @@ if (typeof paxCatch === 'function') { const _f = paxCatch; paxCatch = async func
 /* ---------- 板擦：落地／打中的地方 1.6 格內的鬼看不見 4 秒 ---------- */
 function eraserHit(x, y) {
   noise(.25, .12, 'highpass', 2500, 1); let hit = 0;
-  for (const t of threats()) if (dist(t.e.x, t.e.y, x, y) < 1.8) { t.stun(4); hit++; }
+  for (const t of threats()) if (dist(t.e.x, t.e.y, x, y) < 1.8) { t.stun(4 * DIFF.stun); hit++; }
   G.puffs = (G.puffs || []).concat({ x, y, t: G.t, r: 1.4, end: G.t + 1.2, c: '235,235,225' });
   toast(hit ? '粉筆灰糊住了牠的眼睛！' : '板擦掉在地上，揚起一片粉筆灰');
 }
@@ -49,7 +58,7 @@ function eraserHit(x, y) {
 /* ---------- 滅火器：周圍噴出煙霧，鬼暈眩 3 秒；7 秒內站在煙裡鬼看不到妳 ---------- */
 function useExt() {
   if (G.mode !== 'play' || G.lock || !G.inv.ext || P.hidden) return;
-  G.inv.ext--; G.smoke = { x: P.x, y: P.y, end: G.t + 7 };
+  G.inv.ext--; G.smoke = { x: P.x, y: P.y, end: G.t + 7 * DIFF.stun };
   noise(1.6, .22, 'highpass', 1800, .7); shake = 3;
   for (const t of threats()) if (dist(t.e.x, t.e.y, P.x, P.y) < 3.8) t.stun(3);
   toast('白煙一下子噴滿了四周！（7 秒）'); updateHUD();
@@ -69,7 +78,7 @@ function fearUpdate(dt) {
   if (safe) df -= 14;
   if (P.hidden && d < 4.5 && !FEAR.holding) df += 6;
   const calm = P.hidden || (GH.active && GH.mode === 'script');   // 躲著（摀住嘴）或腳本演出中：不會尖叫
-  G.fear = FEAR.lock != null ? FEAR.lock : clamp(f0 + df * dt, 0, calm ? 95 : 100);   // lock：截圖用
+  G.fear = FEAR.lock != null ? FEAR.lock : clamp(f0 + (df > 0 ? df * DIFF.fear : df) * dt, 0, calm ? 95 : 100);   // lock：截圖用
   // 腿軟：恐懼值滿了 → 尖叫（引鬼過來）、2 秒動不了
   if (G.fear >= 100 && G.t > FEAR.panicT && !(nt && nt.chase && d < 6)) {   // 正在被追的時候不腿軟（不然一定被抓）
     FEAR.panicT = G.t + 12; G.fear = 72; P.stun = G.t + 1; setPose('hurt', 1);

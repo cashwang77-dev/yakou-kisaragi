@@ -24,7 +24,7 @@ function loadImages(list) {
 }
 
 /* ---------- 地圖 ---------- */
-const W = 40, H = 40;
+const W = 64, H = 64;   // 10/23 由 40 放大：新區域畫在 40 以外
 const T = new Array(W * H).fill('X');
 const at = (x, y) => (x < 0 || y < 0 || x >= W || y >= H) ? 'X' : T[y * W + x];
 const put = (x, y, c) => { T[y * W + x] = c; };
@@ -1527,6 +1527,7 @@ async function runTest(kind) {
     if (kind === 'ch5') return testCh5();
     if (kind === 'items') return testItems();
     if (kind === 'fear') return testFear();
+    if (kind === 'phone') return testPhone();
     if (kind === 'chap') {   // 章節選擇：直接從第二章（上）、（下）開始
       await startFrom(2); await waitFree(); const a = G.scene === 2 && G.inv.flashlight && G.mode === 'play';
       await startFrom(3); await waitFree(); const b = G.scene === 3 && G.inv.pages.length === 2 && !$('#hud').classList.contains('hide');

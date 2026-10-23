@@ -7,9 +7,10 @@
 
 const ROOM5 = { wait: [27, 2, 36, 8], conc: [18, 3, 25, 6] };
 const in5 = (r, x, y) => { const [x0, y0, x1, y1] = ROOM5[r]; return x >= x0 && x < x1 + 1 && y >= y0 && y < y1 + 1; };
-const onP1 = (x, y) => x >= 3 && x < 25 && y >= 8 && y < 12, onP2 = (x, y) => x >= 3 && x < 25 && y >= 16 && y < 20;
+const P_END = 51;   // 10/23 月台由 x25 延長到 x51
+const onP1 = (x, y) => x >= 3 && x < P_END && y >= 8 && y < 12, onP2 = (x, y) => x >= 3 && x < P_END && y >= 16 && y < 20;
 const TRACK1 = 12.6, TRACK2 = 14.6;   // 兩條軌道的中線（y）
-const PAX_SPOTS = [[9.5, 11.3], [12.5, 11.3], [15.5, 11.3], [18.5, 11.3], [21, 11.3]];
+const PAX_SPOTS = [[9.5, 11.3], [12.5, 11.3], [15.5, 11.3], [18.5, 11.3], [21, 11.3], [27.5, 11.3], [31.5, 11.3], [35.5, 11.3], [40.5, 11.3], [44.5, 11.3], [48.5, 11.3]];
 const PAX = [];   // 黑影乘客
 const TK = { x: 6, y: TRACK2, dir: 6, vx: 1, state: 'track', frame: 0, animD: 0, timer: 0, moving: false };   // Teke Teke
 const SUMI = { x: 33.5, y: 4.5, dir: 4, at: 'wait' };
@@ -18,17 +19,18 @@ const ENDS_KEY = 'yakou_kisaragi_endings', TRUE_KEY = 'yakou_kisaragi_true';
 Object.assign(HIDE, { bench: '躲到長椅下', ticketm: '擠進售票機之間' });
 SCENE_PATROL[5] = [[30.5, 30.5]];   // 裂口女不來車站
 SCENES[5] = buildCh4;
-loadImages(['passenger', 'passenger2', 'conductor', 'sumika', 'teke']).then(() => { for (const k of ['passenger', 'passenger2', 'conductor', 'teke']) if (IMG[k]) IMG[k].rows = 4; if (IMG.sumika) IMG.sumika.rows = 2; });
+loadImages(['passenger', 'passenger2', 'conductor', 'sumika', 'teke', 'walls5', 'train_side', 'train_front']).then(() => { for (const k of ['passenger', 'passenger2', 'conductor', 'teke']) if (IMG[k]) IMG[k].rows = 4; if (IMG.sumika) IMG.sumika.rows = 2; });
 
 function buildCh4() {
   const room = (r, c) => { const [x0, y0, x1, y1] = ROOM5[r]; for (let y = y0 - 1; y <= y1 + 1; y++) for (let x = x0 - 1; x <= x1 + 1; x++) if (at(x, y) === 'X') put(x, y, '#'); fill(x0, y0, x1, y1, c); };
   room('wait', ':'); room('conc', ':');
   door(26, 5, { locked: true, key: 'ticket', sign: '改札', msg: '閘口。欄杆放下來了。' });
   put(19, 7, ':'); put(20, 7, ':');                                // 通道 → 第一月台的樓梯
-  fill(3, 8, 24, 11, '='); fill(3, 16, 24, 19, '=');                 // 第一、第二月台（軌道 y12–15 留 X＝掉不下去）
+  fill(3, 8, 24, 11, '='); fill(25, 10, 37, 11, '='); fill(38, 8, P_END - 1, 11, '='); fill(3, 16, P_END - 1, 19, '=');   // 第一月台（站房前面只剩 2 格寬）、第二月台（軌道 y12–15 留 X＝掉不下去）
+  for (let x = 38; x < P_END; x++) if (at(x, 7) === 'X') put(x, 7, '#');
   fill(22, 12, 23, 15, '=');                                         // 跨線天橋（從軌道上方跨過去）
   for (let y = 12; y <= 15; y++) { put(21, y, 'f'); put(24, y, 'f'); }
-  fill(25, 17, 32, 19, '=');                                         // 往隧道口的步道
+  fill(P_END, 17, 56, 19, '=');                                      // 往隧道口的步道（月台東端）
   // 候車室
   obj('bench', 30, 6, { act: 'rest5', label: '在長椅上坐一下（存檔）', hide: false });
   obj('plist', 29, 2, { act: 'plist', label: '看牆上的名單' }); obj('notice', 32, 2, { act: 'notice', label: '看事故告示' });
@@ -37,16 +39,18 @@ function buildCh4() {
   obj('conductor', 27, 4, { act: 'conductor', label: '跟車掌說話' });
   // 第一月台：站牌、長椅、停著的列車
   obj('stsign', 14, 8, { act: 'stsign', label: '看站牌' });
-  for (const x of [5, 8, 17]) obj('bench', x, 8);
-  for (let x = 4; x <= 18; x++) obj('train', x, 12, x === 7 || x === 13 ? { act: 'board', label: '看看車門' } : {});
+  for (const x of [5, 8, 17, 40, 46]) obj('bench', x, 8);
+  for (const x of [11, 23, 43]) obj('pillar5', x, 8); for (const x of [11, 23, 33, 43]) obj('pillar5', x, 19);   // 月台的屋簷柱子
+  obj('ekimei', 49, 8, { act: 'stsign', label: '看站名牌' }); obj('ekimei', 38, 19, { act: 'stsign2', label: '看站名牌' });
+  for (let x = 4; x <= 17; x++) obj('train', x, 12, x === 7 || x === 13 ? { act: 'board', label: '看看車門' } : {});
   // 第二月台
-  for (const x of [5, 9, 13, 17]) obj('bench', x, 19);
+  for (const x of [5, 9, 13, 17, 26, 31, 41, 47]) obj('bench', x, 19);
   obj('stsign', 11, 19, { act: 'stsign2', label: '看站牌' });
-  obj('tunnel', 32, 18, { act: 'tunnel', label: '走向隧道口' });
+  obj('tunnel', 57, 18, { act: 'tunnel', label: '走向隧道口' });
   // 光源：月台的燈、候車室、隧道口的紅燈
-  for (const x of [6.5, 12.5, 18.5]) LIGHTS.push({ x, y: 9.2, r: 2.6, c: '230,225,190' });
-  for (const x of [6.5, 12.5, 18.5]) LIGHTS.push({ x, y: 18.2, r: 2.4, c: '200,215,235' });
-  LIGHTS.push({ x: 31.5, y: 4.5, r: 3.6, c: '255,230,180' }, { x: 21.5, y: 4.5, r: 2.2, c: '200,210,230' }, { x: 33.5, y: 17.5, r: 1.8, c: '255,60,60', id: 'tunnelLamp' });
+  for (let x = 6.5; x < P_END; x += 6) LIGHTS.push({ x, y: 9.2, r: 2.6, c: '230,225,190' });
+  for (let x = 6.5; x < P_END; x += 6) LIGHTS.push({ x, y: 18.2, r: 2.4, c: '200,215,235' });
+  LIGHTS.push({ x: 31.5, y: 4.5, r: 3.6, c: '255,230,180' }, { x: 21.5, y: 4.5, r: 2.2, c: '200,210,230' }, { x: 56.5, y: 17.5, r: 1.8, c: '255,60,60', id: 'tunnelLamp' });
   item('can', 10, 10, '空罐'); item('can', 15, 17, '空罐');
   item('bandage', 23, 4, '繃帶'); item('charm', 10, 17, '護身符'); item('drink', 4, 9, '能量飲料');
   item('ext', 19, 4, '滅火器'); item('eraser', 31, 7, '板擦');
@@ -55,18 +59,20 @@ function buildCh4() {
 // 軌道、月台黃線、碎石：畫在地板層
 function sceneFloor(g) {
   if (G.scene !== 5) return;
-  for (let y = 12; y <= 15; y++) for (let x = 0; x <= 38; x++) {
+  for (let y = 12; y <= 15; y++) for (let x = 0; x <= 62; x++) {
     if (at(x, y) !== 'X') continue;
     diamond(g, x, y, (x + y) % 2 ? '#1c1d22' : '#202127'); speck(g, x, y, ['#2b2c33', '#141519'], 10);
   }
   g.strokeStyle = '#6d6a66'; g.lineWidth = 1.2;
   for (const ty of [TRACK1, TRACK2]) for (const o of [-.28, .28]) {   // 鐵軌（跨線天橋那兩格不畫）
-    for (const [a, b] of [[0, 22], [24, 39]]) { const [x0, y0] = isoW(a, ty + o), [x1, y1] = isoW(b, ty + o); g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); }
+    for (const [a, b] of [[0, 22], [24, 63]]) { const [x0, y0] = isoW(a, ty + o), [x1, y1] = isoW(b, ty + o); g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); }
   }
   g.fillStyle = 'rgba(70,55,40,.8)';
-  for (const ty of [TRACK1, TRACK2]) for (let x = 0.3; x < 39; x += .7) { if (x > 21.6 && x < 24.4) continue; const [a, b] = isoW(x, ty - .4), [c, d] = isoW(x, ty + .4); g.fillRect(Math.min(a, c), Math.min(b, d), 3, Math.abs(d - b) + 1); }
-  g.strokeStyle = 'rgba(220,190,60,.55)'; g.lineWidth = 2;   // 月台邊的黃線
-  for (const [y, a, b] of [[11.75, 3, 21], [16.25, 3, 21]]) { const [x0, y0] = isoW(a, y), [x1, y1] = isoW(b, y); g.beginPath(); g.moveTo(x0, y0); g.lineTo(x1, y1); g.stroke(); }
+  for (const ty of [TRACK1, TRACK2]) for (let x = 0.3; x < 63; x += .7) { if (x > 21.6 && x < 24.4) continue; const [a, b] = isoW(x, ty - .4), [c, d] = isoW(x, ty + .4); g.fillRect(Math.min(a, c), Math.min(b, d), 3, Math.abs(d - b) + 1); }
+  // 月台的水泥側面（從軌道這邊看得到）：第一月台南緣（y12）、第二月台南緣（y20）
+  if (IMG.walls5) for (const [ey, a, b] of [[12, 3, 22], [12, 24, P_END], [20, 3, 57]]) for (let x = a; x < b; x++) {
+    const [x0, y0] = isoW(x, ey); g.setTransform(16 / 64, 8 / 64, 0, 12 / 68, x0, y0); g.drawImage(IMG.walls5, 4 * 64, 0, 64, 68, 0, 0, 64, 68); g.setTransform(1, 0, 0, 1, 0, 0);
+  }
 }
 
 /* ---------- 開場（第三章結束後，從地下書庫再往下走） ---------- */
@@ -166,6 +172,7 @@ async function sumikaTalk() {
 function paxProvoked(p) {
   const d = dist(p.x, p.y, P.x, P.y); if (P.hidden || pInvis()) return false;
   if (P.run && P.moving && d < 3.6) return '跑';
+  if (!P.crouch && d < 1.15) return '近';   // 10/23：直接從旁邊走過去也會被注意到（要蹲著經過）
   if (P.light && d < 5.5) { const [fx, fy] = DIRV[P.dir]; if ((fx * (p.x - P.x) + fy * (p.y - P.y)) / d > .82) return '照'; }
   return false;
 }
@@ -174,14 +181,14 @@ function paxUpdate(dt) {
     p.moving = false;
     if (p.state === 'wait') {
       const why = paxProvoked(p);
-      if (why) { p.state = 'follow'; p.timer = 6; p.path = null; sfx.sting(); toast(why === '照' ? '被照到的人影，慢慢轉過頭來——' : '腳步聲太大了——人影轉過頭來'); }
+      if (why) { p.state = 'follow'; p.timer = 6; p.path = null; sfx.sting(); toast(why === '照' ? '被照到的人影，慢慢轉過頭來——' : why === '近' ? '靠太近了——人影轉過頭來（蹲下經過）' : '腳步聲太大了——人影轉過頭來'); }
       else { p.dir = 3; }
       continue;
     }
     if (p.state === 'follow') {
       p.timer -= dt;
       if (P.hidden || pInvis() || p.timer <= 0) { p.state = 'back'; p.path = null; continue; }
-      walker(p, P.x, P.y, .95, dt);
+      walker(p, P.x, P.y, 1.25, dt);
       if (dist(p.x, p.y, P.x, P.y) < .6 && P.inv <= 0 && !G.lock) paxCatch(p);
     } else if (p.state === 'back') { if (walker(p, p.hx, p.hy, .9, dt)) p.state = 'wait'; }
   }
@@ -206,7 +213,7 @@ function tkUpdate(dt) {
   const d = dist(TK.x, TK.y, P.x, P.y);
   if (TK.state === 'stun') { TK.timer -= dt; tkMove(TK.x + TK.vx, TRACK2, 1.2, dt); if (TK.timer <= 0) TK.state = 'track'; return; }
   if (TK.state === 'track') {
-    if (TK.x > 20.5) TK.vx = -1; if (TK.x < 3.5) TK.vx = 1;
+    if (TK.x > P_END - 2) TK.vx = -1; if (TK.x < 3.5) TK.vx = 1;
     tkMove(TK.x + TK.vx, TRACK2, 2.1, dt);
     if (tkSees()) { TK.state = 'chase'; sfx.sting(); shake = 5; toast('テケ、テケ、テケ——！'); }
   } else if (TK.state === 'chase') {
@@ -217,19 +224,23 @@ function tkUpdate(dt) {
 }
 function tkMove(tx, ty, sp, dt) {   // 爬行不受地形限制，但只在軌道與第二月台之間
   const dx = tx - TK.x, dy = ty - TK.y, m = Math.hypot(dx, dy); if (m < .05) return;
-  const s = Math.min(m, sp * dt); TK.x += dx / m * s; TK.y = Math.max(13.9, Math.min(19.6, TK.y + dy / m * s)); TK.x = Math.max(2.5, Math.min(24.5, TK.x));
+  const s = Math.min(m, sp * dt); TK.x += dx / m * s; TK.y = Math.max(13.9, Math.min(19.6, TK.y + dy / m * s)); TK.x = Math.max(2.5, Math.min(P_END - .5, TK.x));
   TK.dir = dirFromWorld(dx, dy); TK.moving = true; TK.animD += s; TK.frame = Math.floor(TK.animD / .22) % 4;
 }
 async function tkCatch() {
   TK.state = 'stun'; TK.timer = 99; P.hidden = null; sfx.sting(); shake = 12;
-  const a = await choose('Teke Teke', '「……我的腳，在哪裡？」', ['校後的平交道', '如月車站的月台', '學校的地下書庫'], TEST ? 0 : 9000);
-  if (a === 0) {
-    await says(['「…………平交道。」', '她的頭髮後面，傳來很輕的、像是在哭的聲音。', '她轉過身，爬回了軌道上。']);
-    TK.state = 'stun'; TK.timer = 7; TK.vx = TK.x > 12 ? 1 : -1; return;
+  // 10/23 難度：選項順序打亂、只有 5 秒；答對她也只會離開一下，之後回來會更兇（沒看過事故告示就只能用猜的）
+  const OPT = ['校後的平交道', '如月車站的月台', '學校的地下書庫', '隧道裡面'].sort(() => Math.random() - .5);
+  const a = await choose('Teke Teke', '「……我的腳，在哪裡？」', OPT, TEST ? OPT.indexOf('校後的平交道') : 5000);
+  if (OPT[a] === '校後的平交道') {
+    TK.asked = (TK.asked || 0) + 1;
+    await says(TK.asked > 1 ? ['「……妳上次也這樣說。」', '「可是，那裡什麼都沒有。」', '指甲刮過小腿——她爬回軌道，又轉過頭來看著這邊。'] : ['「…………平交道。」', '她的頭髮後面，傳來很輕的、像是在哭的聲音。', '她轉過身，爬回了軌道上。……可是，她還在看著這邊。']);
+    if (TK.asked > 1) damage(1);
+    TK.state = 'stun'; TK.timer = TK.asked > 1 ? 3 : 4.5; TK.vx = TK.x > 12 ? 1 : -1; P.inv = 1.5; return;
   }
-  damage(1); if (G.mode !== 'play') return;
+  damage(2); if (G.mode !== 'play') return;
   await says(['「——不對。」', '指甲刮過腳踝。', '（拚命跑回了天橋上。）']);
-  P.x = 22.5; P.y = 11.2; P.inv = 2.5; TK.state = 'stun'; TK.timer = 4; TK.x = 6; TK.y = TRACK2;
+  P.x = 22.5; P.y = 11.2; P.inv = 2.5; TK.state = 'stun'; TK.timer = 3; TK.x = 6; TK.y = TRACK2;
 }
 
 /* ---------- 真結局：第二月台 ---------- */
@@ -394,7 +405,7 @@ async function testCh4() {
     if (want === 'bad') { tp(7.5, 11.4); P.dir = 4; await interact(); }
     else {
       tp(22.5, 13.5); await wait(100); await waitFree();
-      if (want === 'tunnel') { TK.state = 'gone'; tp(31.5, 18.5); P.dir = 6; await interact(); }
+      if (want === 'tunnel') { TK.state = 'gone'; tp(56.5, 18.5); P.dir = 6; await interact(); }
       else { TK.state = 'track'; tp(13.5, 16.6); }
     }
     let t0 = performance.now(); while (G.mode === 'play' && performance.now() - t0 < 25000) await wait(100);
