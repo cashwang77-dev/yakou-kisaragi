@@ -1244,7 +1244,7 @@ function drawObj(o, alpha) {
     case 'bleach': box(x, y, 1, 1, o.hideOnly ? 9 : 18, '#5a5048', '#3e3630', '#342d28'); if (!o.hideOnly) box(x, y, .5, 1, 9, '#61574e', null, null, 18); break;
     case 'box': box(x + .15, y + .2, .7, .6, 14 + shaking, '#6b5232', '#4c3a24', '#3f301d'); ctx.fillStyle = '#2e2416'; ctx.fillRect(cx - 6, cy - 9, 12, 1); break;
     case 'trash': box(x + .3, y + .3, .4, .4, 12 + shaking, '#596066', '#3d4247', '#33373b'); break;
-    case 'statue': box(x + .15, y + .15, .7, .7, 10, '#6c6a64', '#4a4843', '#403e3a'); if (!o.gone && IMG.ninomiya) ctx.drawImage(IMG.ninomiya, cx - 16, cy - 58); break;
+    case 'statue': box(x + .15, y + .15, .7, .7, 10, '#6c6a64', '#4a4843', '#403e3a'); if (!o.gone && IMG.ninomiya) ctx.drawImage(IMG.ninomiya, Math.round(cx - IMG.ninomiya.width / 2), Math.round(cy - 8 - IMG.ninomiya.height)); break;
     case 'bike': ctx.strokeStyle = '#555a5e'; ctx.beginPath(); ctx.ellipse(cx - 6, cy - 5, 5, 4, 0, 0, 7); ctx.ellipse(cx + 6, cy - 2, 5, 4, 0, 0, 7); ctx.moveTo(cx - 6, cy - 5); ctx.lineTo(cx, cy - 10); ctx.lineTo(cx + 6, cy - 2); ctx.stroke(); break;
     case 'gdesk': box(x + .1, y + .2, .8, .6, 12, '#5a4632', '#3e3022', '#33281c'); ctx.fillStyle = '#d8cfb8'; ctx.fillRect(cx - 4, cy - 15, 7, 4); break;
     case 'desk': {
