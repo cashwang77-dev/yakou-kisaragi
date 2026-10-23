@@ -192,6 +192,11 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
 #lyric.show{opacity:.92}
 .phone #bTheme{font-size:calc(var(--u)*10)}
 .phone #lyric{font-size:calc(var(--u)*13);bottom:calc(var(--u)*22)}
+/* 10/23 手機：選單類畫面可以上下滑動（body 是 touch-action:none，給搖桿用） */
+#title,#help,#chapSel,#snd,#lore,#a2hs{overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;justify-content:flex-start;padding:calc(var(--u)*10) 0}
+#title>h1{margin-top:auto}#title>.btns{margin-bottom:auto}
+#help>.hb,#chapSel>.hb,#snd>.hb,#lore>.hb,#a2hs>.hb{margin:auto 0}
+.phone #title .foot{position:static;margin-top:calc(var(--u)*8)}
 #gate{z-index:11;background:#000;cursor:pointer;overflow:hidden;justify-content:flex-start;transition:opacity .8s}
 #gate.out{opacity:0;pointer-events:none}
 /* 場景框＝背景圖比例 1376:768，JS 設成 cover 尺寸；裡面的動畫層用圖片百分比定位 */
@@ -254,7 +259,7 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
   <div id="card" class="ui full hide"><div class="ctx"></div><div class="more">點擊繼續 ▼</div></div>
   <div id="title" class="ui full" style="background-image:url(assets/card_gate.jpg)">
     <h1>夜校・<em>如月</em></h1>
-    <p class="sub">試玩版　序章～第三章</p>
+    <p class="sub">完整版　序章～終章</p>
     <div class="btns">
       <button id="bFull" class="hide">⛶ 全螢幕遊玩</button>
       <button id="bStart">開始遊戲</button>
