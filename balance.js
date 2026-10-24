@@ -29,3 +29,31 @@ async function testAutoSave() {
     document.title = (G.scene === 4 && Math.abs(P.x - 12.5) < .1 && Math.abs(P.y - 21.5) < .1 ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary());
   } catch (e) { document.title = 'ERR ' + e; }
 }
+
+/* 被抓之後的喘息時間（2026-10-24 使用者：被抓到後很容易被黏住、逃不掉）
+   任何扣血之後：所有敵人（裂口女＋各章的鬼）停住 1.5 秒，咪醬至少再無敵 2.7 秒（停住結束後還有 1.2 秒可以拉開距離）。
+   只在「可以操作」的時間倒數：被抓後的對話、過場不會吃掉這段時間。 */
+const CATCH_HOLD = 1.5, CATCH_INV = 1.2;
+const HOLD = { t: 0, fresh: false };
+{ const _d = damage; damage = function (n) { _d(n); HOLD.t = CATCH_HOLD; HOLD.fresh = true; }; }
+{ const _u = update; update = function (dt) {
+    if (HOLD.t <= 0 || G.mode !== 'play' || G.lock) return _u(dt);
+    if (HOLD.fresh) { HOLD.fresh = false; P.inv = Math.max(P.inv, HOLD.t + CATCH_INV); }
+    const g = ghostUpdate, s = sceneUpdate; ghostUpdate = () => {}; sceneUpdate = () => {};
+    try { _u(dt); } finally { ghostUpdate = g; sceneUpdate = s; }
+    HOLD.t -= dt;
+  }; }
+{ const _l = loadCP; loadCP = function (...a) { HOLD.t = 0; HOLD.fresh = false; return _l(...a); }; }
+// 測試（?test=hold）：第三章妃姬子在身邊追 → 扣血 → 停住期間她不動、咪醬無敵 → 結束後她又開始追
+async function testHold() {
+  try {
+    G.inv.pages = [1, 2, 3, 4, 5, 6]; G.inv.mirror = true; await startCh3(); await waitFree();
+    P.x = 12.5; P.y = 21.5; Object.assign(HK, { x: 15.5, y: 21.5, state: 'chase', timer: 99, path: null });
+    damage(1); const x0 = HK.x, y0 = HK.y; await wait(200);   // 測試模式時間約 4 倍速：200ms ≈ 0.8 秒
+    const m = Math.hypot(HK.x - x0, HK.y - y0); if (m > .01) throw 'moved during hold ' + m.toFixed(2);
+    if (P.inv <= 0) throw 'no inv';
+    await wait(1000);
+    if (Math.hypot(HK.x - x0, HK.y - y0) < .3) throw 'never resumed ' + HK.state;
+    document.title = 'PASS hold inv=' + P.inv.toFixed(2);
+  } catch (e) { document.title = 'ERR ' + e; }
+}
