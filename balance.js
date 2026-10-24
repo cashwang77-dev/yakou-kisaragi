@@ -57,3 +57,26 @@ async function testHold() {
     document.title = 'PASS hold inv=' + P.inv.toFixed(2);
   } catch (e) { document.title = 'ERR ' + e; }
 }
+
+/* 護身符隱身中不會被抓（2026-10-24 使用者：護身符會失效）
+   原因：鬼「看不到」咪醬，但追擊中的鬼會走到她最後出現的位置，碰到就抓（碰撞判定只看 P.inv）；
+   沒有頭的學生、Teke Teke 追人時根本不看視線。→ 隱身（含滅火器的煙）期間一律無敵，這兩隻也會跟丟。 */
+{ const _u = update; update = function (dt) { if (pInvis()) P.inv = Math.max(P.inv, .25); return _u(dt); }; }
+{ const _h = hlUpdate; hlUpdate = function (dt) {
+    if (pInvis() && HL.state === 'chase' && !stunned(HL) && inGym(P.x, P.y)) { HL.moving = false; walker(HL, BALL.x, BALL.y, 1.4, dt); return; }
+    return _h(dt); }; }
+{ const _t = tk7Update; tk7Update = function (dt) {
+    if (pInvis() && TK7.state === 'chase' && !stunned(TK7)) { TK7.moving = false; TK7.lost = (TK7.lost || 0) + dt; if (TK7.lost > 2.2) { TK7.state = 'lurk'; TK7.lost = 0; toast('「テケ……テケ……」聲音往軌道那邊去了'); } return; }
+    return _t(dt); }; }
+// 測試（?test=charm）：第三章妃姬子在身邊追 → 用護身符 → 她走到咪醬的位置也抓不到
+async function testCharm() {
+  try {
+    G.inv.pages = [1, 2, 3, 4, 5, 6]; G.inv.mirror = true; await startCh3(); await waitFree();
+    P.x = 12.5; P.y = 21.5; Object.assign(HK, { x: 14.5, y: 21.5, state: 'chase', timer: 99, path: null, last: [12.5, 21.5] });
+    G.inv.charm = 1; const h0 = G.hearts; P.inv = 0; useItem('charm');
+    await wait(1200);
+    if (G.hearts !== h0) throw 'caught hearts=' + G.hearts;
+    if (dist(HK.x, HK.y, P.x, P.y) > 1.5) throw 'HK never came d=' + dist(HK.x, HK.y, P.x, P.y).toFixed(2);
+    document.title = 'PASS charm hearts=' + G.hearts;
+  } catch (e) { document.title = 'ERR ' + e; }
+}

@@ -1550,6 +1550,7 @@ async function runTest(kind) {
     if (kind === 'autosave') return testAutoSave();
     if (kind === 'inv') return testInv();
     if (kind === 'hold') return testHold();
+    if (kind === 'charm') return testCharm();
     if (kind === 'chap') {   // 章節選擇：直接從第二章（上）、（下）開始
       await startFrom(2); await waitFree(); const a = G.scene === 2 && G.inv.flashlight && G.mode === 'play';
       await startFrom(3); await waitFree(); const b = G.scene === 3 && G.inv.pages.length === 2 && !$('#hud').classList.contains('hide');
