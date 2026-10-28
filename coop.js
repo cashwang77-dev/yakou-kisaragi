@@ -30,7 +30,7 @@ const coopMe = () => ({ x: +P.x.toFixed(2), y: +P.y.toFixed(2), d: P.dir, m: P.m
   el.innerHTML = `<div class="hb"><h2>多人合作（測試版）</h2><p>2～4 人。每場隨機場景、隨機怪物。<br>一起找到 3 把鑰匙，再回到出發的地方。被抓會倒地——隊友靠近 2 秒可以扶起來。</p>
 <div id="coopA"><input id="coopName" placeholder="你的名字" maxlength="8"><div class="btns"><button id="coopHost">建立房間</button></div>
 <input id="coopJoin" placeholder="房號（4 碼）" maxlength="4" style="text-transform:uppercase"><div class="btns"><button id="coopJoinB">加入</button><button id="coopBack">返回</button></div></div>
-<div id="coopB" class="hide"><p>把房號告訴朋友，用同一個網址按「多人合作」→「加入」</p><div id="coopCode"></div><p id="coopWho"></p><div class="btns"><button id="coopStart">開始</button></div></div>
+<div id="coopB" class="hide"><p>把房號告訴朋友，用同一個網址按「多人合作」→「加入」</p><div id="coopCode"></div><div class="btns"><button id="coopInv">📋 複製邀請連結</button></div><p id="coopWho"></p><div class="btns"><button id="coopStart">開始</button></div></div>
 <p id="coopMsgP"></p></div>`;
   document.getElementById('wrap').appendChild(el);
   const ch = document.createElement('div'); ch.id = 'coopChat'; ch.className = 'hide'; ch.innerHTML = '<div id="coopLog"></div><input id="coopMsg" placeholder="Enter 聊天" maxlength="50">';
@@ -41,6 +41,8 @@ const coopMe = () => ({ x: +P.x.toFixed(2), y: +P.y.toFixed(2), d: P.dir, m: P.m
   $('#coopHost').onclick = () => coopNet(true);
   $('#coopJoinB').onclick = () => coopNet(false);
   $('#coopStart').onclick = () => coopStartHost();
+  $('#coopInv').onclick = async () => { const u = location.origin + location.pathname + '?join=' + $('#coopCode').textContent; try { await navigator.clipboard.writeText(`來玩《夜校・如月》多人合作！房號 ${$('#coopCode').textContent}：${u}`); $('#coopInv').textContent = '✓ 已複製，貼給朋友'; } catch (e) { $('#coopMsgP').textContent = u; } };
+  const jc = new URLSearchParams(location.search).get('join'); if (jc) { $('#coopJoin').value = jc.toUpperCase().slice(0, 4); setTimeout(() => { el.classList.remove('hide'); try { $('#coopName').value = localStorage.getItem('yko_name') || ''; } catch (e) { } $('#coopMsgP').textContent = '朋友邀請你加入！輸入名字後按「加入」'; }, 600); }
   $('#coopMsg').addEventListener('keydown', e => { e.stopPropagation(); if (e.key !== 'Enter') return; const s = e.target.value.trim(); e.target.value = ''; e.target.blur(); if (!s) return; if (COOP.host) coopChat(COOP.P[COOP.id].n, s, true); else coopSend({ t: 'chat', s }); });
 })();
 function coopLog(t) { const d = document.createElement('div'); d.textContent = t; $('#coopLog').appendChild(d); while ($('#coopLog').childElementCount > 5) $('#coopLog').firstChild.remove(); }
@@ -71,13 +73,13 @@ async function coopNet(host) {
       COOP.id = id; const c = COOP.hc = pr.connect('yakou-coop-' + code, { reliable: true });
       c.on('open', () => { c.send(JSON.stringify({ t: 'hi', n: COOP.name })); $('#coopA').classList.add('hide'); msg('已加入，等房主開始……'); });
       c.on('data', raw => coopClientMsg(JSON.parse(raw)));
-      c.on('close', () => coopLog('與房主的連線中斷了'));
+      c.on('close', () => { coopLog('與房主的連線中斷了'); if (COOP.on && G.mode === 'play') { toast('與房主的連線中斷了，這場結束'); setTimeout(() => { G.mode = 'play'; coopEnd(0); $('#end h2').textContent = '連線中斷'; }, 1500); } });
       setTimeout(() => { if (!c.open) msg('找不到這個房間（房號錯誤，或網路擋住了點對點連線，可以改用手機網路試試）'); }, 9000);
     });
     pr.on('error', e => msg('連線錯誤：' + e.type));
   }
 }
-function coopAdd(id, n) { const i = Object.keys(COOP.P).length; COOP.P[id] = { n, c: COOP_COLS[i % 4], i, x: 0, y: 0, d: 4, m: 0, r: 0, f: 0, cr: 0, li: 0, hd: null, down: 0, rv: 0 }; }
+function coopAdd(id, n) { const i = Object.keys(COOP.P).length; COOP.P[id] = { n, c: COOP_COLS[i % 4], i, kc: 0, sv: 0, dn: 0, sh: 0, fs: 0, x: 0, y: 0, d: 4, m: 0, r: 0, f: 0, cr: 0, li: 0, hd: null, down: 0, rv: 0 }; }
 function coopWho() { $('#coopWho').textContent = '目前：' + Object.values(COOP.P).map(p => p.n).join('、'); }
 function coopHostMsg(id, m) {
   if (m.t === 'hi') { coopAdd(id, m.n); coopWho(); coopSys(m.n + ' 加入了'); }
@@ -149,7 +151,7 @@ function coopSwap(e, fn) {
 }
 function coopDown(id) {
   const p = COOP.P[id]; if (!p || p.down) return;
-  p.down = 1; p.rv = 0; coopSys(`${p.n} 被抓住了！快去扶她起來`);
+  p.down = 1; p.rv = 0; p.dn = (p.dn || 0) + 1; coopSys(`${p.n} 被抓住了！快去扶她起來`);
   if (GH.active) { GH.state = 'pause'; GH.timer = 2.5; }
   if (typeof AM === 'object' && AM.state === 'chase') AM.state = 'patrol';
   if (typeof HK === 'object' && HK.state === 'chase') { HK.state = 'patrol'; HK.path = null; }
@@ -173,7 +175,7 @@ objAction = (_o => async function (o) {
 })(objAction);
 function coopTakeKey(i, id) {
   const k = COOP.keys[i]; if (!k || k.t) return;
-  k.t = 1; const n = COOP.keys.filter(q => q.t).length; coopSys(`${COOP.P[id] ? COOP.P[id].n : '?'} 找到了一把鑰匙（${n} / ${COOP.keys.length}）`); coopObj();
+  k.t = 1; if (COOP.P[id]) COOP.P[id].kc = (COOP.P[id].kc || 0) + 1; const n = COOP.keys.filter(q => q.t).length; coopSys(`${COOP.P[id] ? COOP.P[id].n : '?'} 找到了一把鑰匙（${n} / ${COOP.keys.length}）`); coopObj();
 }
 function coopHostTick(dt) {
   const me = COOP.P[COOP.id]; Object.assign(me, coopMe());
@@ -181,7 +183,7 @@ function coopHostTick(dt) {
     const q = id === COOP.id ? me : p;
     if (p.down) {   // 扶起
       const helper = Object.entries(COOP.P).find(([j, o]) => j !== id && !o.down && dist(o.x, o.y, q.x, q.y) < 1.3);
-      p.rv = helper ? p.rv + dt : 0; if (p.rv >= 2) { p.down = 0; p.rv = 0; coopSys(`${p.n} 被扶起來了`); }
+      p.rv = helper ? p.rv + dt : 0; if (p.rv >= 2) { p.down = 0; p.rv = 0; helper[1].sv = (helper[1].sv || 0) + 1; coopSys(`🤝 ${helper[1].n} 把 ${p.n} 扶起來了`); }
     } else COOP.keys.forEach((k, i) => { if (!k.t && dist(k.x, k.y, q.x, q.y) < .8) coopTakeKey(i, id); });
   }
   // 手電筒壓制：拿手電筒正對 4 格內的怪物照 1.2 秒 → 牠僵住 2.5 秒（每人冷卻 10 秒）
@@ -190,7 +192,7 @@ function coopHostTick(dt) {
     const sv = SCR[q.d] || [0, 1], sl = Math.hypot(sv[0], sv[1]);
     const t = threats().find(t => { const dx = t.e.x - q.x, dy = t.e.y - q.y, d = Math.hypot(dx, dy); if (d > 4 || stunned(t.e) || t.e.state === 'stun') return false; const sx = dx - dy, sy = (dx + dy) / 2, l = Math.hypot(sx, sy) || 1; return (sx * sv[0] + sy * sv[1]) / l / sl > .72; });
     p.fl = t ? (p.fl || 0) + dt : 0;
-    if (t && p.fl > 1.2 && G.t > (p.flCD || 0)) { t.stun(2.5); p.flCD = G.t + 10; p.fl = 0; coopSys(`🔦 ${p.n} 用手電筒照住了${HW_NAME ? (HW_NAME().get(t.e) || '鬼') : '鬼'}，牠僵住了！`); }
+    if (t && p.fl > 1.2 && G.t > (p.flCD || 0)) { t.stun(2.5); p.flCD = G.t + 10; p.fl = 0; p.fs = (p.fs || 0) + 1; coopSys(`🔦 ${p.n} 用手電筒照住了${HW_NAME ? (HW_NAME().get(t.e) || '鬼') : '鬼'}，牠僵住了！`); }
   }
   const all = Object.values(COOP.P), S = COOP_SCENES[COOP.cfg.scene].spawn;
   if (all.length && all.every(p => p.down)) { coopSend({ t: 'end', win: 0 }); coopEnd(0); }
@@ -256,6 +258,8 @@ function coopEnd(win) {
   const e = $('#end'); e.style.backgroundImage = 'url(assets/' + (win ? 'card_gate' : 'card_class') + '.jpg)';
   e.querySelector('h2').textContent = win ? '全員逃出！' : '全員倒下……';
   e.querySelector('p').innerHTML = win ? `${Object.values(COOP.P).map(p => p.n).join('、')}——一起看著天亮。<br><small>想再玩一場：回到標題 → 多人合作</small>` : '走廊盡頭，腳步聲停了下來。<br><small>回到標題 → 多人合作，可以再挑戰一次</small>';
+  const ps = Object.values(COOP.P), score = p => (p.kc || 0) * 3 + (p.sv || 0) * 4 + (p.sh || 0) * 2 + (p.fs || 0) * 2 - (p.dn || 0), mvp = ps.slice().sort((a, b) => score(b) - score(a))[0];
+  if (ps.length && ps[0].kc !== undefined) e.querySelector('p').insertAdjacentHTML('afterend', `<div class="coopRes" style="margin:-6px auto 12px;font-size:calc(var(--u)*9);line-height:1.8;text-align:center;text-shadow:0 0 4px #000">${ps.map(p => `<span style="color:${p.c}">${p === mvp ? '👑 ' : ''}${p.n}</span>　鑰匙 ${p.kc || 0}・救人 ${p.sv || 0}・引開 ${p.sh || 0}・壓制 ${p.fs || 0}・倒地 ${p.dn || 0}`).join('<br>')}<br><small>👑 本場 MVP：${mvp ? mvp.n : ''}</small></div>`);
   e.classList.remove('hide');
 }
 addEventListener('keydown', e => { if (COOP.on && e.code === 'Enter' && document.activeElement !== $('#coopMsg') && G.mode === 'play' && !G.lock && !advanceFn) { $('#coopMsg').focus(); e.preventDefault(); } }, true);
@@ -263,7 +267,7 @@ addEventListener('keydown', e => { if (COOP.on && e.code === 'Enter' && document
 /* ---------- 合作：引開、標記、互相壯膽 ---------- */
 function coopShout(id) {
   const p = COOP.P[id]; if (!p || p.down || G.t < (p.shCD || 0)) return;
-  p.shCD = G.t + 15; const q = id === COOP.id ? coopMe() : p;
+  p.shCD = G.t + 15; p.sh = (p.sh || 0) + 1; const q = id === COOP.id ? coopMe() : p;
   COOP.lure = { id, until: G.t + 4 }; addNoise(q.x, q.y, 12);
   if (GH.active && GH.state !== 'stun') { GH.state = 'chase'; GH.path = null; GH.last = [q.x, q.y]; GH.lastSeenT = G.t; }
   coopSys(`📢 ${p.n}：「這邊！」——怪物轉向她了`);
