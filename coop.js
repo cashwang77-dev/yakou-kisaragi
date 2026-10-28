@@ -101,7 +101,8 @@ function coopClientMsg(m) {
 /* ---------- 開始：主機抽場景與怪物，大家用同一份設定開局 ---------- */
 function coopStartHost() {
   const sc = [1, 2, 3, 4][Math.random() * 4 | 0], pool = COOP_SCENES[sc].mons;
-  let mons = pool.length > 1 ? [[pool[1]], [pool[0]], pool][Math.random() * 3 | 0] : pool.slice();
+  const np = Object.keys(COOP.P).length;
+  let mons = np >= 3 ? pool.slice() : pool.length > 1 ? [[pool[1]], [pool[0]], pool][Math.random() * 3 | 0] : pool.slice();   // 3 人以上：場景裡的怪物全部出動
   const cfg = { scene: sc, mons, keys: null };
   coopBegin(cfg);   // 主機先開局，用自己的地圖算鑰匙位置
   cfg.keys = COOP.keys.map(k => [k.x, k.y]);
@@ -114,6 +115,8 @@ function coopBegin(cfg) {
   Object.assign(P, { x: S.spawn[0] + ((me.i || 0) % 2) * .6, y: S.spawn[1] - Math.floor((me.i || 0) / 2) * .6, dir: 0, hidden: null, crouch: false, pose: null, stun: 0 });
   G.inv.flashlight = true; P.light = true; G.inv.bandage = 1;
   $('#title').classList.add('hide'); startPlay();
+  // 人數越多怪物越快（只有主機跑怪物）：3 人 +6%、4 人 +12%
+  if (COOP.host) { const ex = Math.max(0, Object.keys(COOP.P).length - 2) * .06; COOP.diff0 = COOP.diff0 || { chase: DIFF.chase, walk: DIFF.walk }; DIFF.chase = COOP.diff0.chase * (1 + ex); DIFF.walk = COOP.diff0.walk * (1 + ex); }
   // 怪物
   GH.active = false;
   if (typeof AM === 'object') AM.state = 'off';
