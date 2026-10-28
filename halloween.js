@@ -53,7 +53,7 @@ function hwDecorate() {
     const far = cand.filter(([x, y]) => dist(x + .5, y + .5, P.x, P.y) > 9).sort((a, b) => dist(b[0], b[1], P.x, P.y) - dist(a[0], a[1], P.x, P.y));
     const pool = far.slice(0, Math.max(1, Math.floor(far.length * .45)));
     const p = pool.length && pool[Math.floor(r() * pool.length)];
-    if (p) { add('hw_head', p[0], p[1], { solid: true, act: 'hwpk', label: '跟南瓜頭說話', ph: r() * 6 }); HW.head = { x: p[0] + .5, y: p[1] + .5 }; }
+    if (p) { add('hw_head', p[0], p[1], { solid: true, act: 'hwpk', label: '跟南瓜頭說話', ph: r() * 6 }); HW.head = { x: p[0] + .5, y: p[1] + .5 }; setTimeout(() => toast('🎃 萬聖夜：這一章也躲著一個南瓜頭，找找看！'), 1200); }
   } else HW.head = null;
   for (const [x, y] of pick(cand.filter(([x, y]) => !OBJAT[x + ',' + y]), 14, 6)) {
     add('hw_pumpkin', x, y, { v: Math.floor(r() * 3), ph: r() * 6 });
@@ -220,6 +220,34 @@ if (HW.on) {
 @keyframes hwPulse{50%{box-shadow:0 0 14px rgba(255,140,40,.55)}}
 #title h1 em{text-shadow:0 0 18px rgba(255,120,30,.55)}`;
   document.head.appendChild(st);
+  st.textContent += `#hwNote{z-index:10}
+#hwNote .hb{width:min(92vw,calc(var(--u)*380));text-align:center;border:1px solid #e07a26;background:rgba(20,10,4,.92);padding:calc(var(--u)*14) calc(var(--u)*16);box-shadow:0 0 24px rgba(255,120,30,.35)}
+#hwNote h2{font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*16);letter-spacing:.2em;color:#ffb347;margin-bottom:calc(var(--u)*4)}
+#hwNote .dt{color:#c9a67a;font-size:calc(var(--u)*9);margin-bottom:calc(var(--u)*10)}
+#hwNote ul{list-style:none;text-align:left;font-size:calc(var(--u)*10);line-height:1.8;margin:0 0 calc(var(--u)*12);padding:0}
+#hwNote li b{color:#ffb347}
+#hwNote .hb{max-height:92vh;overflow-y:auto}
+.phone #hwNote .hb{width:min(94vw,calc(var(--u)*560));padding:calc(var(--u)*8) calc(var(--u)*14)}
+.phone #hwNote h2{font-size:calc(var(--u)*13);margin-bottom:calc(var(--u)*2)}
+.phone #hwNote .dt{margin-bottom:calc(var(--u)*5)}
+.phone #hwNote ul{font-size:calc(var(--u)*9);line-height:1.55;margin-bottom:calc(var(--u)*7)}
+.phone #hwNote .btns button{font-size:calc(var(--u)*11);padding:calc(var(--u)*4)}`;
+  const note = document.createElement('div'); note.id = 'hwNote'; note.className = 'ui full hide';
+  note.innerHTML = `<div class="hb"><h2>🎃 萬聖夜限定活動</h2><div class="dt">10/29 – 11/07　期間限定</div><ul>
+<li><b>南瓜頭</b>：每一章都躲著一個南瓜頭小孩，找到他會分妳南瓜糖。七章全部找齊有驚喜！</li>
+<li><b>不給糖就搗蛋</b>：鬼靠近時可能會跟妳討糖——給牠，牠會發呆 6 秒；不給，手電筒會被吹熄。</li>
+<li><b>南瓜糖</b>：也可以自己吃掉（${isTouch ? '道具選單點按' : '按 8'}），讓心跳平靜下來。</li>
+<li><b>校園也換上了萬聖節裝飾</b>，咪醬戴上了魔女帽。</li></ul>
+<div class="btns"><button type="button" id="hwOk">知道了</button></div></div>`;
+  document.body.appendChild(note);
+  $('#hwOk').addEventListener('click', e => { e.stopPropagation(); note.classList.add('hide'); });
+  const showNote = () => {   // 入口畫面點進來、看到標題時跳出（每次打開都提醒）
+    if (TEST) { if (Q.get('hwnote')) setTimeout(() => note.classList.remove('hide'), 600); return; }   // 截圖：&hwnote=1
+    const id = setInterval(() => { if ($('#gate').classList.contains('hide') && !$('#title').classList.contains('hide')) { clearInterval(id); note.classList.remove('hide'); } }, 300);
+  };
+  showNote();
+  $('#title .btns').insertAdjacentHTML('beforeend', '<button id="bHw">🎃 萬聖夜活動</button>');
+  $('#bHw').onclick = () => note.classList.remove('hide');
   const sub = $('#title .sub'); if (sub) sub.insertAdjacentHTML('afterend', '<div id="hwBadge">🎃 萬聖夜限定　找出躲在各章的南瓜頭</div>');
   if (typeof LORE === 'object') LORE.push(['pumpkin', '南瓜頭', '萬聖夜才會出現的小孩，躲在每一章的角落。', '找到他會分妳南瓜糖；鬼來討糖時給牠，牠就會發呆。', () => hwGot().length > 0]);
 }

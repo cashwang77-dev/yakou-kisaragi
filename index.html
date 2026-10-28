@@ -179,6 +179,9 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
 #bSnd{position:absolute;display:none;right:calc(var(--u)*8);top:calc(var(--u)*72);z-index:8;width:calc(var(--u)*26);height:calc(var(--u)*26);background:rgba(0,0,0,.5);border:1px solid #5b554c;color:#ddd;font-size:calc(var(--u)*13);line-height:1;cursor:pointer;pointer-events:auto}
 #hud:not(.hide)~#bSnd{display:block}
 .phone #bSnd{width:calc(var(--u)*30);height:calc(var(--u)*30);font-size:calc(var(--u)*15);top:calc(var(--u)*80)}
+/* 10/28 使用者：觸控時 ⚙ 離「調查」太近會誤按 → 移到全螢幕鈕左邊同一排 */
+#touch:not(.hide)~#bSnd{top:calc(var(--u)*42);right:calc(var(--u)*40)}
+.phone #touch:not(.hide)~#bSnd{top:calc(var(--u)*46);right:calc(var(--u)*46)}
 #snd{z-index:12;background:rgba(0,0,0,.9)}
 #snd .hb{text-align:center;width:calc(var(--u)*300)}
 #snd h2{font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*16);margin-bottom:calc(var(--u)*12);letter-spacing:.2em}
@@ -372,6 +375,6 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
 <script src="balance.js?v=70d72ae4"></script>
 <script src="faces.js?v=f56e827c"></script>
 <script src="inventory.js?v=bfcedd3a"></script>
-<script src="halloween.js?v=44dc41a4"></script>
+<script src="halloween.js?v=da9f3328"></script>
 </body>
 </html>
