@@ -1335,6 +1335,7 @@ function render() {
   if (G.shadow) { const s = G.shadow; list.push({ d: s.x + s.y, f: () => drawSprite(IMG.mi, s.x, s.y, s.dir, { sc: MI_SC, tint: 'rgba(0,0,0,1)', alpha: .85 * (s.a ?? 1), noShadow: true }) }); }
   if (GH.active) list.push({ d: GH.x + GH.y, f: () => drawSprite(...ghSpr(), { bob: GH.moving && GH.frame % 2 ? -1 : 0, jit: GH.state === 'chase' ? (Math.random() - .5) * 2 : 0, lean: GH.state === 'chase' ? .16 : 0 }) });
   if (G.scene !== 1 && typeof sceneSprites === 'function') sceneSprites(list);
+  if (typeof coopSprites === 'function') coopSprites(list);   // 多人合作：隊友與鑰匙（coop.js）
   list.sort((a, b) => a.d - b.d);
   for (const l of list) l.f(l.tall && l.d > pd + .2 && near(l.sx, l.sy, l.tall) && !P.hidden ? .3 : 1);
   // 光照（DARK＝整體暗幕濃度，太暗玩起來很累 → 2026-10-21 由 .8 調到 .6，10/22 再調到 .5）
