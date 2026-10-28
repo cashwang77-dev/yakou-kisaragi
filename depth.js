@@ -158,6 +158,16 @@ function ngTick(dt) {
 #end .rk b{display:block;font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*34);color:#f2c14e;line-height:1.1}
 #end .btns{display:flex;flex-direction:row;gap:calc(var(--u)*8);flex-wrap:wrap;justify-content:center}
 #end{overflow-y:auto;justify-content:safe center}
+#end .xp{margin-top:calc(var(--u)*10);text-align:center}
+#end .xp small{display:block;color:var(--dim);font-size:calc(var(--u)*8);letter-spacing:.2em;margin-bottom:calc(var(--u)*4)}
+#end .xpl{display:flex;gap:calc(var(--u)*8);justify-content:center;flex-wrap:wrap}
+#end .xpl a{display:grid;grid-template-columns:calc(var(--u)*64) 1fr;grid-template-rows:auto auto;column-gap:calc(var(--u)*6);align-items:center;width:calc(var(--u)*190);background:rgba(0,0,0,.65);border:1px solid #6b655c;color:var(--ink);text-decoration:none;text-align:left;font-size:calc(var(--u)*7.5);line-height:1.35;padding:calc(var(--u)*3)}
+#end .xpl a:hover{border-color:var(--red)}
+#end .xpl img{grid-row:1/3;width:100%;aspect-ratio:1.91;object-fit:cover}
+#end .xpl b{font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*9.5);color:#efe8dc;align-self:end}
+#end .xpl span{color:var(--dim);align-self:start}
+.phone #end .xp{margin-top:calc(var(--u)*6)}
+.phone #end .xpl a{width:calc(var(--u)*170)}
 .phone #end h2{font-size:calc(var(--u)*20);margin-bottom:calc(var(--u)*3)}
 .phone #end p{font-size:calc(var(--u)*9.5);line-height:1.5;margin-bottom:calc(var(--u)*8)}
 .phone #end .rk{font-size:calc(var(--u)*9);margin:0 0 calc(var(--u)*6);line-height:1.4}
@@ -242,9 +252,14 @@ finaleEnd = (_f => async function (k) {
   rk.innerHTML = r.chap ? `<small>（從章節選擇開始，不列入評價）</small>` : `評價<b>${r.g}</b>難度 ${r.diff}${r.ng ? '（二週目）' : ''}　遊玩 ${fmtMin(r.min)}　被抓 ${r.hits} 次　重來 ${r.deaths} 次　遺落物 ${r.fr}／7`;
   let sb = $('#bShare'); if (!sb) { sb = document.createElement('button'); sb.id = 'bShare'; sb.type = 'button'; sb.textContent = '📣 分享成績'; $('#bEndTitle').before(sb); }
   sb.onclick = () => doShare(kk, r);
+  if (!e.querySelector('.xp')) e.querySelector('.btns').insertAdjacentHTML('afterend', XPROMO);
   if (cleared() && !TEST) setTimeout(() => toast('🔓 已解鎖：二週目、換裝（開始遊戲時選擇）'), 1500);
 })(finaleEnd);
 
+/* ---------- 其他遊戲（三款互相導流，連部落格） ---------- */
+const XPROMO = `<div class="xp"><small>Cash城的其他免費遊戲</small><div class="xpl">
+<a href="https://cashkingw.blogspot.com/p/cash.html" target="_top" rel="noopener"><img src="assets/x_midnight.jpg" alt=""><b>Cash的午夜檔案室</b><span>台灣法庭推理・找出證詞的矛盾</span></a>
+<a href="https://cashkingw.blogspot.com/2026/10/_69.html" target="_top" rel="noopener"><img src="assets/x_sekigahara.jpg" alt=""><b>關原決戰</b><span>六角格戰國戰略・東西軍任選</span></a></div></div>`;
 /* ---------- 怪談筆記：加上遺落物與隱藏結局進度 ---------- */
 loreOpen = (_lo => function () {
   _lo();
