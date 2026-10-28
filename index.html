@@ -196,6 +196,7 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
 .phone #bTheme{font-size:calc(var(--u)*10)}
 .phone #lyric{font-size:calc(var(--u)*13);bottom:calc(var(--u)*22)}
 /* 10/23 手機：選單類畫面可以上下滑動（body 是 touch-action:none，給搖桿用） */
+button{touch-action:manipulation}#hwNote,#runSet,#end,#invMenu{touch-action:pan-y}   /* 10/28 iPhone 連點兩下會放大：按鈕不吃雙擊縮放、新畫面只准上下捲 */
 #title,#help,#chapSel,#snd,#lore,#a2hs{overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;justify-content:flex-start;padding:calc(var(--u)*10) 0}
 #title>h1{margin-top:auto}#title>.btns{margin-bottom:auto}
 #help>.hb,#chapSel>.hb,#snd>.hb,#lore>.hb,#a2hs>.hb{margin:auto 0}
@@ -355,7 +356,7 @@ html,body{height:100%;background:#000;overflow:hidden;color:var(--ink);font-fami
   </div>
   <div id="rot" class="ui hide">請將手機轉為橫向遊玩<br>↻</div>
 </div>
-<script src="game.js?v=894a3d3b"></script>
+<script src="game.js?v=fad3592a"></script>
 <script src="ch2.js?v=d87bb526"></script>
 <script src="ch2b.js?v=3e2b573d"></script>
 <script src="ch3.js?v=67c59078"></script>

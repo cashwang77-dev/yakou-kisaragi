@@ -971,7 +971,7 @@ async function intro() {
   setTimeout(() => $('#hint').innerHTML = '', 16000);
 }
 function startPlay(keepTheme) {
-  if (!keepTheme) themeStop(8);
+  if (!keepTheme) themeStop(8); else THEME.keepUntil = performance.now() + 25000;   // 新遊戲：主題曲最多再放 25 秒（或走進校舍）
   G.mode = 'play'; $('#hud').classList.remove('hide'); $('#touch').classList.toggle('hide', !isTouch); $('#title').classList.add('hide'); updateHUD();
 }
 const TRIG = [
@@ -1482,6 +1482,24 @@ $('#title').addEventListener('click', () => { audioInit(); if (!$('#title').clas
 // 保險：標題畫面上任何一次放開手指／點擊，音樂沒在播就補播（也順便解鎖音效）
 const themeRetry = () => { audioInit(); if (THEME.on && !$('#title').classList.contains('hide') && $('#gate').classList.contains('hide') && (!THEME.el || THEME.el.paused)) themePlay(); };
 addEventListener('touchend', themeRetry, { passive: true }); addEventListener('pointerup', themeRetry);
+// 10/28 使用者：「進遊戲後歌曲有時不會停」→ 看門狗：遊戲中主題曲只在新遊戲開頭 25 秒內、還沒走進校舍時可以響
+//（第一章變大後在戶外逛很久會一直循環；play() 還在載入時 themeStop 看到 paused 會直接略過，之後就停不下來）
+setInterval(() => {
+  const e = THEME.el; if (!e || e.paused || TEST) return;
+  if (G.mode !== 'play') return;
+  const keep = G.scene === 1 && !G.triggers.inside && performance.now() < (THEME.keepUntil || 0);
+  if (!keep && !THEME.fading) { THEME.fading = true; themeStop(3); setTimeout(() => { THEME.fading = false; }, 3300); }
+}, 500);
+// 10/28 使用者：「網頁有時會放大，之後縮不回來」→ iPhone 不理 user-scalable=no：搖桿＋按鈕兩指一起動會被當成縮放；
+// body 又是 touch-action:none，放大後也捏不回來。擋掉縮放手勢，萬一還是放大了就把 viewport 重設回 1 倍
+['gesturestart', 'gesturechange', 'gestureend'].forEach(t => document.addEventListener(t, e => e.preventDefault(), { passive: false }));
+document.addEventListener('touchmove', e => { if (e.touches.length > 1 || (e.scale && e.scale !== 1)) e.preventDefault(); }, { passive: false });
+document.addEventListener('dblclick', e => e.preventDefault(), { passive: false });
+setInterval(() => {
+  const vv = window.visualViewport; if (!vv || vv.scale < 1.02) return;
+  const m = document.querySelector('meta[name=viewport]'), c = 'width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no';
+  m.setAttribute('content', c + ',viewport-fit=cover'); setTimeout(() => { m.setAttribute('content', c); window.scrollTo(0, 0); layout(); }, 60);
+}, 700);
 addEventListener('keydown', () => { if (!$('#gate').classList.contains('hide')) gateOpen(); else if (!$('#title').classList.contains('hide')) themePlay(); });
 /* 聲音設定面板：標題右上「⚙ 聲音」、遊戲中右上 ⚙（打開時遊戲暫停） */
 let sndPaused = false;
