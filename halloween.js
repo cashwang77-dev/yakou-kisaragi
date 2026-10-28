@@ -146,7 +146,7 @@ function hwHat(cx, cy, s, tilt) {
   ctx.restore();
 }
 { const _m = drawMi; drawMi = function () {
-    if (!HW.on && !G.flags.hat) return _m();   // 二週目換裝（depth.js）也用這頂帽子
+    if (!HW.on && !G.flags.hat && !(typeof XM === 'object' && XM.on)) return _m();   // 聖誕夜（xmas.js）也戴帽子   // 二週目換裝（depth.js）也用這頂帽子
     let call = null; const _s = drawSprite;
     drawSprite = function (img, x, y, dir, frame, opt) { call = [img, x, y, dir, frame, opt]; return _s.apply(this, arguments); };
     try { _m(); } finally { drawSprite = _s; }
