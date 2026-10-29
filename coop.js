@@ -192,6 +192,7 @@ function coopBegin(cfg) {
     }
     COOP.keys = out.map(([x, y]) => ({ x: x + .5, y: y + .5, t: 0 }));
   }
+  COOP.lastKeyT = G.t; COOP.hintNext = 0;
   chapter(cfg.total ? _L`第 ${cfg.stage + 1} 關／共 ${cfg.total} 關` : _L('多人合作'), ['', _L('操場'), _L('二年B班的樓層'), _L('特別教室棟'), _L('舊校舍')][cfg.scene]);
   coopObj();
   coopLog(_L`這次的地點：${['', _L('操場'), _L('二年B班的樓層'), _L('特別教室棟'), _L('舊校舍')][cfg.scene]}。出沒的是——${cfg.mons.map(m => COOP_NAME[m]).join(_L('、'))}。`);
@@ -239,7 +240,7 @@ objAction = (_o => async function (o) {
 })(objAction);
 function coopTakeKey(i, id) {
   const k = COOP.keys[i]; if (!k || k.t) return;
-  k.t = 1; k.p = 0; addNoise(k.x, k.y, 9); if (COOP.P[id]) COOP.P[id].kc = (COOP.P[id].kc || 0) + 1; const n = COOP.keys.filter(q => q.t).length; coopSys(_L`${COOP.P[id] ? COOP.P[id].n : '?'} 找到了一把鑰匙（${n} / ${COOP.keys.length}）`); coopObj();
+  k.t = 1; k.p = 0; addNoise(k.x, k.y, 9); COOP.lastKeyT = G.t; if (COOP.P[id]) COOP.P[id].kc = (COOP.P[id].kc || 0) + 1; const n = COOP.keys.filter(q => q.t).length; coopSys(_L`${COOP.P[id] ? COOP.P[id].n : '?'} 找到了一把鑰匙（${n} / ${COOP.keys.length}）`); coopObj();
 }
 function coopHostTick(dt) {
   const me = COOP.P[COOP.id]; Object.assign(me, coopMe());
@@ -262,6 +263,11 @@ function coopHostTick(dt) {
     const t = threats().find(t => { const dx = t.e.x - q.x, dy = t.e.y - q.y, d = Math.hypot(dx, dy); if (d > 4 || stunned(t.e) || t.e.state === 'stun') return false; const sx = dx - dy, sy = (dx + dy) / 2, l = Math.hypot(sx, sy) || 1; return (sx * sv[0] + sy * sv[1]) / l / sl > .72; });
     p.fl = t ? (p.fl || 0) + dt : 0;
     if (t && p.fl > 1.2 && G.t > (p.flCD || 0)) { t.stun(2.5); p.flCD = G.t + 10; p.fl = 0; p.fs = (p.fs || 0) + 1; coopSys(_L`🔦 ${p.n} 用手電筒照住了${HW_NAME ? (HW_NAME().get(t.e) || _L('鬼')) : _L('鬼')}，牠僵住了！`); }
+  }
+  const left = COOP.keys.filter(k => !k.t);
+  if (left.length && G.t - COOP.lastKeyT > 60 && G.t > (COOP.hintNext || 0)) {
+    COOP.hintNext = G.t + 45; const k = left[Math.random() * left.length | 0], m = { t: 'pg', x: k.x, y: k.y, n: '🔑', c: '#ffe08a' };
+    coopAddPing(m); coopSend(m); coopSys(_L('🔔 遠處傳來鑰匙的叮噹聲……（地圖上標出來了）'));
   }
   const all = Object.values(COOP.P), S = COOP_SCENES[COOP.cfg.scene].spawn;
   if (all.length && all.every(p => p.down)) { coopSend({ t: 'end', win: 0 }); coopEnd(0); }
@@ -334,8 +340,10 @@ function coopEnd(win) {
   e.querySelector('h2').textContent = win ? _L('全員逃出！') : _L('全員倒下……');
   const c = COOP.cfg || {}; document.querySelectorAll('.coopRes,.coopAgain').forEach(x => x.remove());
   e.querySelector('p').innerHTML = win ? _L`${Object.values(COOP.P).map(p => p.n).join(_L('、'))}——一起看著天亮。` : _L`走廊盡頭，腳步聲停了下來。${c.total ? _L`<br><small>（倒在第 ${c.stage + 1} 關）</small>` : ''}`;
-  e.querySelector('.btns').insertAdjacentHTML('beforebegin', COOP.host ? _L('<div class="btns coopAgain"><button id="coopAgainB" style="color:#ffd36a;border-color:#ffd36a;font-weight:700">🔁 同一個房間再來一場</button></div>') : _L('<p class="coopAgain" style="margin:0 0 8px;font-size:calc(var(--u)*9)">⏳ 等房主開下一場（不用重新加入）</p>'));
-  if (COOP.host) $('#coopAgainB').onclick = () => { if (Object.keys(COOP.P).length < 2) { toast(_L('隊友都離開了，回到標題重新開房')); return; } coopStartHost(); };
+  const retry = !win && c.total && c.stage > 0;
+  e.querySelector('.btns').insertAdjacentHTML('beforebegin', COOP.host ? '<div class="btns coopAgain" style="white-space:nowrap">' + (retry ? _L`<button id="coopRetryB" style="color:#ffd36a;border-color:#ffd36a;font-weight:700">↩ 從第 ${c.stage + 1} 關重來</button>` : '') + `<button id="coopAgainB"${retry ? '' : ' style="color:#ffd36a;border-color:#ffd36a;font-weight:700"'}>🔁 ${retry ? _L('從頭開始') : _L('同一個房間再來一場')}</button></div>` : _L('<p class="coopAgain" style="margin:0 0 8px;font-size:calc(var(--u)*9)">⏳ 等房主開下一場（不用重新加入）</p>'));
+  const go = st => { if (Object.keys(COOP.P).length < 2) { toast(_L('隊友都離開了，回到標題重新開房')); return; } coopStartHost(st); };
+  if (COOP.host) { $('#coopAgainB').onclick = () => go(0); if (retry) $('#coopRetryB').onclick = () => go(c.stage); }
   const ps = Object.values(COOP.P), score = p => (p.kc || 0) * 3 + (p.sv || 0) * 4 + (p.sh || 0) * 2 + (p.fs || 0) * 2 - (p.dn || 0), mvp = ps.slice().sort((a, b) => score(b) - score(a))[0];
   if (ps.length && ps[0].kc !== undefined) e.querySelector('p').insertAdjacentHTML('afterend', _L`<div class="coopRes" style="margin:-6px auto 12px;font-size:calc(var(--u)*9);line-height:1.8;text-align:center;text-shadow:0 0 4px #000">${ps.map(p => _L`<span style="color:${p.c}">${p === mvp ? '👑 ' : ''}${p.n}</span>　鑰匙 ${p.kc || 0}・救人 ${p.sv || 0}・引開 ${p.sh || 0}・壓制 ${p.fs || 0}・倒地 ${p.dn || 0}`).join('<br>')}<br><small>👑 本場 MVP：${mvp ? mvp.n : ''}</small></div>`);
   e.classList.remove('hide');
@@ -462,7 +470,11 @@ async function testCoopStages() {
     R.push('end=' + G.mode + ' again=' + !!$('#coopAgainB') + ' kc=' + COOP.P.C.kc);
     $('#coopAgainB').click(); await wait(300);
     R.push('rematch=' + G.mode + ' stage=' + COOP.cfg.stage + ' endHidden=' + $('#end').classList.contains('hide') + ' kc=' + COOP.P.C.kc);
-    document.title = (COOP.P.C.kc === 0 && G.mode === 'play' && el > 1.4 ? 'PASS ' : 'FAIL ') + R.join(' | ');
+    park(); COOP.lastKeyT = G.t - 61; await wait(200); const hint = (COOP.pings || []).some(m => m.n === '🔑'); R.push('hint=' + hint);
+    coopStartHost(1); await wait(300); park(); COOP.P.H.down = 1; COOP.P.C.down = 1; for (let i = 0; i < 20 && G.mode === 'play'; i++) await wait(50);
+    if (Q.get('hold') === 'lose') return;
+    const rb = $('#coopRetryB'); R.push('lose=' + G.mode + ' retryBtn=' + !!rb); if (rb) rb.click(); await wait(300); R.push('retry stage=' + COOP.cfg.stage + ' mode=' + G.mode);
+    document.title = (hint && rb && COOP.cfg.stage === 1 && G.mode === 'play' && el > 1.4 ? 'PASS ' : 'FAIL ') + R.join(' | ');
   } catch (e) { document.title = 'ERR ' + e + ' ' + R.join(' | '); }
 }
 { const _t = runTest; runTest = async function (kind) { if (kind === 'coops') return testCoopStages(); return _t(kind); }; }
