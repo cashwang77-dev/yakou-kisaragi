@@ -75,32 +75,53 @@ const coopSys = s => coopChat('', s, true);
 function loadPeer() { return new Promise((res, rej) => { if (window.Peer) return res(); const sc = document.createElement('script'); sc.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'; sc.onload = res; sc.onerror = () => rej(_L('無法載入連線元件')); document.head.appendChild(sc); }); }
 
 /* ---------- 連線 ---------- */
-async function coopNet(host) {
+/* 手機網路（電信 NAT）常擋直連 → 加 TURN 中繼；房主切到 LINE 傳房號時瀏覽器會斷開連線伺服器 → 自動重連 */
+const COOP_PEER_OPT = { debug: 0, config: { iceServers: [
+  { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+  { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' }] } };
+const COOP_ERR = {
+  'peer-unavailable': _L('找不到這個房間：房號錯了，或房主的手機切到別的 App／螢幕關了。請房主回到遊戲畫面，再按一次「加入」'),
+  'unavailable-id': _L('房號剛好重複，正在換一個……'), 'network': _L('連不上連線伺服器（網路不穩），正在重新連線……'),
+  'server-error': _L('連線伺服器暫時故障，請稍後再試'), 'socket-error': _L('連線伺服器斷線，正在重新連線……'), 'socket-closed': _L('連線伺服器斷線，正在重新連線……'),
+  'browser-incompatible': _L('這個瀏覽器不支援連線，請用 Chrome 或 Safari 開（LINE／FB 內建瀏覽器請改用外部瀏覽器）'),
+  'webrtc': _L('點對點連線失敗：網路擋住了，建議兩台都改用手機行動網路或都連同一個 Wi-Fi 再試'), 'disconnected': _L('連線伺服器斷線，正在重新連線……')
+};
+const coopErrText = e => (COOP_ERR[e.type] || (_L('連線錯誤：') + e.type)) + _L`（${e.type}）`;
+function coopKeepAlive(pr) {   // 被系統暫停後自動重連連線伺服器（房間才不會消失）
+  pr.on('disconnected', () => { if (pr.destroyed) return; setTimeout(() => { try { if (pr.disconnected && !pr.destroyed) pr.reconnect(); } catch (e) { } }, 800); });
+}
+document.addEventListener('visibilitychange', () => { const pr = COOP.peer; if (document.visibilityState === 'visible' && pr && pr.disconnected && !pr.destroyed) try { pr.reconnect(); } catch (e) { } });
+async function coopNet(host, tries) {
   const msg = t => $('#coopMsgP').textContent = t;
   COOP.name = $('#coopName').value.trim() || (host ? _L('房主') : _L('同學')); try { localStorage.setItem('yko_name', COOP.name); } catch (e) { }
   try { await loadPeer(); } catch (e) { msg(e); return; }
+  if (COOP.peer && !COOP.on) { try { COOP.peer.destroy(); } catch (e) { } COOP.peer = null; COOP.conns = []; }   // 重按不會留下舊連線
   COOP.host = host; msg(_L('連線中……'));
   if (host) {
     const code = Array.from({ length: 4 }, () => 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.random() * 31 | 0]).join('');
-    const pr = COOP.peer = new Peer('yakou-coop-' + code);
-    pr.on('open', id => { COOP.id = id; COOP.P = {}; coopAdd(id, COOP.name, COOP.look || 0); $('#coopA').classList.add('hide'); $('#coopB').classList.remove('hide'); $('#coopCode').textContent = code; coopWho(); msg(''); });
+    const pr = COOP.peer = new Peer('yakou-coop-' + code, COOP_PEER_OPT); coopKeepAlive(pr);
+    pr.on('open', id => { if (COOP.id === id) { msg(''); return; } COOP.id = id; COOP.P = {}; coopAdd(id, COOP.name, COOP.look || 0); $('#coopA').classList.add('hide'); $('#coopB').classList.remove('hide'); $('#coopCode').textContent = code; coopWho(); msg(_L('建好了！傳房號給朋友時，傳完請馬上回到這個畫面')); });
     pr.on('connection', c => {
       c.on('open', () => { if (Object.keys(COOP.P).length >= 4 || COOP.on) { c.send(JSON.stringify({ t: 'full' })); return; } COOP.conns.push(c); });
       c.on('data', raw => coopHostMsg(c.peer, JSON.parse(raw)));
       c.on('close', () => { COOP.conns = COOP.conns.filter(x => x !== c); if (COOP.P[c.peer]) { coopSys(COOP.P[c.peer].n + _L(' 離開了')); delete COOP.P[c.peer]; coopWho(); } });
     });
-    pr.on('error', e => msg(_L('連線錯誤：') + e.type));
+    pr.on('error', e => { if (e.type === 'unavailable-id' && !COOP.id) { msg(coopErrText(e)); pr.destroy(); COOP.peer = null; setTimeout(() => coopNet(true), 300); return; } if (e.type === 'peer-unavailable') return; msg(coopErrText(e)); });
   } else {
     const code = $('#coopJoin').value.trim().toUpperCase(); if (code.length !== 4) { msg(_L('請輸入 4 碼房號')); return; }
-    const pr = COOP.peer = new Peer();
+    tries = tries || 0;
+    const pr = COOP.peer = new Peer(COOP_PEER_OPT); coopKeepAlive(pr); let done = false, joined = false;
+    const retry = why => { if (done) return; done = true; if (tries < 2) { msg(why + _L`——自動重試（${tries + 1}/2）……`); setTimeout(() => { if (COOP.peer === pr) coopNet(false, tries + 1); }, 2500); } else msg(why); };
     pr.on('open', id => {
       COOP.id = id; const c = COOP.hc = pr.connect('yakou-coop-' + code, { reliable: true });
-      c.on('open', () => { c.send(JSON.stringify({ t: 'hi', n: COOP.name, lk: COOP.look || 0 })); $('#coopA').classList.add('hide'); msg(_L('已加入，等房主開始……')); });
+      c.on('open', () => { done = joined = true; c.send(JSON.stringify({ t: 'hi', n: COOP.name, lk: COOP.look || 0 })); $('#coopA').classList.add('hide'); msg(_L('已加入，等房主開始……')); });
       c.on('data', raw => coopClientMsg(JSON.parse(raw)));
-      c.on('close', () => { coopLog(_L('與房主的連線中斷了')); if (COOP.on && G.mode === 'play') { toast(_L('與房主的連線中斷了，這場結束')); setTimeout(() => { G.mode = 'play'; coopEnd(0); $('#end h2').textContent = _L('連線中斷'); }, 1500); } });
-      setTimeout(() => { if (!c.open) msg(_L('找不到這個房間（房號錯誤，或網路擋住了點對點連線，可以改用手機網路試試）')); }, 9000);
+      c.on('error', e => retry(coopErrText({ type: 'webrtc' })));
+      c.on('iceStateChanged', s => { if (s === 'failed') retry(coopErrText({ type: 'webrtc' })); });
+      c.on('close', () => { if (!joined) return; if (!COOP.on) { msg(_L('與房主的連線中斷了，請重新加入')); $('#coopA').classList.remove('hide'); return; } coopLog(_L('與房主的連線中斷了')); if (COOP.on && G.mode === 'play') { toast(_L('與房主的連線中斷了，這場結束')); setTimeout(() => { G.mode = 'play'; coopEnd(0); $('#end h2').textContent = _L('連線中斷'); }, 1500); } });
+      setTimeout(() => { if (!c.open) retry(_L('連不上房主（房號錯誤、房主手機休眠，或網路擋住了點對點連線）')); }, 15000);
     });
-    pr.on('error', e => msg(_L('連線錯誤：') + e.type));
+    pr.on('error', e => { if (e.type === 'peer-unavailable') retry(coopErrText(e)); else msg(coopErrText(e)); });
   }
 }
 function coopAdd(id, n, lk) { const i = Object.keys(COOP.P).length; COOP.P[id] = { n, lk: lk || 0, c: COOP_COLS[i % 4], i, kc: 0, sv: 0, dn: 0, sh: 0, fs: 0, x: 0, y: 0, d: 4, m: 0, r: 0, f: 0, cr: 0, li: 0, hd: null, down: 0, rv: 0 }; }
