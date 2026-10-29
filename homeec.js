@@ -7,7 +7,7 @@
 const HE = { x0: 42, y0: 4, x1: 56, y1: 16 };
 const inHE = (x, y) => x >= HE.x0 && x <= HE.x1 && y >= HE.y0 && y <= HE.y1;
 const ZW = { x: 55.5, y: 10.5, state: 'chant', t: 3, word: 0, caught: 0 };
-const DARUMA = ['だ', 'る', 'ま', 'さ', 'ん', 'が', 'こ', 'ろ', 'ん', 'だ'];
+const DARUMA = [_L('だ'), _L('る'), _L('ま'), _L('さ'), _L('ん'), _L('が'), _L('こ'), _L('ろ'), _L('ん'), _L('だ')];
 loadImages(['zashiki']);
 
 function buildHomeEc() {
@@ -15,11 +15,11 @@ function buildHomeEc() {
   put(37, 10, ':'); put(37, 11, ':'); put(37, 12, ':');
   for (let y = HE.y0 - 1; y <= HE.y1 + 1; y++) for (let x = HE.x0 - 1; x <= HE.x1 + 1; x++) if (at(x, y) === 'X' || at(x, y) === ':') put(x, y, '#');
   fill(HE.x0, HE.y0, HE.x1, HE.y1, '_');
-  door(41, 11, { sign: '家政教室' });
+  door(41, 11, { sign: _L('家政教室') });
   for (const [x, y] of [[45, 6], [45, 9], [45, 13], [49, 6], [49, 13], [52, 9]]) obj('labtable', x, y);   // 調理台（可以躲在下面）
-  obj('fridge', 55, 5, { act: 'fridge', label: '打開冰箱' });
+  obj('fridge', 55, 5, { act: 'fridge', label: _L('打開冰箱') });
   obj('stove', 52, 4); obj('stove', 50, 4);
-  obj('henote', 43, 16, { act: 'henote', label: '看牆上的貼紙' });
+  obj('henote', 43, 16, { act: 'henote', label: _L('看牆上的貼紙') });
   LIGHTS.push({ x: 55.5, y: 6, r: 1.6, c: '200,230,255', id: 'fridgeL' }, { x: 39.5, y: 11, r: 1.4, c: '150,170,220' }, { x: 55.5, y: 10.5, r: 1.6, c: '255,180,170' });
   // 肺臟模型不在視聽教室了（存檔用索引：不刪，只關掉）
   const lung = ITEMS.find(i => i.id === 'organ_lung'); if (lung) lung.off = true;
@@ -34,8 +34,8 @@ function zwUpdate(dt) {
   if (ZW.state === 'chant') {
     const total = (2.6 + Math.random() * 0) * fast, per = total / DARUMA.length;
     const w = Math.min(DARUMA.length, Math.floor((total - ZW.t) / per));
-    while (ZW.word < w) { tone(520 - ZW.word * 18, .12, 'triangle', .04); ZW.word++; toast(DARUMA.slice(0, ZW.word).join('・')); }
-    if (ZW.t <= 0) { ZW.state = 'look'; ZW.t = 2.1; ZW.grace = .25; sfx.sting(); toast('——她回頭了。（不要動）'); }
+    while (ZW.word < w) { tone(520 - ZW.word * 18, .12, 'triangle', .04); ZW.word++; toast(DARUMA.slice(0, ZW.word).join(_L('・'))); }
+    if (ZW.t <= 0) { ZW.state = 'look'; ZW.t = 2.1; ZW.grace = .25; sfx.sting(); toast(_L('——她回頭了。（不要動）')); }
   } else {
     ZW.grace -= dt;
     if (ZW.grace <= 0 && P.moving && !P.hidden && !pInvis() && !G.lock) zwCatch();
@@ -46,7 +46,7 @@ async function zwCatch() {
   ZW.state = 'chant'; ZW.t = 3; ZW.word = 0; ZW.caught++;
   damage(1); sfx.hurt(); shake = 12; setPose('hurt', 1);
   if (G.mode !== 'play') return;
-  await says(['「——動了。」', '小小的、冰冷的手牽住了我的手。', '「妳輸了。再來一次。」', '（回過神來，人站在家政教室的門口。）']);
+  await says([_L('「——動了。」'), _L('小小的、冰冷的手牽住了我的手。'), _L('「妳輸了。再來一次。」'), _L('（回過神來，人站在家政教室的門口。）')]);
   P.x = 42.5; P.y = 11.5; P.inv = 1.5;
 }
 
@@ -54,12 +54,12 @@ async function zwCatch() {
 async function heAction(o) {
   const F = G.flags, I = G.inv;
   switch (o.act) {
-    case 'henote': await says([['貼紙', '「家政教室使用守則：用完的食材請放回冰箱。」'], '底下有人用蠟筆畫了一個小女孩，旁邊寫著：', ['', '「陪我玩。だるまさんがころんだ。動了就輸。」']]); return;
+    case 'henote': await says([[_L('貼紙'), _L('「家政教室使用守則：用完的食材請放回冰箱。」')], _L('底下有人用蠟筆畫了一個小女孩，旁邊寫著：'), ['', _L('「陪我玩。だるまさんがころんだ。動了就輸。」')]]); return;
     case 'fridge':
-      if (F.lungTaken) { await says(['冰箱裡只剩下一盒過期的牛奶。']); return; }
+      if (F.lungTaken) { await says([_L('冰箱裡只剩下一盒過期的牛奶。')]); return; }
       F.lungTaken = 1; (I.organs = I.organs || []).push('organ_lung'); sfx.pick(); updateHUD();
-      toast(`得到【肺臟模型】（${I.organs.length} / 3）`);
-      await says(['冰箱的冷光照亮了整個房間。', '冷藏室裡，整整齊齊地擺著一個塑膠的肺臟模型。……用保鮮膜包著。', '身後，數數的聲音變快了。']);
+      toast(_L`得到【肺臟模型】（${I.organs.length} / 3）`);
+      await says([_L('冰箱的冷光照亮了整個房間。'), _L('冷藏室裡，整整齊齊地擺著一個塑膠的肺臟模型。……用保鮮膜包著。'), _L('身後，數數的聲音變快了。')]);
       saveCP('lung'); return;
   }
   return false;
@@ -87,9 +87,9 @@ async function heAction(o) {
     return _d(o, cx, cy, shaking);
   }; }
 { const _o = sceneOnLoad; sceneOnLoad = function (cp) { _o(cp); if (G.scene !== 3) return; Object.assign(ZW, { state: 'chant', t: 3, word: 0 }); const lung = ITEMS.find(i => i.id === 'organ_lung'); if (lung) lung.off = true; }; }
-TRIG.push({ scene: 3, id: 'heIn', when: () => inHE(P.x, P.y), run: async () => { await says(['家政教室。冰箱的燈在最裡面一閃一閃。', '房間的另一頭，一個穿紅色和服的小女孩，面對著牆壁站著。', '「だるまさんが……」', '（她數數的時候可以走。她回頭的時候——絕對不能動。）']); } });
+TRIG.push({ scene: 3, id: 'heIn', when: () => inHE(P.x, P.y), run: async () => { await says([_L('家政教室。冰箱的燈在最裡面一閃一閃。'), _L('房間的另一頭，一個穿紅色和服的小女孩，面對著牆壁站著。'), _L('「だるまさんが……」'), _L('（她數數的時候可以走。她回頭的時候——絕對不能動。）')]); } });
 // 器官模型的提示改成三個地方
-LORE.push(['zashiki', '座敷童子的遊戲', '家政教室裡，面對牆壁數數的紅色和服小女孩。', '「だるまさんがころんだ」——她回頭的時候還在動，就輸了。', () => G.flags.lungTaken]);
+LORE.push(['zashiki', _L('座敷童子的遊戲'), _L('家政教室裡，面對牆壁數數的紅色和服小女孩。'), _L('「だるまさんがころんだ」——她回頭的時候還在動，就輸了。'), () => G.flags.lungTaken]);
 // 測試：第二章（下）的肺臟改在家政教室冰箱（testCh2b 會呼叫）
 async function testHomeEc() {
   P.x = 54.5; P.y = 5.4; P.dir = 0; ZW.state = 'chant'; ZW.t = 99;

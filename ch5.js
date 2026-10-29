@@ -12,7 +12,7 @@ const DOG = { x: 30.5, y: 27.5, dir: 4, state: 'sit', frame: 0, animD: 0, moving
 const KUNE = { x: 25.5, y: 15.5 };
 const HACHI_SPOTS = [[29.5, 2.6], [19.5, 2.6], [10.5, 2.6]];
 const HACHI = { i: -1, show: 0, dir: 4 };
-Object.assign(HIDE, { cshelf: '擠進貨架之間', busstop: '躲進公車亭', ditch: '躲進水溝' });
+Object.assign(HIDE, { cshelf: _L('擠進貨架之間'), busstop: _L('躲進公車亭'), ditch: _L('躲進水溝') });
 SCENE_PATROL[6] = [[20.5, 37.5]];   // 裂口女不出校門
 SCENES[6] = buildCh5;
 loadImages(['jinmen', 'babaa', 'hachi', 'walls6']).then(() => { for (const k of ['jinmen', 'babaa']) if (IMG[k]) IMG[k].rows = 4; if (IMG.hachi) IMG.hachi.rows = 1; });
@@ -25,7 +25,7 @@ function buildCh5() {
   const room = (r, c) => { const [x0, y0, x1, y1] = ROOM6[r]; for (let y = y0 - 1; y <= y1 + 1; y++) for (let x = x0 - 1; x <= x1 + 1; x++) if (at(x, y) === 'X') put(x, y, '#'); fill(x0, y0, x1, y1, c); };
   for (const r of ['conv', 'elec', 'shopA', 'shopB']) room(r, '_');
   for (let x = 2; x <= 31; x++) if (at(x, 30) === 'X') put(x, 30, '#');
-  door(10, 30, { sign: '便利商店' });
+  door(10, 30, { sign: _L('便利商店') });
   fill(30, 26, 31, 29, ','); put(30, 30, ','); put(31, 30, ',');           // 人面犬的巷子
   for (let y = 25; y <= 29; y++) { put(29, y, '#'); put(32, y, '#'); } put(30, 25, '#'); put(31, 25, '#');
   // 田邊公路：往北，兩邊是田
@@ -38,18 +38,18 @@ function buildCh5() {
   fill(33, 5, 36, 5, ','); put(2, 3, '#'); put(2, 4, '#'); put(38, 3, '#'); put(38, 4, '#');
   for (const x of [25, 15]) { fill(x, 5, x + 1, 7, ','); put(x - 1, 6, '#'); put(x - 1, 7, '#'); put(x + 2, 6, '#'); put(x + 2, 7, '#'); fill(x - 1, 8, x + 2, 8, '#'); }   // 死巷
   // 物件：便利商店
-  obj('register', 12, 27, { act: 'register', label: '櫃台（存檔）' });
+  obj('register', 12, 27, { act: 'register', label: _L('櫃台（存檔）') });
   for (const y of [27, 28]) obj('cshelf', 9, y);
   obj('cshelf', 11, 29);
-  obj('tvwin', 18, 31, { act: 'tvwin', label: '看電器行的櫥窗', solid: false });
-  obj('dogspot', 30, 27, { act: 'dog', label: '跟那隻狗說話' });
+  obj('tvwin', 18, 31, { act: 'tvwin', label: _L('看電器行的櫥窗'), solid: false });
+  obj('dogspot', 30, 27, { act: 'dog', label: _L('跟那隻狗說話') });
   for (const x of [5, 24]) obj('vend2', x, 31);
   // 公路：公車亭、水溝
   obj('busstop', 36, 24); obj('busstop', 33, 16); obj('busstop', 36, 9);
   obj('ditch', 33, 21); obj('ditch', 36, 13);
-  obj('roadsign', 36, 29, { act: 'roadsign', label: '看路標', solid: false });
+  obj('roadsign', 36, 29, { act: 'roadsign', label: _L('看路標'), solid: false });
   // 小巷盡頭：車站的燈
-  obj('stlight', 3, 3, { act: 'toStation', label: '走向亮著燈的車站' });
+  obj('stlight', 3, 3, { act: 'toStation', label: _L('走向亮著燈的車站') });
   // 光源
   LIGHTS.push({ x: 11, y: 27.5, r: 3.6, c: '220,240,255' });                 // 便利商店的日光燈
   LIGHTS.push({ x: 18.5, y: 31.2, r: 2, c: '170,190,255', id: 'tvwin' });
@@ -61,8 +61,8 @@ function buildCh5() {
   for (const x of [3, 13, 24]) obj('pole6', x, 34, { solid: false });
   obj('scooter', 15, 31, { solid: false }); obj('scooter', 27, 31, { solid: false, v: 1 }); obj('scooter', 3, 31, { solid: false, v: 2 });
   // 道具
-  item('salt', 13, 26, '鹽包'); item('salt', 13, 29, '鹽包'); item('bandage', 22, 32, '繃帶'); item('drink', 35, 27, '能量飲料');
-  item('can', 15, 34, '空罐'); item('can', 34, 18, '空罐'); item('charm', 27, 4, '護身符'); item('eraser', 6, 33, '板擦');
+  item('salt', 13, 26, _L('鹽包')); item('salt', 13, 29, _L('鹽包')); item('bandage', 22, 32, _L('繃帶')); item('drink', 35, 27, _L('能量飲料'));
+  item('can', 15, 34, _L('空罐')); item('can', 34, 18, _L('空罐')); item('charm', 27, 4, _L('護身符')); item('eraser', 6, 33, _L('板擦'));
 }
 // 地面細節：馬路的白線、田的條紋
 function road6Floor(g) {
@@ -78,15 +78,15 @@ sceneFloor = function (g) { if (G.scene === 6) return road6Floor(g); if (_sceneF
 /* ---------- 開場（第三章結束後，走出校門） ---------- */
 async function startRoad() {
   markReach(5);
-  await card('card_gate', ['……校門，開了。', '門外不是熟悉的小鎮。商店全都拉下了鐵捲門，路燈一盞一盞地熄掉。', '只有很遠很遠的地方，亮著一點燈。']);
+  await card('card_gate', [_L('……校門，開了。'), _L('門外不是熟悉的小鎮。商店全都拉下了鐵捲門，路燈一盞一盞地熄掉。'), _L('只有很遠很遠的地方，亮著一點燈。')]);
   loadScene(6);
   Object.assign(P, { x: 3.5, y: 32.5, dir: 6, hidden: null, crouch: false, pose: null });
   GH.active = false; roadReset();
-  chapter('第四章', '回家的路');
+  chapter(_L('第四章'), _L('回家的路'));
   saveCP('road');
   await wait(TEST ? 10 : 1600);
-  await phoneCall(['我是瑪莉。', '我現在……在商店街。', '那間便利商店，一直都開著哦。']);
-  setObj('穿過商店街（便利商店可以存檔）');
+  await phoneCall([_L('我是瑪莉。'), _L('我現在……在商店街。'), _L('那間便利商店，一直都開著哦。')]);
+  setObj(_L('穿過商店街（便利商店可以存檔）'));
 }
 function roadReset() {
   Object.assign(BABA, { x: 34.5, y: 36, state: 'off', timer: 0 });
@@ -102,41 +102,41 @@ async function ch5Action(o) {
       if (G.hearts < 5) G.hearts = Math.min(5, G.hearts + 1);
       if (!F.receipt) {
         F.receipt = true;
-        await says(['「歡迎光臨。」', '……店裡一個人都沒有。自動門一直重複著同一句話。', '收銀機「喀啦」一聲，自己吐出一張收據。',
-          ['收據', '日期：2004．2．□　時間：4:44'], ['收據', '品項：定期票　一張　¥0'], '……我手上的定期票，好像越來越重了。']);
+        await says([_L('「歡迎光臨。」'), _L('……店裡一個人都沒有。自動門一直重複著同一句話。'), _L('收銀機「喀啦」一聲，自己吐出一張收據。'),
+          [_L('收據'), _L('日期：2004．2．□　時間：4:44')], [_L('收據'), _L('品項：定期票　一張　¥0')], _L('……我手上的定期票，好像越來越重了。')]);
         sfx.sting();
-      } else await says(['「歡迎光臨。」……收銀機安靜下來了。']);
-      saveCP('conv'); toast('（已存檔）'); updateHUD(); return;
+      } else await says([_L('「歡迎光臨。」……收銀機安靜下來了。')]);
+      saveCP('conv'); toast(_L('（已存檔）')); updateHUD(); return;
     case 'tvwin':
-      await says(['電器行的櫥窗。裡面每一台電視都開著。', '每一台，都在播同一個女人。', '……她慢慢地，把臉轉向櫥窗外的我。']);
+      await says([_L('電器行的櫥窗。裡面每一台電視都開著。'), _L('每一台，都在播同一個女人。'), _L('……她慢慢地，把臉轉向櫥窗外的我。')]);
       sfx.sting(); shake = 4; return;
-    case 'roadsign': await says([['路標', '↑　如月　2km'], '……路標的柱子上，貼滿了寫著「不要回頭」的紙條。']); return;
+    case 'roadsign': await says([[_L('路標'), _L('↑　如月　2km')], _L('……路標的柱子上，貼滿了寫著「不要回頭」的紙條。')]); return;
     case 'dog': return dogTalk();
     case 'toStation':
-      if (!F.alleyDone && !TEST) { await says(['……還不能過去。圍牆後面，有什麼東西在看著我。']); }
+      if (!F.alleyDone && !TEST) { await says([_L('……還不能過去。圍牆後面，有什麼東西在看著我。')]); }
       return roadEnd();
   }
   return false;
 }
 async function dogTalk() {
-  const N = '人面犬';
+  const N = _L('人面犬');
   DOG.talk++;
   if (DOG.talk === 1) {
-    await says(['巷子裡蹲著一隻狗。牠轉過頭來——', '是一張中年男人的臉。', [N, '「……別理我。」']]);
+    await says([_L('巷子裡蹲著一隻狗。牠轉過頭來——'), _L('是一張中年男人的臉。'), [N, _L('「……別理我。」')]]);
     return;
   }
   if (DOG.talk === 2) {
-    const a = await choose(N, '「……又是妳。想問什麼？」', ['問往車站的路', '問圍牆後面的聲音'], 0);
-    if (a === 0) await says([[N, '「往東，再沿著公路往北。」'], [N, '「公路上，聽到背後有腳步聲，就躲進公車亭。別回頭。」'], '（……這聽起來是真的。）']);
-    else await says([[N, '「那個聲音會叫妳的名字。」'], [N, '「……回應她就沒事了。她只是想確認妳還在。」'], '（……這是真的嗎？）']);
+    const a = await choose(N, _L('「……又是妳。想問什麼？」'), [_L('問往車站的路'), _L('問圍牆後面的聲音')], 0);
+    if (a === 0) await says([[N, _L('「往東，再沿著公路往北。」')], [N, _L('「公路上，聽到背後有腳步聲，就躲進公車亭。別回頭。」')], _L('（……這聽起來是真的。）')]);
+    else await says([[N, _L('「那個聲音會叫妳的名字。」')], [N, _L('「……回應她就沒事了。她只是想確認妳還在。」')], _L('（……這是真的嗎？）')]);
     return;
   }
   G.flags.dogFollow = true; DOG.state = 'follow';
-  await says([[N, '「妳很喜歡跟我說話嘛。」'], [N, '「……那我陪妳走一段。」'], '牠站起來，跟在我後面。', '（理牠太多次了……牠的腳步聲很吵。）']);
+  await says([[N, _L('「妳很喜歡跟我說話嘛。」')], [N, _L('「……那我陪妳走一段。」')], _L('牠站起來，跟在我後面。'), _L('（理牠太多次了……牠的腳步聲很吵。）')]);
 }
 async function roadEnd() {
   G.flags.ending4 = 1;
-  await says(['巷子的盡頭，是一座亮著燈的小車站。', '月台的站牌上寫著——「きさらぎ」。']);
+  await says([_L('巷子的盡頭，是一座亮著燈的小車站。'), _L('月台的站牌上寫著——「きさらぎ」。')]);
   return startCh4();
 }
 
@@ -151,7 +151,7 @@ function babaUpdate(dt) {
   switch (BABA.state) {
     case 'idle':   // 在南邊路口等著
       BABA.x = 34.5; BABA.y = Math.max(BABA.y, 31); BABA.timer -= dt;
-      if (BABA.timer <= 0 && onRoad) { BABA.state = 'charge'; BABA.x = 34.5 + (Math.random() < .5 ? 0 : 1); BABA.y = Math.max(P.y + 9, 31); sfx.sting(); toast('背後……有很快的腳步聲！'); }
+      if (BABA.timer <= 0 && onRoad) { BABA.state = 'charge'; BABA.x = 34.5 + (Math.random() < .5 ? 0 : 1); BABA.y = Math.max(P.y + 9, 31); sfx.sting(); toast(_L('背後……有很快的腳步聲！')); }
       break;
     case 'charge': {   // 衝向玩家；玩家躲起來就繼續往前衝（跑過頭）
       const tx = P.hidden ? BABA.x : P.x, ty = P.hidden ? BABA.y - 1 : P.y;
@@ -172,7 +172,7 @@ function babaUpdate(dt) {
 async function babaHit() {
   BABA.state = 'return'; BABA.over = null; sfx.hurt(); shake = 10; damage(1);
   if (G.mode !== 'play') return;
-  await says(['一陣風從背後撞上來——', '老婆婆的臉，貼在我的臉旁邊，咧嘴笑著跑過去了。', '（……要躲起來才行。）']);
+  await says([_L('一陣風從背後撞上來——'), _L('老婆婆的臉，貼在我的臉旁邊，咧嘴笑著跑過去了。'), _L('（……要躲起來才行。）')]);
   P.inv = 2;
 }
 
@@ -193,7 +193,7 @@ function kuneUpdate(dt) {
   const [fx, fy] = DIRV[P.dir];
   if ((fx * dx + fy * dy) / d > .8) {
     G.fear = Math.min(100, (G.fear || 0) + 26 * dt); G.kuneLook = (G.kuneLook || 0) + dt;
-    if (G.kuneLook > .6 && !G.flags.kuneSeen) { G.flags.kuneSeen = true; toast('田裡有白色的東西在扭——不要看！'); sfx.sting(); }
+    if (G.kuneLook > .6 && !G.flags.kuneSeen) { G.flags.kuneSeen = true; toast(_L('田裡有白色的東西在扭——不要看！')); sfx.sting(); }
   } else G.kuneLook = 0;
 }
 
@@ -202,29 +202,29 @@ async function hachiEvent(i) {
   HACHI.i = i; HACHI.show = 1; G.flags['hachi' + i] = 1;
   const [hx] = HACHI_SPOTS[i];
   for (let k = 0; k < 3; k++) { tone(200 + k * 15, .18, 'triangle', .05); await wait(TEST ? 5 : 220); }
-  await says([['？？？', '「ぽ……ぽぽ……ぽぽぽ……」'], '圍牆上面……探出一頂白色的大帽子。']);
-  const opts = ['「……媽？」（回應）', '不要出聲，低頭繼續走'];
-  if ((G.inv.salt || 0) > 0) opts.push('撒鹽');
-  const a = await choose('？？？', i === 2 ? '「咪醬。媽媽在這裡等妳好久了。過來，讓媽媽抱一下。」' : '「咪醬？是媽媽喔。這麼晚了，快點過來。」', opts, TEST ? 0 : 7000);
+  await says([[_L('？？？'), _L('「ぽ……ぽぽ……ぽぽぽ……」')], _L('圍牆上面……探出一頂白色的大帽子。')]);
+  const opts = [_L('「……媽？」（回應）'), _L('不要出聲，低頭繼續走')];
+  if ((G.inv.salt || 0) > 0) opts.push(_L('撒鹽'));
+  const a = await choose(_L('？？？'), i === 2 ? _L('「咪醬。媽媽在這裡等妳好久了。過來，讓媽媽抱一下。」') : _L('「咪醬？是媽媽喔。這麼晚了，快點過來。」'), opts, TEST ? 0 : 7000);
   if (a === 2) {
     G.inv.salt--; updateHUD(); sfx.whoosh();
-    await says(['把整包鹽撒向圍牆。', '「ぽ——」聲音一下子斷掉了。白色的帽子，縮回了圍牆後面。']);
+    await says([_L('把整包鹽撒向圍牆。'), _L('「ぽ——」聲音一下子斷掉了。白色的帽子，縮回了圍牆後面。')]);
   } else if (a === 0) {
     sfx.sting(); shake = 12; damage(1); G.fear = Math.min(100, (G.fear || 0) + 30);
     if (G.mode !== 'play') return;
-    await says(['一隻好長好長的手，從圍牆上伸了下來——', '冰冷的指尖碰到了臉頰。', '……那不是媽媽的聲音。（不能回應她。）']);
+    await says([_L('一隻好長好長的手，從圍牆上伸了下來——'), _L('冰冷的指尖碰到了臉頰。'), _L('……那不是媽媽的聲音。（不能回應她。）')]);
   } else {
-    await says(['低著頭，一步一步往前走。', '「ぽぽ……ぽ……」', '……聲音慢慢遠了。']);
+    await says([_L('低著頭，一步一步往前走。'), _L('「ぽぽ……ぽ……」'), _L('……聲音慢慢遠了。')]);
   }
   HACHI.show = 0;
-  if (i === 2) { G.flags.alleyDone = 1; setObj('走到巷子盡頭的車站'); saveCP('alley'); }
+  if (i === 2) { G.flags.alleyDone = 1; setObj(_L('走到巷子盡頭的車站')); saveCP('alley'); }
 }
 
 /* ---------- 包一層：接進掛勾 ---------- */
 TRIG.push(
-  { scene: 6, id: 'convIn', when: () => in6('conv', P.x, P.y), run: async () => { await says(['「歡迎光臨。」', '「歡迎光臨。」', '「歡迎光臨。」……自動門沒有關上，一直在說話。']); } },
-  { scene: 6, id: 'roadIn', when: () => onRoad6(P.x, P.y) && P.y < 29, run: async () => { await says(['往北的公路。兩邊是黑漆漆的田。', '……路燈只到這裡為止。']); setObj('沿著公路往北走（聽到背後有腳步聲就躲進公車亭）'); saveCP('road2'); } },
-  { scene: 6, id: 'alleyIn', when: () => inAlley6(P.x, P.y), run: async () => { await says(['住宅區的小巷。兩邊是高高的圍牆。', '……每一戶都沒有開燈。']); setObj('穿過住宅區的小巷，往西走'); saveCP('alley0'); } },
+  { scene: 6, id: 'convIn', when: () => in6('conv', P.x, P.y), run: async () => { await says([_L('「歡迎光臨。」'), _L('「歡迎光臨。」'), _L('「歡迎光臨。」……自動門沒有關上，一直在說話。')]); } },
+  { scene: 6, id: 'roadIn', when: () => onRoad6(P.x, P.y) && P.y < 29, run: async () => { await says([_L('往北的公路。兩邊是黑漆漆的田。'), _L('……路燈只到這裡為止。')]); setObj(_L('沿著公路往北走（聽到背後有腳步聲就躲進公車亭）')); saveCP('road2'); } },
+  { scene: 6, id: 'alleyIn', when: () => inAlley6(P.x, P.y), run: async () => { await says([_L('住宅區的小巷。兩邊是高高的圍牆。'), _L('……每一戶都沒有開燈。')]); setObj(_L('穿過住宅區的小巷，往西走')); saveCP('alley0'); } },
   ...HACHI_SPOTS.map(([hx], i) => ({ scene: 6, id: 'hachi' + i, when: () => inAlley6(P.x, P.y) && Math.abs(P.x - hx) < 2.2, run: () => hachiEvent(i) })),
 );
 const _sceneUpdate5 = sceneUpdate;
@@ -251,12 +251,12 @@ function drawKune() {   // 田裡的白色人形：只是扭動的線條（遠�
   ctx.fillStyle = 'rgba(240,240,245,.9)'; ctx.beginPath(); ctx.arc(sx + Math.sin(t) * 6, sy - 28, 3.2, 0, 7); ctx.fill();
 }
 const _sceneHUD5 = sceneHUD;
-sceneHUD = function (s) { _sceneHUD5(s); if (G.inv.salt) s.push(`<div class="s">鹽包×${G.inv.salt}<em>八尺大人用</em></div>`); };
+sceneHUD = function (s) { _sceneHUD5(s); if (G.inv.salt) s.push(_L`<div class="s">鹽包×${G.inv.salt}<em>八尺大人用</em></div>`); };
 const _sceneOnLoad5 = sceneOnLoad;
 sceneOnLoad = function (cp) { if (G.scene !== 6) return _sceneOnLoad5(cp); roadReset(); };
 const _takeItem5 = takeItem;
 takeItem = async function (it) {
-  if (G.scene === 6 && it.id === 'salt') { it.taken = true; G.inv.salt = (G.inv.salt || 0) + 1; sfx.pick(); updateHUD(); toast('得到【鹽包】　八尺大人探頭時可以撒鹽逼退'); return; }
+  if (G.scene === 6 && it.id === 'salt') { it.taken = true; G.inv.salt = (G.inv.salt || 0) + 1; sfx.pick(); updateHUD(); toast(_L('得到【鹽包】　八尺大人探頭時可以撒鹽逼退')); return; }
   return _takeItem5(it);
 };
 const _sceneDrawObj5 = sceneDrawObj;

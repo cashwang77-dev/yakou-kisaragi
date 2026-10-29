@@ -9,7 +9,7 @@ const KAKASHI = [[6, 37], [14, 42], [19, 35], [21, 29], [26, 26], [16, 32]].map(
 const TR7 = { x: 99, v: 0, warn: 0, next: 6 };
 const TK7 = { x: 37.5, y: TRK7, dir: 4, state: 'off', frame: 0, animD: 0, moving: false, r: .25 };
 const LEVER_OK = [4, 2, 1, 3];
-Object.assign(HIDE, { bush7: '躲進草叢' });
+Object.assign(HIDE, { bush7: _L('躲進草叢') });
 SCENE_PATROL[7] = [[60.5, 60.5]];
 SCENES[7] = buildCh7;
 loadImages(['kakashi_a', 'kakashi_b']);
@@ -20,27 +20,27 @@ function buildCh7() {
   fill(25, 30, 30, 30, ',');
   // 信號所
   for (let y = 23; y <= 29; y++) for (let x = 27; x <= 33; x++) put(x, y, '#');
-  fill(28, 24, 32, 28, '_'); door(30, 29, { locked: true, key: 'hutkey', sign: '信號所', msg: '信號所的門鎖著。' });
+  fill(28, 24, 32, 28, '_'); door(30, 29, { locked: true, key: 'hutkey', sign: _L('信號所'), msg: _L('信號所的門鎖著。') });
   // 平交道（軌道 y20–21 只有這兩格能走）、北邊的小路
   fill(23, 20, 24, 21, '='); fill(23, 8, 24, 19, ','); fill(23, 7, 53, 8, ','); fill(36, 9, 37, 18, ',');
-  for (const [x, y] of [[23, 22], [24, 22], [23, 19], [24, 19]]) obj('gate7', x, y, { act: 'gate7', label: '看平交道的柵欄', n: y < 20 });
+  for (const [x, y] of [[23, 22], [24, 22], [23, 19], [24, 19]]) obj('gate7', x, y, { act: 'gate7', label: _L('看平交道的柵欄'), n: y < 20 });
   obj('xsig', 22, 22, { solid: false }); obj('xsig', 25, 19, { solid: false });
   // 稻草人（手上掛著鑰匙的那一個）
-  obj('kakashiK', 10, 30, { act: 'kakashiK', label: '看看那個稻草人' });
+  obj('kakashiK', 10, 30, { act: 'kakashiK', label: _L('看看那個稻草人') });
   // 信號所裡面
-  obj('hutboard', 29, 23, { act: 'hutboard', label: '看黑板' });
-  obj('panel7', 31, 24, { act: 'panel7', label: '拉桿控制盤' });
-  obj('hutdesk', 32, 27, { act: 'hutlog', label: '看值班簿' });
+  obj('hutboard', 29, 23, { act: 'hutboard', label: _L('看黑板') });
+  obj('panel7', 31, 24, { act: 'panel7', label: _L('拉桿控制盤') });
+  obj('hutdesk', 32, 27, { act: 'hutlog', label: _L('看值班簿') });
   // 慰靈碑、Teke Teke 的腳、往車站的路
-  obj('memorial', 36, 18, { act: 'memorial', label: '看看那個小石碑' });
-  obj('legs7', 37, 18, { act: 'legs7', label: '草叢裡……有東西' });
-  obj('exit7', 53, 7, { act: 'exit7', label: '往車站的燈走去' });
+  obj('memorial', 36, 18, { act: 'memorial', label: _L('看看那個小石碑') });
+  obj('legs7', 37, 18, { act: 'legs7', label: _L('草叢裡……有東西') });
+  obj('exit7', 53, 7, { act: 'exit7', label: _L('往車站的燈走去') });
   for (const [x, y] of [[42, 8], [48, 8], [24, 12]]) obj('bush7', x, y);
   // 光
   LIGHTS.push({ x: 23.5, y: 22.5, r: 2.2, c: '255,60,50', id: 'xs1' }, { x: 24.5, y: 19.5, r: 2.2, c: '255,60,50', id: 'xs2' });
   LIGHTS.push({ x: 30.5, y: 26, r: 3, c: '255,226,170' }, { x: 53.5, y: 7.5, r: 3.4, c: '255,226,170' }, { x: 36.5, y: 17.5, r: 1.2, c: '255,190,140' });
   LIGHTS.push({ x: 3.5, y: 39.5, r: 2.4, c: '255,214,150' });
-  item('bandage', 29, 25, '繃帶'); item('drink', 45, 7, '能量飲料'); item('can', 20, 39, '空罐');
+  item('bandage', 29, 25, _L('繃帶')); item('drink', 45, 7, _L('能量飲料')); item('can', 20, 39, _L('空罐'));
 }
 // 地面：水田、稻株、軌道碎石、北邊的草地
 function ch7Floor(g) {
@@ -79,16 +79,16 @@ function ch7Floor(g) {
 /* ---------- 開場（小巷盡頭 → 平交道） ---------- */
 async function startCrossing() {
   markReach(7);
-  await card('card_gate', ['巷子的盡頭沒有車站。', '是一片很大很大的水田。田的另一邊，有一條鐵軌。', '……車站的燈，在平交道的對面。']);
+  await card('card_gate', [_L('巷子的盡頭沒有車站。'), _L('是一片很大很大的水田。田的另一邊，有一條鐵軌。'), _L('……車站的燈，在平交道的對面。')]);
   loadScene(7);
   Object.assign(P, { x: 3.5, y: 39.5, dir: 6, hidden: null, crouch: false, pose: null });
   GH.active = false; ch7Reset();
-  chapter('第五章', '平交道');
+  chapter(_L('第五章'), _L('平交道'));
   saveCP('cross0');
   await wait(TEST ? 10 : 1400);
-  await says(['田裡站著好幾個稻草人。', '……剛剛回頭的時候，它們好像都是背對著我的。']);
-  await phoneCall(['我是瑪莉。', '我現在……在平交道。', '稻草人很害羞哦。被看著的時候，它們不會動的。']);
-  setObj('沿著田間小路走到平交道');
+  await says([_L('田裡站著好幾個稻草人。'), _L('……剛剛回頭的時候，它們好像都是背對著我的。')]);
+  await phoneCall([_L('我是瑪莉。'), _L('我現在……在平交道。'), _L('稻草人很害羞哦。被看著的時候，它們不會動的。')]);
+  setObj(_L('沿著田間小路走到平交道'));
 }
 function ch7Reset() {
   KAKASHI.forEach(k => Object.assign(k, { x: k.hx, y: k.hy, tilt: 0 }));
@@ -104,36 +104,36 @@ async function ch7Action(o) {
   switch (o.act) {
     case 'gate7':
       if (F.gate7) return;
-      await says(['平交道的柵欄放下來了。警鈴一直「噹、噹、噹」地響。', '……可是，沒有電車來。', '柵欄旁邊的小屋，門牌上寫著「信號所」。']);
-      setObj(I.hutkey ? '打開信號所，把柵欄升起來' : '找到信號所的鑰匙（田裡的稻草人……？）'); return;
+      await says([_L('平交道的柵欄放下來了。警鈴一直「噹、噹、噹」地響。'), _L('……可是，沒有電車來。'), _L('柵欄旁邊的小屋，門牌上寫著「信號所」。')]);
+      setObj(I.hutkey ? _L('打開信號所，把柵欄升起來') : _L('找到信號所的鑰匙（田裡的稻草人……？）')); return;
     case 'kakashiK':
-      if (I.hutkey || F.hutOpen) { await says(['稻草人的手是空的。', '……它的頭，比剛才更歪了一點。']); return; }
-      await says(['小路盡頭的稻草人，手上掛著一串鑰匙。鑰匙牌上寫著「信號所」。', '稻草人的臉，是用麻布縫的。……縫線，是一張笑著的嘴。']);
-      { const a = await choose('稻草人', '要拿鑰匙嗎？', ['拿', '先不要'], 0); if (a !== 0) return; }
+      if (I.hutkey || F.hutOpen) { await says([_L('稻草人的手是空的。'), _L('……它的頭，比剛才更歪了一點。')]); return; }
+      await says([_L('小路盡頭的稻草人，手上掛著一串鑰匙。鑰匙牌上寫著「信號所」。'), _L('稻草人的臉，是用麻布縫的。……縫線，是一張笑著的嘴。')]);
+      { const a = await choose(_L('稻草人'), _L('要拿鑰匙嗎？'), [_L('拿'), _L('先不要')], 0); if (a !== 0) return; }
       I.hutkey = 1; F.scareMad = 1; sfx.pick(); updateHUD(); sfx.sting(); shake = 6;
-      await says(['拿下鑰匙的瞬間——', '「沙……」', '田裡所有的稻草人，同時把頭轉向了這邊。', '（不要背對它們。用手電筒照著，它們就不會動。）']);
-      setObj('打開信號所（田間小路的東邊）'); saveCP('hutkey'); return;
+      await says([_L('拿下鑰匙的瞬間——'), _L('「沙……」'), _L('田裡所有的稻草人，同時把頭轉向了這邊。'), _L('（不要背對它們。用手電筒照著，它們就不會動。）')]);
+      setObj(_L('打開信號所（田間小路的東邊）')); saveCP('hutkey'); return;
     case 'hutboard':
-      await says(['黑板上用粉筆寫著拉桿的順序。', ['黑板', '「柵欄故障時：拉桿依序　④　？　①　？」'], '中間的字被擦掉了。……用手機的閃光燈照照看的話？']); return;
+      await says([_L('黑板上用粉筆寫著拉桿的順序。'), [_L('黑板'), _L('「柵欄故障時：拉桿依序　④　？　①　？」')], _L('中間的字被擦掉了。……用手機的閃光燈照照看的話？')]); return;
     case 'hutlog':
       F.hutlog = 1;
-      await says([['信號所值班簿', '2004 年 2 月 □ 日　4:40　平交道警鈴故障，柵欄未放下。'], ['信號所值班簿', '4:44　下行列車通過。……平交道上，有一位穿制服的女學生。'], ['信號所值班簿', '（之後的頁面，全部都只寫著同一句話）'], ['信號所值班簿', '「是我沒有放下柵欄。是我沒有放下柵欄。是我沒有放下柵欄。」']]);
+      await says([[_L('信號所值班簿'), _L('2004 年 2 月 □ 日　4:40　平交道警鈴故障，柵欄未放下。')], [_L('信號所值班簿'), _L('4:44　下行列車通過。……平交道上，有一位穿制服的女學生。')], [_L('信號所值班簿'), _L('（之後的頁面，全部都只寫著同一句話）')], [_L('信號所值班簿'), _L('「是我沒有放下柵欄。是我沒有放下柵欄。是我沒有放下柵欄。」')]]);
       return;
     case 'panel7': return leverPanel();
     case 'memorial':
-      await says(['軌道旁邊的小石碑。上面放著一束早就枯掉的花。', ['石碑', '「平成十六年二月　如月高校二年　慰靈」'], '……石碑旁邊的草叢裡，好像有什麼東西。']); return;
+      await says([_L('軌道旁邊的小石碑。上面放著一束早就枯掉的花。'), [_L('石碑'), _L('「平成十六年二月　如月高校二年　慰靈」')], _L('……石碑旁邊的草叢裡，好像有什麼東西。')]); return;
     case 'legs7':
       if (F.legs) return;
-      await says(['撥開草叢——', '……是一雙穿著黑色長襪的腿。膝蓋以下，還穿著學校的室內鞋。', '冰冷，可是很乾淨。好像一直有人在幫它擦乾淨一樣。']);
-      { const a = await choose('', '……要帶走嗎？', ['帶走（還給她）', '不要碰'], 0); if (a !== 0) { await says(['……退開了。可是，不帶走的話，她就永遠找不到了。']); return; } }
+      await says([_L('撥開草叢——'), _L('……是一雙穿著黑色長襪的腿。膝蓋以下，還穿著學校的室內鞋。'), _L('冰冷，可是很乾淨。好像一直有人在幫它擦乾淨一樣。')]);
+      { const a = await choose('', _L('……要帶走嗎？'), [_L('帶走（還給她）'), _L('不要碰')], 0); if (a !== 0) { await says([_L('……退開了。可是，不帶走的話，她就永遠找不到了。')]); return; } }
       F.legs = 1; o.hidden7 = 1; o.act = null; updateHUD(); sfx.sting(); shake = 12;
-      await says(['把那雙腿抱起來的瞬間，軌道上傳來聲音。', '「テケ、テケ、テケ、テケ——」', '「…………那是，我的。」', '（跑！往東邊，車站的燈那裡！）']);
-      TK7.state = 'chase'; TK7.x = 37.5; TK7.y = TRK7; setObj('帶著她的腳，逃到車站的燈那裡'); saveCP('legs');
+      await says([_L('把那雙腿抱起來的瞬間，軌道上傳來聲音。'), _L('「テケ、テケ、テケ、テケ——」'), _L('「…………那是，我的。」'), _L('（跑！往東邊，車站的燈那裡！）')]);
+      TK7.state = 'chase'; TK7.x = 37.5; TK7.y = TRK7; setObj(_L('帶著她的腳，逃到車站的燈那裡')); saveCP('legs');
       return;
     case 'exit7':
-      if (!F.legs) { await says(['車站的燈就在前面。', '……可是，慰靈碑那邊，好像有人在等著什麼。', '（還有事情沒做完。）']); if (!TEST) return; }
+      if (!F.legs) { await says([_L('車站的燈就在前面。'), _L('……可是，慰靈碑那邊，好像有人在等著什麼。'), _L('（還有事情沒做完。）')]); if (!TEST) return; }
       F.out7 = 1; TK7.state = 'off';
-      await says(['跑到燈下的時候，聲音停了。', '回頭——軌道上什麼都沒有。', '只有懷裡這雙腿，還是冰冷的。', '前面的路，通往一座亮著燈的小車站。']);
+      await says([_L('跑到燈下的時候，聲音停了。'), _L('回頭——軌道上什麼都沒有。'), _L('只有懷裡這雙腿，還是冰冷的。'), _L('前面的路，通往一座亮著燈的小車站。')]);
       G.flags.ending4 = 1;
       return startCh4();
   }
@@ -141,22 +141,22 @@ async function ch7Action(o) {
 }
 async function leverPanel() {
   const F = G.flags;
-  if (F.gate7) { await says(['拉桿都在正確的位置。柵欄升起來了。']); return; }
-  await says(['控制盤上有四根生鏽的拉桿，編號 ① 到 ④。']);
+  if (F.gate7) { await says([_L('拉桿都在正確的位置。柵欄升起來了。')]); return; }
+  await says([_L('控制盤上有四根生鏽的拉桿，編號 ① 到 ④。')]);
   const pick = [];
   for (let i = 0; i < 4; i++) {
     G.leverStep = i;
-    const a = await choose('拉桿', `第 ${i + 1} 次，要拉哪一根？`, ['①', '②', '③', '④'], 0);
+    const a = await choose(_L('拉桿'), _L`第 ${i + 1} 次，要拉哪一根？`, ['①', '②', '③', '④'], 0);
     pick.push(a + 1); sfx.click(); tone(120, .2, 'square', .05);
   }
   if (pick.join() === LEVER_OK.join()) {
     F.gate7 = 1; for (const o of OBJ) if (o.t === 'gate7') o.solid = false;
-    sfx.door(); await says(['「喀啦——」', '外面的柵欄，慢慢地升了起來。警鈴的聲音也停了。', '（電車還是會經過。要看準時機穿過平交道。）']);
-    setObj('穿過平交道（警鈴響的時候不要靠近軌道）'); saveCP('gate7'); return;
+    sfx.door(); await says([_L('「喀啦——」'), _L('外面的柵欄，慢慢地升了起來。警鈴的聲音也停了。'), _L('（電車還是會經過。要看準時機穿過平交道。）')]);
+    setObj(_L('穿過平交道（警鈴響的時候不要靠近軌道）')); saveCP('gate7'); return;
   }
   // 拉錯：警鈴大響，稻草人暴走
   addNoise(P.x, P.y, 10); G.scareRage = G.t + 12; sfx.sting(); shake = 8;
-  await says(['「噹噹噹噹噹噹噹——」', '警鈴突然響得震耳欲聾。……外面的田裡，傳來稻草被拖動的聲音。', '（順序不對。黑板上的字……）']);
+  await says([_L('「噹噹噹噹噹噹噹——」'), _L('警鈴突然響得震耳欲聾。……外面的田裡，傳來稻草被拖動的聲音。'), _L('（順序不對。黑板上的字……）')]);
 }
 
 /* ---------- 稻草人：沒被看著的時候才會動 ---------- */
@@ -184,7 +184,7 @@ async function kakashiHit(k) {
   damage(1); sfx.hurt(); shake = 8; setPose('hurt', .8); P.inv = 2;
   k.x = k.hx; k.y = k.hy;
   if (G.mode !== 'play') return;
-  toast('乾草的手臂，一把抓住了脖子——（看著它們！）');
+  toast(_L('乾草的手臂，一把抓住了脖子——（看著它們！）'));
 }
 
 /* ---------- 電車：警鈴響 3.5 秒後高速通過 ---------- */
@@ -203,7 +203,7 @@ async function trainHit() {
   damage(2); sfx.hurt(); shake = 18; setPose('hurt', 1); P.inv = 2.5;
   P.y = P.y < TRK7 ? 18.6 : 22.6;
   if (G.mode !== 'play') return;
-  await says(['——光。', '整個人被風壓甩了出去。', '（警鈴響的時候，不能靠近軌道……）']);
+  await says([_L('——光。'), _L('整個人被風壓甩了出去。'), _L('（警鈴響的時候，不能靠近軌道……）')]);
 }
 
 /* ---------- Teke Teke：拿走她的腳之後一路追來 ---------- */
@@ -211,7 +211,7 @@ function tk7Update(dt) {
   TK7.moving = false;
   if (TK7.state !== 'chase' || stunned(TK7)) return;
   const d = dist(TK7.x, TK7.y, P.x, P.y);
-  if (P.hidden && !TK7.sawHide) { TK7.lost = (TK7.lost || 0) + dt; if (TK7.lost > 2.2) { TK7.state = 'lurk'; TK7.lost = 0; toast('「テケ……テケ……」聲音往軌道那邊去了'); } return; }
+  if (P.hidden && !TK7.sawHide) { TK7.lost = (TK7.lost || 0) + dt; if (TK7.lost > 2.2) { TK7.state = 'lurk'; TK7.lost = 0; toast(_L('「テケ……テケ……」聲音往軌道那邊去了')); } return; }
   TK7.lost = 0;
   const sp = 3.5 * DIFF.chase * dt, m = Math.max(d, .01), dx = P.x - TK7.x, dy = P.y - TK7.y;
   TK7.x += dx / m * Math.min(sp, d); TK7.y += dy / m * Math.min(sp, d);
@@ -223,14 +223,14 @@ function tk7Update(dt) {
 async function tk7Catch() {
   damage(2); sfx.sting(); shake = 14; P.inv = 2.5; TK7.stunT = G.t + 3;
   if (G.mode !== 'play') return;
-  await says(['冰冷的手指扣住了腳踝——', '「還給我。還、給、我。」', '（拚命甩開——她被甩回了軌道那邊。）']);
+  await says([_L('冰冷的手指扣住了腳踝——'), _L('「還給我。還、給、我。」'), _L('（拚命甩開——她被甩回了軌道那邊。）')]);
   TK7.x = Math.max(23, P.x - 6); TK7.y = TRK7;
 }
 // 躲起來之後：她回到軌道附近徘徊，看到人又會追
 function tk7Lurk(dt) {
   if (TK7.state !== 'lurk') return;
   const d = dist(TK7.x, TK7.y, P.x, P.y);
-  if (!P.hidden && d < 5.5 && !pInvis()) { TK7.state = 'chase'; sfx.sting(); toast('テケ、テケ、テケ——！'); }
+  if (!P.hidden && d < 5.5 && !pInvis()) { TK7.state = 'chase'; sfx.sting(); toast(_L('テケ、テケ、テケ——！')); }
 }
 
 /* ---------- 掛勾 ---------- */
@@ -301,14 +301,14 @@ function drawKakashi(x, y, tilt, hasKey) {
     return _d(o, cx, cy, shaking);
   }; }
 { const _h = sceneHUD; sceneHUD = function (s) {
-    _h(s); if (G.scene === 7 || G.scene === 5) { if (G.flags.legs) s.push(`<div class="s">她的腳</div>`); }
-    if (G.scene === 7 && G.inv.hutkey && !G.flags.hutOpen) s.push(`<div class="s">信號所的鑰匙</div>`);
+    _h(s); if (G.scene === 7 || G.scene === 5) { if (G.flags.legs) s.push(_L`<div class="s">她的腳</div>`); }
+    if (G.scene === 7 && G.inv.hutkey && !G.flags.hutOpen) s.push(_L`<div class="s">信號所的鑰匙</div>`);
   }; }
 { const _o = sceneOnLoad; sceneOnLoad = function (cp) { _o(cp); if (G.scene === 7) ch7Reset(); }; }
 { const _ud = useDoor; useDoor = async function (dr) {
     if (G.scene === 7 && dr.key === 'hutkey') {
-      if (G.inv.hutkey) { dr.locked = false; G.inv.hutkey = 0; G.flags.hutOpen = 1; sfx.door(); updateHUD(); toast('信號所的門打開了'); setObj('把平交道的柵欄升起來（信號所的控制盤）'); return; }
-      sfx.locked(); await says([dr.msg, '（鑰匙……田裡那個稻草人手上，好像掛著什麼。）']); return;
+      if (G.inv.hutkey) { dr.locked = false; G.inv.hutkey = 0; G.flags.hutOpen = 1; sfx.door(); updateHUD(); toast(_L('信號所的門打開了')); setObj(_L('把平交道的柵欄升起來（信號所的控制盤）')); return; }
+      sfx.locked(); await says([dr.msg, _L('（鑰匙……田裡那個稻草人手上，好像掛著什麼。）')]); return;
     }
     return _ud(dr); }; }
 { const _th = threats; threats = function () {
@@ -318,26 +318,26 @@ function drawKakashi(x, y, tilt, hasKey) {
     return t; }; }
 { const _hd = hide; hide = function (o) { if (G.scene === 7) TK7.sawHide = TK7.state === 'chase' && dist(TK7.x, TK7.y, P.x, P.y) < 3; return _hd(o); }; }
 // 第四章的小巷盡頭 → 先到平交道
-roadEnd = async function () { await says(['巷子的盡頭，是一片看不到邊的水田。', '……遠遠的，有平交道的警鈴聲。']); return startCrossing(); };
+roadEnd = async function () { await says([_L('巷子的盡頭，是一片看不到邊的水田。'), _L('……遠遠的，有平交道的警鈴聲。')]); return startCrossing(); };
 // 手機：拍黑板 → 看到被擦掉的數字
-PHOTO_SPOTS.push({ scene: 7, x: 29.5, y: 23.5, id: 'hutboard', lines: ['閃光燈一閃，黑板上被擦掉的粉筆痕浮了出來。', ['黑板', '「柵欄故障時：拉桿依序　④　②　①　③」']], then: () => { G.flags.leverHint = 1; } });
+PHOTO_SPOTS.push({ scene: 7, x: 29.5, y: 23.5, id: 'hutboard', lines: [_L('閃光燈一閃，黑板上被擦掉的粉筆痕浮了出來。'), [_L('黑板'), _L('「柵欄故障時：拉桿依序　④　②　①　③」')]], then: () => { G.flags.leverHint = 1; } });
 // 終章：帶著腳的話，Teke Teke 抓到妳時可以把腳還給她
 if (typeof tkCatch === 'function') { const _tc = tkCatch; tkCatch = async function () {
     if (G.scene === 5 && G.flags.legs && !G.flags.legsGiven) {
       TK.state = 'stun'; TK.timer = 99; P.hidden = null; sfx.sting();
-      const a = await choose('Teke Teke', '「……我的腳，在哪裡？」', ['把抱著的那雙腿還給她', '不說話'], TEST ? 0 : 6000);
+      const a = await choose('Teke Teke', _L('「……我的腳，在哪裡？」'), [_L('把抱著的那雙腿還給她'), _L('不說話')], TEST ? 0 : 6000);
       if (a === 0) {
         G.flags.legsGiven = 1; G.flags.legs = 0; updateHUD();
-        await says(['把那雙腿放在她面前。', '她伸出手，很慢、很慢地摸了摸那雙室內鞋。', '「…………找到了。」', '頭髮後面，第一次露出了一點點臉。是一個很普通的女生。', '「謝謝。……我要回家了。」', '她抱著自己的腿，沿著軌道慢慢走遠——是「走」的。']);
+        await says([_L('把那雙腿放在她面前。'), _L('她伸出手，很慢、很慢地摸了摸那雙室內鞋。'), _L('「…………找到了。」'), _L('頭髮後面，第一次露出了一點點臉。是一個很普通的女生。'), _L('「謝謝。……我要回家了。」'), _L('她抱著自己的腿，沿著軌道慢慢走遠——是「走」的。')]);
         TK.state = 'gone'; return;
       }
     }
     return _tc(); }; }
 // 怪談筆記
 LORE.push(
-  ['kakashi', '稻草人', '水田裡的稻草人，被看著的時候一動也不動。', '只要用手電筒照著它們，它們就不會靠近。', () => G.flags.scareMad],
-  ['fumikiri', '校後的平交道', '2004 年 2 月，警鈴故障的平交道上，一位女學生被列車撞上。', '信號所的值班簿上，同一句話寫了好幾百遍。', () => G.flags.hutlog],
-  ['legs', 'Teke Teke 的腳', '慰靈碑旁的草叢裡，一雙穿著室內鞋的腿。', '把它還給她的話……', () => G.flags.legs || G.flags.legsGiven],
+  ['kakashi', _L('稻草人'), _L('水田裡的稻草人，被看著的時候一動也不動。'), _L('只要用手電筒照著它們，它們就不會靠近。'), () => G.flags.scareMad],
+  ['fumikiri', _L('校後的平交道'), _L('2004 年 2 月，警鈴故障的平交道上，一位女學生被列車撞上。'), _L('信號所的值班簿上，同一句話寫了好幾百遍。'), () => G.flags.hutlog],
+  ['legs', _L('Teke Teke 的腳'), _L('慰靈碑旁的草叢裡，一雙穿著室內鞋的腿。'), _L('把它還給她的話……'), () => G.flags.legs || G.flags.legsGiven],
 );
 
 /* ---------- 測試（?test=ch7） ---------- */

@@ -234,6 +234,35 @@ button{touch-action:manipulation}#hwNote,#runSet,#end,#invMenu{touch-action:pan-
 @keyframes gatePulse{0%,100%{opacity:.35}50%{opacity:1}}
 #rot{inset:0;background:#000;display:flex;align-items:center;justify-content:center;font-size:16px;z-index:9;pointer-events:auto;text-align:center;line-height:2}
 </style>
+<style>html.en #title h1{letter-spacing:.06em}html.en #title .sub,html.en .gtx{letter-spacing:.04em}
+#bLang{position:absolute;right:calc(var(--u)*10);top:calc(var(--u)*30);pointer-events:auto;background:rgba(0,0,0,.45);border:1px solid #5b554c;color:#cfc6b6;font:inherit;font-size:calc(var(--u)*9);padding:calc(var(--u)*3) calc(var(--u)*7);cursor:pointer}
+.phone #bLang{font-size:calc(var(--u)*10);top:calc(var(--u)*34)}</style>
+<script>
+/* 語言：?lang=en|zh（記住）＞上次選的＞瀏覽器語言 */
+const LANG=(()=>{const q=(location.search.match(/[?&]lang=(\w+)/)||[])[1];if(q){try{if(q!=='dump')localStorage.setItem('kisaragiLang',q)}catch(e){}return q}
+  try{const s=localStorage.getItem('kisaragiLang');if(s)return s}catch(e){}return /^zh/i.test(navigator.language||'zh')?'zh':'en'})();
+let I18N={};const I18N_MISS=new Set();
+if(LANG==='en'){document.documentElement.lang='en';document.documentElement.classList.add('en');document.write('<script src="i18n_en.js?v=9f86d956"><\/script>');}
+function _L(s,...v){
+  if(Array.isArray(s)&&s.raw){
+    if(LANG==='en'){const k=s.reduce((a,x,i)=>a+'{'+(i-1)+'}'+x);const e=I18N[k];
+      if(e!=null)return e.replace(/\{(\d+)\}/g,(_,n)=>v[n]);I18N_MISS.add(k);}
+    return s.reduce((a,x,i)=>a+v[i-1]+x);}
+  if(LANG==='en'){const e=I18N[s];if(e!=null)return e;I18N_MISS.add(s);}return s;}
+/* 英文→中文（立繪用說話者名字查表） */
+function _Lzh(s){if(LANG!=='en')return s;if(!_Lzh.m){_Lzh.m={};for(const k in I18N)_Lzh.m[I18N[k]]=k;}return _Lzh.m[s]||s;}
+function _Ldom(root){const CJK=/[\u3000-\u30ff\u4e00-\u9fff\uff00-\uffef]/,INL=/^(B|SPAN|BR|I|SMALL|A|EM|STRONG)$/,keys=[];
+  const sw=k=>{if(LANG==='dump'){keys.push(k);return null}if(LANG!=='en')return null;const e=I18N[k];if(e==null)I18N_MISS.add(k);return e};
+  const walk=el=>{if(/^(SCRIPT|STYLE|svg|SVG|CANVAS)$/.test(el.tagName))return;
+    for(const a of ['title','alt','placeholder','aria-label'])if(el.hasAttribute&&el.hasAttribute(a)&&CJK.test(el.getAttribute(a))){const e=sw(el.getAttribute(a));if(e!=null)el.setAttribute(a,e);}
+    if(!CJK.test(el.textContent))return;
+    const kids=[...el.children];
+    if(kids.every(k=>INL.test(k.tagName)&&!k.children.length)&&[...el.childNodes].some(n=>n.nodeType===3&&CJK.test(n.textContent))){const e=sw(el.innerHTML.trim());if(e!=null)el.innerHTML=e;return;}
+    for(const n of [...el.childNodes]){if(n.nodeType===3){const t=n.textContent.trim();if(t&&CJK.test(t)){const e=sw(t);if(e!=null)n.textContent=n.textContent.replace(t,e);}}else if(n.nodeType===1)walk(n);}};
+  walk(root);if(LANG==='en'){const h=document.head;document.title=_L(document.title);
+    h.querySelectorAll('meta[name=description],meta[property^="og:"]').forEach(m=>{const c=m.getAttribute('content');if(CJK.test(c)){const e=sw(c);if(e!=null)m.setAttribute('content',e)}});}
+  if(LANG==='dump'){const p=document.createElement('pre');p.id='i18nKeys';p.textContent=JSON.stringify(keys.concat([document.title,...[...document.head.querySelectorAll('meta[name=description],meta[property^="og:"]')].map(m=>m.getAttribute('content')).filter(c=>CJK.test(c))]));document.body.appendChild(p);}}
+</script>
 </head>
 <body>
 <div id="wrap">
@@ -273,6 +302,7 @@ button{touch-action:manipulation}#hwNote,#runSet,#end,#invMenu{touch-action:pan-
       <button id="bHelp">操作說明</button>
     </div>
     <div class="foot" id="foot">戴上耳機遊玩效果最佳</div>
+    <button id="bLang" onclick="event.stopPropagation();try{localStorage.setItem('kisaragiLang',LANG==='en'?'zh':'en')}catch(e){};location.search=location.search.replace(/([?&])lang=\w+&?/,'$1')"><script>document.write(LANG==='en'?'中文':'English')</script></button>
     <button id="bTheme">⚙ 聲音</button>
     <div id="lyric" class="ui"></div>
   </div>
@@ -356,29 +386,30 @@ button{touch-action:manipulation}#hwNote,#runSet,#end,#invMenu{touch-action:pan-
   </div>
   <div id="rot" class="ui hide">請將手機轉為橫向遊玩<br>↻</div>
 </div>
-<script src="game.js?v=412d5fb2"></script>
-<script src="ch2.js?v=d87bb526"></script>
-<script src="ch2b.js?v=3e2b573d"></script>
-<script src="ch3.js?v=67c59078"></script>
-<script src="ch4.js?v=91e87ca6"></script>
-<script src="ch5.js?v=bdca9037"></script>
-<script src="station.js?v=b1febd52"></script>
-<script src="props.js?v=b4660c46"></script>
-<script src="systems.js?v=e9afa1f7"></script>
-<script src="phone.js?v=1ea7c18d"></script>
-<script src="ch5b.js?v=c75287e8"></script>
-<script src="crossing.js?v=35aa7864"></script>
-<script src="gym.js?v=0664d67e"></script>
-<script src="schoolyard.js?v=714311e7"></script>
-<script src="oldwing.js?v=708f621b"></script>
-<script src="artroom.js?v=5a115ff2"></script>
-<script src="homeec.js?v=2ac5755d"></script>
-<script src="balance.js?v=70d72ae4"></script>
-<script src="faces.js?v=f56e827c"></script>
-<script src="inventory.js?v=bfcedd3a"></script>
-<script src="halloween.js?v=a258d404"></script>
-<script src="depth.js?v=5aa2b553"></script>
-<script src="xmas.js?v=73b1526c"></script>
-<script src="coop.js?v=f62b86ab"></script>
+<script>_Ldom(document.body)</script>
+<script src="game.js?v=f51f869d"></script>
+<script src="ch2.js?v=7dba7af0"></script>
+<script src="ch2b.js?v=7e0faccc"></script>
+<script src="ch3.js?v=49f460ee"></script>
+<script src="ch4.js?v=4d125804"></script>
+<script src="ch5.js?v=609cf4f3"></script>
+<script src="station.js?v=9268d8e1"></script>
+<script src="props.js?v=c1e4dde6"></script>
+<script src="systems.js?v=2c9c6c49"></script>
+<script src="phone.js?v=8dedfca8"></script>
+<script src="ch5b.js?v=e7745406"></script>
+<script src="crossing.js?v=8527c74e"></script>
+<script src="gym.js?v=be6ac764"></script>
+<script src="schoolyard.js?v=7d62ad8a"></script>
+<script src="oldwing.js?v=9243ac32"></script>
+<script src="artroom.js?v=16d12c2e"></script>
+<script src="homeec.js?v=8f35adac"></script>
+<script src="balance.js?v=c45f71a1"></script>
+<script src="faces.js?v=3d275219"></script>
+<script src="inventory.js?v=90365749"></script>
+<script src="halloween.js?v=ff6f592e"></script>
+<script src="depth.js?v=b7670da5"></script>
+<script src="xmas.js?v=dd2400fe"></script>
+<script src="coop.js?v=c271b8dc"></script>
 </body>
 </html>

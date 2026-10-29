@@ -2,9 +2,9 @@
    新道具一律加在各場景道具清單的最後（存檔用索引記錄撿過的道具）。載入順序：所有場景擴充檔之後。 */
 const EXTRA_BANDAGE = { 1: [20, 14], 3: [28, 11], 5: [30, 17], 6: [48, 25], 7: [40, 7] };
 for (const [n, [x, y]] of Object.entries(EXTRA_BANDAGE)) {
-  const _b = SCENES[n]; SCENES[n] = function () { _b(); item('bandage', x, y, '繃帶'); };
+  const _b = SCENES[n]; SCENES[n] = function () { _b(); item('bandage', x, y, _L('繃帶')); };
 }
-if (G.scene === 1 && !ITEMS.some(i => i.id === 'bandage' && Math.floor(i.x) === 20 && Math.floor(i.y) === 14)) item('bandage', 20, 14, '繃帶');   // 開機時已經建好的第一章
+if (G.scene === 1 && !ITEMS.some(i => i.id === 'bandage' && Math.floor(i.x) === 20 && Math.floor(i.y) === 14)) item('bandage', 20, 14, _L('繃帶'));   // 開機時已經建好的第一章
 
 /* 自動存檔（2026-10-23 使用者：不然玩家每次都要重來）：原本只在固定存檔點存。
    現在每 45 秒、以及切到別的 App／關掉網頁時，只要「安全」就存一次：沒被追、6 格內沒有鬼、沒在躲、沒在對話或過場。 */
@@ -66,7 +66,7 @@ async function testHold() {
     if (pInvis() && HL.state === 'chase' && !stunned(HL) && inGym(P.x, P.y)) { HL.moving = false; walker(HL, BALL.x, BALL.y, 1.4, dt); return; }
     return _h(dt); }; }
 { const _t = tk7Update; tk7Update = function (dt) {
-    if (pInvis() && TK7.state === 'chase' && !stunned(TK7)) { TK7.moving = false; TK7.lost = (TK7.lost || 0) + dt; if (TK7.lost > 2.2) { TK7.state = 'lurk'; TK7.lost = 0; toast('「テケ……テケ……」聲音往軌道那邊去了'); } return; }
+    if (pInvis() && TK7.state === 'chase' && !stunned(TK7)) { TK7.moving = false; TK7.lost = (TK7.lost || 0) + dt; if (TK7.lost > 2.2) { TK7.state = 'lurk'; TK7.lost = 0; toast(_L('「テケ……テケ……」聲音往軌道那邊去了')); } return; }
     return _t(dt); }; }
 // 測試（?test=charm）：第三章妃姬子在身邊追 → 用護身符 → 她走到咪醬的位置也抓不到
 async function testCharm() {

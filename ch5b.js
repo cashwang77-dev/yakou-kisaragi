@@ -9,15 +9,15 @@
 
 const MZ = { x0: 39, x1: 61, y0: 3, y1: 31 };
 const JIZO = [
-  { x: 39, y: 31, need: 'salt', name: '鹽包', hint: '……地藏的頭被打掉了。台座上有一個空空的小碟子。（要放鹽）' },
-  { x: 61, y: 10, need: 'ofuda', name: 'お札', hint: '……地藏背後的木牌上，原本貼著一張紙。被撕掉了。（要一張お札）' },
-  { x: 61, y: 31, need: 'onigiri', name: '飯糰', hint: '……地藏前面的供品盤是空的。旁邊有烏鴉的羽毛。（要供品）' },
+  { x: 39, y: 31, need: 'salt', name: _L('鹽包'), hint: _L('……地藏的頭被打掉了。台座上有一個空空的小碟子。（要放鹽）') },
+  { x: 61, y: 10, need: 'ofuda', name: _L('お札'), hint: _L('……地藏背後的木牌上，原本貼著一張紙。被撕掉了。（要一張お札）') },
+  { x: 61, y: 31, need: 'onigiri', name: _L('飯糰'), hint: _L('……地藏前面的供品盤是空的。旁邊有烏鴉的羽毛。（要供品）') },
 ];
 const HA = { x: 55, y: 18, dir: 4, state: 'off', frame: 0, animD: 0, moving: false, path: null, r: .35, wp: 0, timer: 0, last: null };
 const HA_PATROL = [[53.5, 17.5], [46.5, 10.5], [53.5, 4], [60.5, 10.5], [60.5, 24.5], [46.5, 24.5], [40, 17.5], [46.5, 30.5], [53.5, 30.5]];
 const inMaze = (x, y) => x >= MZ.x0 && x <= MZ.x1 + 1 && y >= MZ.y0 && y <= MZ.y1 + 1;
 const haSafe = (x, y) => JIZO.some((j, i) => G.flags['jizo' + i] && dist(x, y, j.x + .5, j.y + .5) < 1.8);
-Object.assign(HIDE, { hedge6: '躲進樹籬後面', bin6: '躲進垃圾集中箱' });
+Object.assign(HIDE, { hedge6: _L('躲進樹籬後面'), bin6: _L('躲進垃圾集中箱') });
 loadImages(['hachi_walk']).then(() => { if (IMG.hachi_walk) IMG.hachi_walk.rows = 4; });
 
 /* ---------- 地圖 ---------- */
@@ -41,21 +41,21 @@ function buildMaze() {
   for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) if (at(x, y) === '#' && [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]].every(([dx, dy]) => solid(x + dx, y + dy))) hollow.push([x, y]);
   for (const [x, y] of hollow) put(x, y, 'X');
   // 小巷入口的結界、公路北端也拉起しめ縄（不能直接走去小巷）
-  obj('shimenawa', 38, 3, { act: 'shimenawa', label: '看那條繩子' }); obj('shimenawa', 38, 4, { act: 'shimenawa', label: '看那條繩子' });
-  for (const x of [33, 34, 35, 36]) obj('shimenawa', x, 5, { act: 'shimenawa', label: '看那條繩子' });
-  JIZO.forEach((j, i) => obj('jizo', j.x, j.y, { act: 'jizo', label: '看看地藏', i }));
+  obj('shimenawa', 38, 3, { act: 'shimenawa', label: _L('看那條繩子') }); obj('shimenawa', 38, 4, { act: 'shimenawa', label: _L('看那條繩子') });
+  for (const x of [33, 34, 35, 36]) obj('shimenawa', x, 5, { act: 'shimenawa', label: _L('看那條繩子') });
+  JIZO.forEach((j, i) => obj('jizo', j.x, j.y, { act: 'jizo', label: _L('看看地藏'), i }));
   // 可以翻找的東西
-  obj('mailbox', 45, 10, { act: 'search', label: '翻翻信箱', find: 'ofuda' });
-  obj('mailbox', 52, 24, { act: 'search', label: '翻翻信箱', find: 'note1' });
-  obj('mailbox', 59, 17, { act: 'search', label: '翻翻信箱', find: 'salt' });
-  obj('mailbox', 41, 30, { act: 'search', label: '翻翻信箱', find: null });
-  obj('nboard', 37, 19, { act: 'nboard', label: '看社區公告欄' });
+  obj('mailbox', 45, 10, { act: 'search', label: _L('翻翻信箱'), find: 'ofuda' });
+  obj('mailbox', 52, 24, { act: 'search', label: _L('翻翻信箱'), find: 'note1' });
+  obj('mailbox', 59, 17, { act: 'search', label: _L('翻翻信箱'), find: 'salt' });
+  obj('mailbox', 41, 30, { act: 'search', label: _L('翻翻信箱'), find: null });
+  obj('nboard', 37, 19, { act: 'nboard', label: _L('看社區公告欄') });
   // 躲藏點
   for (const [x, y] of [[42, 11], [50, 18], [57, 25], [44, 4], [58, 4], [41, 24]]) obj('hedge6', x, y);
   for (const [x, y] of [[48, 31], [55, 11]]) obj('bin6', x, y);
   for (const [x, y] of [[40.5, 10.5], [53.5, 17.5], [46.5, 24.5], [60.5, 30.5], [46.5, 3.5]]) LIGHTS.push({ x, y, r: 2.2, c: '255,214,150' });
   JIZO.forEach(j => LIGHTS.push({ x: j.x + .5, y: j.y + .5, r: 1.2, c: '255,170,120', id: 'jizoL' }));
-  item('onigiri', 9, 29, '飯糰');   // 便利商店的貨架（新道具一律加在最後，存檔用索引）
+  item('onigiri', 9, 29, _L('飯糰'));   // 便利商店的貨架（新道具一律加在最後，存檔用索引）
 }
 // 牆：住宅區一律是民宅
 { const _k = wall6Kind; wall6Kind = function (x, y) { if (x >= 38 && x <= 62 && y >= 2 && y <= 32 && !(x === 38 && y < 5)) return (x * 7 + y * 13) % 11 === 0 ? 'house' : 'block'; return _k(x, y); }; }
@@ -66,10 +66,10 @@ async function ch5bAction(o) {
   switch (o.act) {
     case 'shimenawa':
       if (F.kekkai) return false;
-      await says(['兩根電線桿之間，拉著一條很粗的稻草繩。上面垂著一張一張的白紙。', '……繩子在發抖。明明沒有風。', '（過不去。好像有什麼東西，不讓任何東西通過。）']);
-      if (!F.kekkaiSeen) { F.kekkaiSeen = 1; setObj('在住宅區裡找到被打壞的地藏，把它們修好'); } return;
+      await says([_L('兩根電線桿之間，拉著一條很粗的稻草繩。上面垂著一張一張的白紙。'), _L('……繩子在發抖。明明沒有風。'), _L('（過不去。好像有什麼東西，不讓任何東西通過。）')]);
+      if (!F.kekkaiSeen) { F.kekkaiSeen = 1; setObj(_L('在住宅區裡找到被打壞的地藏，把它們修好')); } return;
     case 'nboard':
-      await says([['社區公告', '「夜間請勿外出。聽到有人叫你的名字，不要回答。」'], ['社區公告', '「本社區三尊地藏遭人破壞，請居民留意。」'], '公告欄的地圖褪色了，看不清楚。……用手機拍下來的話？']); return;
+      await says([[_L('社區公告'), _L('「夜間請勿外出。聽到有人叫你的名字，不要回答。」')], [_L('社區公告'), _L('「本社區三尊地藏遭人破壞，請居民留意。」')], _L('公告欄的地圖褪色了，看不清楚。……用手機拍下來的話？')]); return;
     case 'jizo': return jizoAct(o);
     case 'search': return searchAct(o);
   }
@@ -77,31 +77,31 @@ async function ch5bAction(o) {
 }
 async function jizoAct(o) {
   const j = JIZO[o.i], F = G.flags, I = G.inv;
-  if (F['jizo' + o.i]) { await says(['地藏的小臉，在燈下好像笑了一下。', '（這附近，她好像碰不到我。）']); return; }
+  if (F['jizo' + o.i]) { await says([_L('地藏的小臉，在燈下好像笑了一下。'), _L('（這附近，她好像碰不到我。）')]); return; }
   const have = j.need === 'salt' ? (I.salt || 0) > 0 : !!I[j.need];
   if (!have) { await says([j.hint]); return; }
-  const a = await choose('地藏', `供上【${j.name}】嗎？`, ['供上', '先不要'], 0);
+  const a = await choose(_L('地藏'), _L`供上【${j.name}】嗎？`, [_L('供上'), _L('先不要')], 0);
   if (a !== 0) return;
   if (j.need === 'salt') I.salt--; else I[j.need] = 0;
   F['jizo' + o.i] = 1; sfx.door(); updateHUD();
   const n = [0, 1, 2].filter(i => F['jizo' + i]).length;
-  await says(['雙手合十。', '……地藏前面的小燈，亮了起來。', `（修好的地藏：${n} / 3）`]);
+  await says([_L('雙手合十。'), _L('……地藏前面的小燈，亮了起來。'), _L`（修好的地藏：${n} / 3）`]);
   if (n === 3) {
     F.kekkai = 1; kekkaiOpen(); HA.state = 'hunt'; HA.path = null; sfx.sting(); shake = 10;
-    await says(['遠處傳來「啪」的一聲——稻草繩斷了。', '「ぽ。」', '「ぽぽぽぽぽぽぽぽぽぽぽぽ——」', '……她知道了。快走，往小巷，去車站的燈那裡！']);
-    setObj('往西穿過小巷，跑到車站的燈下'); saveCP('kekkai');
+    await says([_L('遠處傳來「啪」的一聲——稻草繩斷了。'), _L('「ぽ。」'), _L('「ぽぽぽぽぽぽぽぽぽぽぽぽ——」'), _L('……她知道了。快走，往小巷，去車站的燈那裡！')]);
+    setObj(_L('往西穿過小巷，跑到車站的燈下')); saveCP('kekkai');
   } else saveCP('jizo' + o.i);
 }
 async function searchAct(o) {
-  if (o.searched) { await says(['……裡面已經沒有東西了。']); return; }
-  G.lock++; sfx.click(); toast('翻找中……'); addNoise(o.x + .5, o.y + .5, 3.5);
+  if (o.searched) { await says([_L('……裡面已經沒有東西了。')]); return; }
+  G.lock++; sfx.click(); toast(_L('翻找中……')); addNoise(o.x + .5, o.y + .5, 3.5);
   await wait(TEST ? 10 : 1400); G.lock--;
   o.searched = 1; G.flags['srch_' + o.x + '_' + o.y] = 1;
   const I = G.inv;
-  if (o.find === 'ofuda') { I.ofuda = 1; sfx.pick(); await says(['信箱最裡面，夾著一張摺起來的白紙。', '……是神社的お札。上面的字被雨水暈開了。', '得到【お札】']); }
-  else if (o.find === 'salt') { I.salt = (I.salt || 0) + 1; sfx.pick(); await says(['信箱裡有一小包用和紙包著的鹽。', '……「給回不了家的孩子」。', '得到【鹽包】']); }
-  else if (o.find === 'note1') { await says(['一封沒有寄出去的信。', ['信', '「媽媽，那個人又在圍牆外面了。帽子好白好白。」'], ['信', '「她會學妳的聲音叫我。所以如果妳真的來接我，請先敲三下門。」']]); }
-  else await says(['……只有被雨淋濕的廣告單。']);
+  if (o.find === 'ofuda') { I.ofuda = 1; sfx.pick(); await says([_L('信箱最裡面，夾著一張摺起來的白紙。'), _L('……是神社的お札。上面的字被雨水暈開了。'), _L('得到【お札】')]); }
+  else if (o.find === 'salt') { I.salt = (I.salt || 0) + 1; sfx.pick(); await says([_L('信箱裡有一小包用和紙包著的鹽。'), _L('……「給回不了家的孩子」。'), _L('得到【鹽包】')]); }
+  else if (o.find === 'note1') { await says([_L('一封沒有寄出去的信。'), [_L('信'), _L('「媽媽，那個人又在圍牆外面了。帽子好白好白。」')], [_L('信'), _L('「她會學妳的聲音叫我。所以如果妳真的來接我，請先敲三下門。」')]]); }
+  else await says([_L('……只有被雨淋濕的廣告單。')]);
   updateHUD();
 }
 
@@ -149,12 +149,12 @@ function haUpdate(dt) {
   HA.po = (HA.po || 0) - dt;
   if (HA.po <= 0 && d < 16) { HA.po = HA.state === 'chase' || HA.state === 'hunt' ? 1.6 : 4 + Math.random() * 3; for (let k = 0; k < 3; k++) tone(190 + k * 12, .14, 'triangle', .05 * (1 - d / 16), undefined, 0, k * .2); }
 }
-function haSpot() { HA.state = 'chase'; HA.last = [P.x, P.y]; HA.lostT = 0; HA.path = null; sfx.sting(); shake = 6; toast('白色的帽子……轉向這邊了！'); }
+function haSpot() { HA.state = 'chase'; HA.last = [P.x, P.y]; HA.lostT = 0; HA.path = null; sfx.sting(); shake = 6; toast(_L('白色的帽子……轉向這邊了！')); }
 async function haCatch() {
   if (G.lock) return;
   HA.state = 'search'; HA.timer = 6; sfx.sting(); shake = 14; setPose('hurt', 1);
   damage(2); if (G.mode !== 'play') return;
-  await says(['一隻好長好長的手，從頭頂上方伸下來——', '整個人被拎了起來。腳碰不到地面。', '「ぽ……ぽぽ……」帽子底下，那張臉在笑。', '（拚命掙扎——摔在地上的時候，已經回到了住宅區的入口。）']);
+  await says([_L('一隻好長好長的手，從頭頂上方伸下來——'), _L('整個人被拎了起來。腳碰不到地面。'), _L('「ぽ……ぽぽ……」帽子底下，那張臉在笑。'), _L('（拚命掙扎——摔在地上的時候，已經回到了住宅區的入口。）')]);
   P.x = 37.5; P.y = 17.5; P.inv = 2.5; HA.x = 57.5; HA.y = 24.5; HA.path = null;
   if (G.flags.kekkai) { HA.state = 'hunt'; }
 }
@@ -163,17 +163,17 @@ function throwSalt() {
   if (G.mode !== 'play' || G.lock || !(G.inv.salt > 0) || G.scene !== 6) return;
   G.inv.salt--; sfx.whoosh(); updateHUD();
   G.puffs = (G.puffs || []).concat({ x: P.x, y: P.y, t: G.t, r: 1.6, end: G.t + 1, c: '245,245,240' });
-  if (HA.state !== 'off' && dist(HA.x, HA.y, P.x, P.y) < 3.2) { HA.stunT = G.t + 4 * DIFF.stun; HA.state = HA.state === 'hunt' ? 'hunt' : 'search'; HA.timer = 4; toast('撒出去的鹽打在她身上——「ぽ——！」她退開了'); }
-  else toast('鹽撒在地上……她不在附近');
+  if (HA.state !== 'off' && dist(HA.x, HA.y, P.x, P.y) < 3.2) { HA.stunT = G.t + 4 * DIFF.stun; HA.state = HA.state === 'hunt' ? 'hunt' : 'search'; HA.timer = 4; toast(_L('撒出去的鹽打在她身上——「ぽ——！」她退開了')); }
+  else toast(_L('鹽撒在地上……她不在附近'));
 }
 // 媽媽打來的電話：不要接
 async function momCall() {
   G.flags.momCalls = (G.flags.momCalls || 0) + 1;
-  if (!PH.silent) addNoise(P.x, P.y, 7); else toast('口袋裡的手機在震動……');
+  if (!PH.silent) addNoise(P.x, P.y, 7); else toast(_L('口袋裡的手機在震動……'));
   sfx.ring();
-  const a = await choose('來電：媽媽', '螢幕上顯示「媽媽」。', ['接聽', '掛斷'], TEST ? 1 : 4500);
+  const a = await choose(_L('來電：媽媽'), _L('螢幕上顯示「媽媽」。'), [_L('接聽'), _L('掛斷')], TEST ? 1 : 4500);
   if (a === 0) {
-    await says([['媽媽', '「咪醬？妳在哪裡？媽媽來接妳了。」'], ['媽媽', '「媽媽就在妳旁邊喔。……妳看，上面。」'], '——手機那頭的聲音，跟頭頂上傳來的聲音，是同一個。']);
+    await says([[_L('媽媽'), _L('「咪醬？妳在哪裡？媽媽來接妳了。」')], [_L('媽媽'), _L('「媽媽就在妳旁邊喔。……妳看，上面。」')], _L('——手機那頭的聲音，跟頭頂上傳來的聲音，是同一個。')]);
     HA.state = 'chase'; HA.last = [P.x, P.y]; HA.lostT = 0; HA.x = P.x + 5; HA.y = P.y; HA.path = null; sfx.sting();
   }
 }
@@ -215,15 +215,15 @@ async function momCall() {
   }; }
 { const _h = sceneHUD; sceneHUD = function (s) {
     _h(s); if (G.scene !== 6) return;
-    for (let i = s.length - 1; i >= 0; i--) if (/鹽包×/.test(s[i])) s.splice(i, 1);
-    if (G.inv.salt) s.push(`<div class="s tap" data-k="throwSalt">鹽包×${G.inv.salt}<em>${isTouch ? '點按撒鹽' : '8 撒鹽'}</em></div>`);
-    if (G.inv.ofuda) s.push(`<div class="s">お札</div>`); if (G.inv.onigiri) s.push(`<div class="s">飯糰（供品）</div>`);
-    if (G.flags.kekkaiSeen && !G.flags.kekkai) s.push(`<div class="s">地藏 ${[0, 1, 2].filter(i => G.flags['jizo' + i]).length} / 3</div>`);
+    for (let i = s.length - 1; i >= 0; i--) if (s[i].startsWith('<div class="s">') && s[i].includes('×' + G.inv.salt + '<em>')) s.splice(i, 1);
+    if (G.inv.salt) s.push(_L`<div class="s tap" data-k="throwSalt">鹽包×${G.inv.salt}<em>${isTouch ? _L('點按撒鹽') : _L('8 撒鹽')}</em></div>`);
+    if (G.inv.ofuda) s.push(_L`<div class="s">お札</div>`); if (G.inv.onigiri) s.push(_L`<div class="s">飯糰（供品）</div>`);
+    if (G.flags.kekkaiSeen && !G.flags.kekkai) s.push(_L`<div class="s">地藏 ${[0, 1, 2].filter(i => G.flags['jizo' + i]).length} / 3</div>`);
   }; }
 { const _p = press; press = function (k) { if (k === 'throwSalt') { throwSalt(); return; } return _p(k); }; }
 addEventListener('keydown', e => { if (!e.repeat && e.code === 'Digit8') press('throwSalt'); });
 { const _t = takeItem; takeItem = async function (it) {
-    if (G.scene === 6 && it.id === 'onigiri') { it.taken = true; G.inv.onigiri = 1; sfx.pick(); updateHUD(); toast('得到【飯糰】　……可以當作供品'); return; }
+    if (G.scene === 6 && it.id === 'onigiri') { it.taken = true; G.inv.onigiri = 1; sfx.pick(); updateHUD(); toast(_L('得到【飯糰】　……可以當作供品')); return; }
     return _t(it); }; }
 { const _o = sceneOnLoad; sceneOnLoad = function (cp) {
     _o(cp); if (G.scene !== 6) return;
@@ -238,10 +238,10 @@ addEventListener('keydown', e => { if (!e.repeat && e.code === 'Digit8') press('
 // 舊的「圍牆上探頭→回答問題」三個事件拿掉；小巷盡頭的車站要等結界斷了
 for (let i = TRIG.length - 1; i >= 0; i--) if (/^hachi\d$/.test(TRIG[i].id)) TRIG.splice(i, 1);
 TRIG.push({ scene: 6, id: 'mazeIn', when: () => inMaze(P.x, P.y), run: async () => {
-  await says(['住宅區。每一戶的窗戶都暗著。', '……圍牆的上面，有一頂白色的帽子，慢慢地移動著。', '比圍牆還高。比電線桿還高。', '（被她看到就完了。蹲下來的話，圍牆擋得住。）']);
-  setObj(G.flags.kekkaiSeen ? '在住宅區裡找到被打壞的地藏，把它們修好' : '找路去車站'); saveCP('maze0'); } });
+  await says([_L('住宅區。每一戶的窗戶都暗著。'), _L('……圍牆的上面，有一頂白色的帽子，慢慢地移動著。'), _L('比圍牆還高。比電線桿還高。'), _L('（被她看到就完了。蹲下來的話，圍牆擋得住。）')]);
+  setObj(G.flags.kekkaiSeen ? _L('在住宅區裡找到被打壞的地藏，把它們修好') : _L('找路去車站')); saveCP('maze0'); } });
 // 手機：拍公告欄的地圖 → 手機地圖上標出地藏的位置
-PHOTO_SPOTS.push({ scene: 6, x: 37.5, y: 19.5, id: 'nboard', lines: ['閃光燈照亮了褪色的地圖。', '……照片裡，地圖上浮出三個紅色的圈。', '（手機地圖上標出了地藏的位置。）'], then: () => { G.flags.jizoMap = 1; } });
+PHOTO_SPOTS.push({ scene: 6, x: 37.5, y: 19.5, id: 'nboard', lines: [_L('閃光燈照亮了褪色的地圖。'), _L('……照片裡，地圖上浮出三個紅色的圈。'), _L('（手機地圖上標出了地藏的位置。）')], then: () => { G.flags.jizoMap = 1; } });
 { const _m = phoneMap; phoneMap = function () {
     _m(); if (G.scene !== 6 || !G.flags.jizoMap) return;
     const c = $('#phMap'), g = c.getContext('2d'), k = 6.5, ox = c.width / 2 - (P.x - P.y) * k, oy = c.height / 2 - (P.x + P.y) * k / 2;
@@ -249,7 +249,7 @@ PHOTO_SPOTS.push({ scene: 6, x: 37.5, y: 19.5, id: 'nboard', lines: ['閃光燈�
   }; }
 // 小巷盡頭的車站：結界斷了才過得去（原本看 alleyDone）
 { const _a = ch5Action; ch5Action = async function (o) {
-    if (o.act === 'toStation') { G.flags.alleyDone = G.flags.kekkai ? 1 : 0; if (!G.flags.kekkai && !TEST) { await says(['……還不能過去。']); return; } }
+    if (o.act === 'toStation') { G.flags.alleyDone = G.flags.kekkai ? 1 : 0; if (!G.flags.kekkai && !TEST) { await says([_L('……還不能過去。')]); return; } }
     return _a(o); }; }
 // 車站燈下：安全
 { const _sf = typeof sceneSafe === 'function' ? sceneSafe : null; sceneSafe = function (x, y) { if (G.scene === 6 && (haSafe(x, y) || dist(x, y, 3.5, 3.5) < 2.2)) return true; return _sf ? _sf(x, y) : false; }; }

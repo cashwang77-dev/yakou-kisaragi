@@ -10,7 +10,7 @@ const FACE_OF = {
 const FACE_OK = new Set();
 ['mi', 'mi2', 'sumika', 'hikiko', 'hikiko2', 'mary', 'kuchi', 'hanako', 'teke', 'hachi', 'jinmen', 'baba', 'conductor', 'anatomy', 'shadow', 'kakashi'].forEach(k => { const im = new Image(); im.onload = () => FACE_OK.add(k); im.src = `assets/face_${k}.png`; });
 function faceFor(name) {
-  let f = FACE_OF[name]; if (typeof f === 'function') f = f();
+  let f = FACE_OF[name] ?? FACE_OF[_Lzh(name)]; if (typeof f === 'function') f = f();
   return f && FACE_OK.has(f) ? `assets/face_${f}.png` : null;
 }
 { const _s = say; say = function (name, text, face) { return _s(name, text, face || faceFor(name || '')); }; }

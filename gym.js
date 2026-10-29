@@ -9,28 +9,28 @@ const inGym = (x, y) => x > GYM.x0 && x < GYM.x1 && y > GYM.y0 && y < GYM.y1;
 const BALL = { x: 52.5, y: 19.5, vx: 1.2, vy: .8, z: 0, vz: 0, chase: 0 };
 const HL = { x: 52.5, y: 15.5, dir: 4, state: 'off', frame: 0, animD: 0, moving: false, path: null, r: .25 };
 const HANDS = [];   // {x, y, t0}
-Object.assign(HIDE, { vault: '躲到跳箱後面' });
+Object.assign(HIDE, { vault: _L('躲到跳箱後面') });
 
 function buildGym() {
   put(39, 20, '='); put(39, 21, '='); fill(40, 20, 42, 21, '=');                 // 圍欄的破洞 → 體育館
   fill(GYM.x0, GYM.y0, GYM.x1, GYM.y1, '#'); fill(GYM.x0 + 1, GYM.y0 + 1, GYM.x1 - 1, GYM.y1 - 1, '_');
-  door(43, 20, { sign: '體育館' });
+  door(43, 20, { sign: _L('體育館') });
   fill(57, 21, 61, 21, '#'); for (let y = 21; y <= 25; y++) put(57, y, '#');   // 器材室
-  door(57, 23, { locked: true, key: 'gymkey', sign: '器材室', msg: '器材室。門鎖著。' });
+  door(57, 23, { locked: true, key: 'gymkey', sign: _L('器材室'), msg: _L('器材室。門鎖著。') });
   door(52, 26, {});                                                              // 體育館 → 游泳池
   fill(43, 27, 62, 37, 'f'); fill(44, 27, 61, 36, '=');                          // 游泳池（四周是圍欄）
   for (let y = POOL.y0; y <= POOL.y1; y++) for (let x = POOL.x0; x <= POOL.x1; x++) put(x, y, 'X');
   for (let x = 46; x <= 58; x++) if (x !== 52) obj('stage', x, 14);
-  obj('stage', 52, 14, { g1: 1, act: 'stagekey', label: '舞台的布幕繩' });
+  obj('stage', 52, 14, { g1: 1, act: 'stagekey', label: _L('舞台的布幕繩') });
   obj('hoop', 44, 19); obj('hoop', 56, 19);
   for (const [x, y] of [[47, 24], [50, 24], [45, 16]]) obj('vault', x, y);
-  obj('gymnote', 59, 25, { g1: 1, act: 'net', label: '牆上掛著的撈網' });
-  obj('gymboard', 44, 25, { g1: 1, act: 'gymboard', label: '看體育館的公告' });
-  obj('poolkey', 52, 35, { g1: 1, act: 'fish', label: '池底……有東西在發光', solid: false });
-  obj('poolbench', 45, 35, { g1: 1, act: 'poolnote', label: '看長椅上的東西' });
+  obj('gymnote', 59, 25, { g1: 1, act: 'net', label: _L('牆上掛著的撈網') });
+  obj('gymboard', 44, 25, { g1: 1, act: 'gymboard', label: _L('看體育館的公告') });
+  obj('poolkey', 52, 35, { g1: 1, act: 'fish', label: _L('池底……有東西在發光'), solid: false });
+  obj('poolbench', 45, 35, { g1: 1, act: 'poolnote', label: _L('看長椅上的東西') });
   LIGHTS.push({ x: 52.5, y: 15.2, r: 2.2, c: '255,214,160', id: 'stageL' }, { x: 59.5, y: 24, r: 1.6, c: '220,230,255' });
   LIGHTS.push({ x: 52.5, y: 35.6, r: 1.4, c: '160,230,255', id: 'poolkeyL' }, { x: 44.5, y: 28, r: 2.4, c: '200,220,255' }, { x: 60.5, y: 36, r: 2.4, c: '200,220,255' });
-  item('bandage', 58, 22, '繃帶'); item('can', 45, 22, '空罐');
+  item('bandage', 58, 22, _L('繃帶')); item('can', 45, 22, _L('空罐'));
 }
 { const _b = SCENES[1]; SCENES[1] = function () { _b(); buildGym(); }; }
 if (G.scene === 1 && !OBJ.some(o => o.t === 'stage')) { buildGym(); indexObjs(); }   // 開機時已經建好的第一章
@@ -54,32 +54,32 @@ if (G.scene === 1 && !OBJ.some(o => o.t === 'stage')) { buildGym(); indexObjs();
 /* ---------- 互動 ---------- */
 // 器材小屋的鑰匙箱（game.js 會先問這個）
 async function gymKeybox() {
-  if (G.flags.gymHint) { await says(['鑰匙箱是空的。……字條上寫著，鑰匙借給游泳社了。']); return true; }
+  if (G.flags.gymHint) { await says([_L('鑰匙箱是空的。……字條上寫著，鑰匙借給游泳社了。')]); return true; }
   G.flags.gymHint = 1; sfx.click();
-  await says(['掛著「側門」名牌的鉤子是空的。', '鉤子上夾著一張字條。', ['字條', '「側門鑰匙借給游泳社晨練用，練完放回。——體育股長」'], ['字條', '日期：2004 年 2 月 □ 日'], '……二十年前借走的鑰匙。', '游泳池在體育館後面。操場東邊的圍欄，好像有一個破洞。']);
-  setObj('穿過操場東邊圍欄的破洞，去體育館找側門鑰匙'); saveCP('gymhint');
+  await says([_L('掛著「側門」名牌的鉤子是空的。'), _L('鉤子上夾著一張字條。'), [_L('字條'), _L('「側門鑰匙借給游泳社晨練用，練完放回。——體育股長」')], [_L('字條'), _L('日期：2004 年 2 月 □ 日')], _L('……二十年前借走的鑰匙。'), _L('游泳池在體育館後面。操場東邊的圍欄，好像有一個破洞。')]);
+  setObj(_L('穿過操場東邊圍欄的破洞，去體育館找側門鑰匙')); saveCP('gymhint');
   return true;
 }
 async function gymAction(o) {
   const F = G.flags, I = G.inv;
   switch (o.act) {
-    case 'gymboard': await says([['體育館公告', '「夜間禁止進入體育館。」'], ['體育館公告', '「籃球社的同學：請不要在晚上練球。值班老師說每天晚上都聽到運球聲。」'], '……底下有人用原子筆補了一行：「那不是我們。」']); return;
+    case 'gymboard': await says([[_L('體育館公告'), _L('「夜間禁止進入體育館。」')], [_L('體育館公告'), _L('「籃球社的同學：請不要在晚上練球。值班老師說每天晚上都聽到運球聲。」')], _L('……底下有人用原子筆補了一行：「那不是我們。」')]); return;
     case 'stagekey':
-      if (F.gymkey) { await says(['布幕繩上什麼都沒有了。']); return; }
-      await says(['舞台的布幕繩上，綁著一把小鑰匙。名牌上寫著「器材室」。', '……布幕後面，好像有人站著。']);
-      { const a = await choose('', '要解下鑰匙嗎？', ['解下來', '先不要'], 0); if (a !== 0) return; }
+      if (F.gymkey) { await says([_L('布幕繩上什麼都沒有了。')]); return; }
+      await says([_L('舞台的布幕繩上，綁著一把小鑰匙。名牌上寫著「器材室」。'), _L('……布幕後面，好像有人站著。')]);
+      { const a = await choose('', _L('要解下鑰匙嗎？'), [_L('解下來'), _L('先不要')], 0); if (a !== 0) return; }
       F.gymkey = 1; I.gymkey = 1; sfx.pick(); updateHUD();
       sfx.sting(); shake = 10;
-      await says(['解下鑰匙的瞬間，舞台的燈「啪」地熄了。', '布幕後面走出來一個穿著運動服的學生。', '……脖子上面，什麼都沒有。', '籃球場的另一頭，那顆球停止了彈跳。他在找他的頭。']);
+      await says([_L('解下鑰匙的瞬間，舞台的燈「啪」地熄了。'), _L('布幕後面走出來一個穿著運動服的學生。'), _L('……脖子上面，什麼都沒有。'), _L('籃球場的另一頭，那顆球停止了彈跳。他在找他的頭。')]);
       HL.state = 'chase'; HL.x = 52.5; HL.y = 15.6; HL.path = null;
-      setObj('用鑰匙打開器材室（體育館的東南角）'); saveCP('gymkey'); return;
+      setObj(_L('用鑰匙打開器材室（體育館的東南角）')); saveCP('gymkey'); return;
     case 'net':
       if (I.net) return;
       I.net = 1; sfx.pick(); updateHUD();
-      await says(['器材室的牆上，掛著一支清理泳池用的長柄撈網。', '得到【撈網】', '……把手上用麥克筆寫著：「游泳社　澄香」。']);
-      setObj('到體育館後面的游泳池，把側門鑰匙撈起來'); saveCP('net'); return;
+      await says([_L('器材室的牆上，掛著一支清理泳池用的長柄撈網。'), _L('得到【撈網】'), _L('……把手上用麥克筆寫著：「游泳社　澄香」。')]);
+      setObj(_L('到體育館後面的游泳池，把側門鑰匙撈起來')); saveCP('net'); return;
     case 'poolnote':
-      await says(['長椅上放著一件摺好的運動外套。', '口袋裡有一張紙條。', ['紙條', '「池底的手不會抓看著它的人。看到水面起漣漪，就往後退。」'], ['紙條', '「……可是，撈東西的時候，眼睛只能看著網子。」']]); return;
+      await says([_L('長椅上放著一件摺好的運動外套。'), _L('口袋裡有一張紙條。'), [_L('紙條'), _L('「池底的手不會抓看著它的人。看到水面起漣漪，就往後退。」')], [_L('紙條'), _L('「……可是，撈東西的時候，眼睛只能看著網子。」')]]); return;
     case 'fish': return fishKey(o);
   }
   return false;
@@ -87,26 +87,26 @@ async function gymAction(o) {
 async function fishKey(o) {
   const F = G.flags;
   if (G.inv.key || F.poolKey) return;
-  if (!G.inv.net) { await says(['池底有一個亮亮的東西……是一把鑰匙。', '手搆不到。要有長一點的東西才行。（體育館的器材室？）']); return; }
+  if (!G.inv.net) { await says([_L('池底有一個亮亮的東西……是一把鑰匙。'), _L('手搆不到。要有長一點的東西才行。（體育館的器材室？）')]); return; }
   F.fish = (F.fish || 0);
-  G.lock++; sfx.click(); toast('把撈網伸進水裡……'); noise(.8, .06, 'lowpass', 500, 1);
+  G.lock++; sfx.click(); toast(_L('把撈網伸進水裡……')); noise(.8, .06, 'lowpass', 500, 1);
   const n0 = HANDS.length;
   await wait(TEST ? 10 : 1300);
   G.lock--;
   const grabbed = HANDS.some(h => G.t - h.t0 > .8 && dist(h.x, h.y, P.x, P.y) < 1.6) && !TEST;
-  if (grabbed) { damage(1); sfx.hurt(); shake = 10; setPose('hurt', .8); F.fish = Math.max(0, F.fish - 1); toast('水裡的手抓住了網子——差點被拖下去！'); return; }
+  if (grabbed) { damage(1); sfx.hurt(); shake = 10; setPose('hurt', .8); F.fish = Math.max(0, F.fish - 1); toast(_L('水裡的手抓住了網子——差點被拖下去！')); return; }
   F.fish++;
-  if (F.fish < 3) { toast(`網子碰到鑰匙了……（${F.fish} / 3）`); spawnHand(true); return; }
+  if (F.fish < 3) { toast(_L`網子碰到鑰匙了……（${F.fish} / 3）`); spawnHand(true); return; }
   F.poolKey = 1; o.act = null;
-  G.inv.key = true; sfx.pick(); updateHUD(); toast('得到【側門鑰匙】');
-  await says(['撈起來了。生鏽的鑰匙，名牌上寫著「側門」。', '……網子上纏著一縷長長的黑頭髮。', '水面上，好幾隻白色的手慢慢沉了下去。']);
-  STATUE.gone = true; setObj('用鑰匙打開校舍側門'); saveCP('key');
+  G.inv.key = true; sfx.pick(); updateHUD(); toast(_L('得到【側門鑰匙】'));
+  await says([_L('撈起來了。生鏽的鑰匙，名牌上寫著「側門」。'), _L('……網子上纏著一縷長長的黑頭髮。'), _L('水面上，好幾隻白色的手慢慢沉了下去。')]);
+  STATUE.gone = true; setObj(_L('用鑰匙打開校舍側門')); saveCP('key');
 }
 // 器材室的門
 { const _ud = useDoor; useDoor = async function (dr) {
     if (G.scene === 1 && dr.key === 'gymkey') {
-      if (G.inv.gymkey) { dr.locked = false; G.inv.gymkey = 0; sfx.door(); updateHUD(); toast('器材室的門打開了'); return; }
-      sfx.locked(); await says([dr.msg, '（鑰匙……舞台那邊？）']); return;
+      if (G.inv.gymkey) { dr.locked = false; G.inv.gymkey = 0; sfx.door(); updateHUD(); toast(_L('器材室的門打開了')); return; }
+      sfx.locked(); await says([dr.msg, _L('（鑰匙……舞台那邊？）')]); return;
     }
     return _ud(dr); }; }
 
@@ -125,7 +125,7 @@ function ballUpdate(dt) {
   if (BALL.z <= 0) { BALL.z = 0; BALL.vz = 7; const d = dist(BALL.x, BALL.y, P.x, P.y); if (d < 14) noise(.06, .14 * (1 - d / 14), 'lowpass', 180, 1); }
   if (!P.hidden && P.inv <= 0 && !G.lock && BALL.z < .6 && dist(BALL.x, BALL.y, P.x, P.y) < .45) {
     damage(1); sfx.hurt(); shake = 6; P.inv = 1.8; addNoise(P.x, P.y, 9); BALL.vx *= -1.5; BALL.vy *= -1.5;
-    toast('球砸在身上……好重。不是籃球的重量。');
+    toast(_L('球砸在身上……好重。不是籃球的重量。'));
   }
 }
 /* ---------- 沒有頭的學生：拿走器材室鑰匙後，在體育館裡追人 ---------- */
@@ -141,7 +141,7 @@ function hlUpdate(dt) {
 async function hlHit() {
   damage(1); sfx.sting(); shake = 10; P.inv = 2.2; setPose('hurt', .8);
   const [fx, fy] = DIRV[HL.dir]; moveEnt(P, fx * 1.2, fy * 1.2); HL.stunT = G.t + 1.5;
-  toast('冰冷的手在妳的臉上摸來摸去……像是在確認那是不是他的頭。');
+  toast(_L('冰冷的手在妳的臉上摸來摸去……像是在確認那是不是他的頭。'));
 }
 /* ---------- 泳池的手：看到漣漪就退開 ---------- */
 function spawnHand(atKey) {
@@ -155,7 +155,7 @@ function spawnHand(atKey) {
 function handsUpdate(dt) {
   for (let i = HANDS.length - 1; i >= 0; i--) {
     const h = HANDS[i], age = G.t - h.t0;
-    if (age > .8 && age < 1.6 && !G.lock && P.inv <= 0 && dist(h.x, h.y, P.x, P.y) < 1.15) { damage(1); sfx.hurt(); shake = 8; P.inv = 1.6; P.stun = G.t + .8; toast('水裡伸出的手抓住了腳踝！'); }
+    if (age > .8 && age < 1.6 && !G.lock && P.inv <= 0 && dist(h.x, h.y, P.x, P.y) < 1.15) { damage(1); sfx.hurt(); shake = 8; P.inv = 1.6; P.stun = G.t + .8; toast(_L('水裡伸出的手抓住了腳踝！')); }
     if (age > 2) HANDS.splice(i, 1);
   }
   const nearPool = P.x > POOL.x0 - 2 && P.x < POOL.x1 + 3 && P.y > POOL.y0 - 2 && P.y < POOL.y1 + 3;
@@ -192,7 +192,7 @@ function handsUpdate(dt) {
     }
     return _d(o, cx, cy, shaking);
   }; }
-{ const _h = sceneHUD; sceneHUD = function (s) { _h(s); if (G.scene !== 1) return; if (G.inv.gymkey) s.push(`<div class="s">器材室鑰匙</div>`); if (G.inv.net && !G.flags.poolKey) s.push(`<div class="s">撈網${G.flags.fish ? ` ${G.flags.fish}/3` : ''}</div>`); }; }
+{ const _h = sceneHUD; sceneHUD = function (s) { _h(s); if (G.scene !== 1) return; if (G.inv.gymkey) s.push(_L`<div class="s">器材室鑰匙</div>`); if (G.inv.net && !G.flags.poolKey) s.push(_L`<div class="s">撈網${G.flags.fish ? ` ${G.flags.fish}/3` : ''}</div>`); }; }
 { const _th = threats; threats = function () { const t = _th(); if (G.scene === 1 && HL.state === 'chase' && inGym(P.x, P.y)) t.push({ e: HL, chase: true, stun: s => { HL.stunT = G.t + s; } }); return t; }; }
 { const _hd = hide; hide = function (o) { if (G.scene === 1) HL.sawHide = HL.state === 'chase' && dist(HL.x, HL.y, P.x, P.y) < 2.5; return _hd(o); }; }
 { const _o = sceneOnLoad; sceneOnLoad = function (cp) { _o(cp); if (G.scene === 1) gymReset(); }; }
@@ -203,12 +203,12 @@ function gymReset() {
 }
 { const _r = resetWorld; resetWorld = function () { const r = _r(); gymReset(); return r; }; }
 TRIG.push(
-  { scene: 1, id: 'gymIn', when: () => inGym(P.x, P.y), run: async () => { await says(['體育館。天花板很高，月光從高窗照進來。', '「咚……咚……咚……」', '……球場正中央，一顆籃球在自己彈跳。', '（不要發出聲音。它好像會往有聲音的地方滾過來。）']); } },
-  { scene: 1, id: 'poolIn', when: () => P.y > 27 && P.x > 44 && P.x < 61, run: async () => { await says(['游泳池。水是黑的，看不到底。', '池底有一個小小的、亮亮的東西。', '水面靜靜的……可是靠近池邊的時候，好像有什麼在下面跟著。']); } },
+  { scene: 1, id: 'gymIn', when: () => inGym(P.x, P.y), run: async () => { await says([_L('體育館。天花板很高，月光從高窗照進來。'), _L('「咚……咚……咚……」'), _L('……球場正中央，一顆籃球在自己彈跳。'), _L('（不要發出聲音。它好像會往有聲音的地方滾過來。）')]); } },
+  { scene: 1, id: 'poolIn', when: () => P.y > 27 && P.x > 44 && P.x < 61, run: async () => { await says([_L('游泳池。水是黑的，看不到底。'), _L('池底有一個小小的、亮亮的東西。'), _L('水面靜靜的……可是靠近池邊的時候，好像有什麼在下面跟著。')]); } },
 );
 LORE.push(
-  ['ball', '半夜的運球聲', '體育館裡，一顆籃球自己在彈跳。', '它會往有聲音的地方滾過來。被砸到的話……那不是籃球的重量。', () => G.flags.gymkey],
-  ['pool', '游泳池的手', '黑色的池水裡，伸出好幾隻白色的手。', '水面起漣漪的地方，就是它們要伸出來的地方。', () => G.flags.fish],
+  ['ball', _L('半夜的運球聲'), _L('體育館裡，一顆籃球自己在彈跳。'), _L('它會往有聲音的地方滾過來。被砸到的話……那不是籃球的重量。'), () => G.flags.gymkey],
+  ['pool', _L('游泳池的手'), _L('黑色的池水裡，伸出好幾隻白色的手。'), _L('水面起漣漪的地方，就是它們要伸出來的地方。'), () => G.flags.fish],
 );
 // 測試：第一章流程裡，拿鑰匙改走體育館路線（runTest flow 會呼叫）
 async function testGymRoute() {

@@ -21,13 +21,13 @@ function buildOldWing() {
   for (let y = 1; y <= 11; y++) for (let x = 43; x <= 61; x++) if (at(x, y) === 'X') put(x, y, '#');
   fill(44, 2, 60, 10, '_'); put(50, 11, '='); put(51, 11, '=');
   for (const y of [5, 7, 9]) for (let x = 45; x <= 59; x++) if (x !== 50 && x !== 51) obj('auchair', x, y);
-  obj('podium', 52, 3, { g4: 1, act: 'podium', label: '講台' });
+  obj('podium', 52, 3, { g4: 1, act: 'podium', label: _L('講台') });
   for (const x of [45, 46, 58, 59]) obj('oldshelf', x, 2);
   obj('locker', 44, 4); obj('locker', 60, 4); obj('cabinet', 60, 8);
-  obj('auport', 56, 2, { g4: 1, act: 'auport', label: '看牆上的照片' });
-  obj('wingnote', 40, 20, { g4: 1, act: 'wingnote', label: '看牆上的紙' });
+  obj('auport', 56, 2, { g4: 1, act: 'auport', label: _L('看牆上的照片') });
+  obj('wingnote', 40, 20, { g4: 1, act: 'wingnote', label: _L('看牆上的紙') });
   LIGHTS.push({ x: 52.5, y: 3.6, r: 2.6, c: '255,210,150', id: 'podL' }, { x: 50.5, y: 21, r: 1.6, c: '150,170,220' }, { x: 50.5, y: 11.5, r: 1.4, c: '150,170,220' });
-  item('bandage', 47, 21, '繃帶'); item('can', 57, 10, '空罐');
+  item('bandage', 47, 21, _L('繃帶')); item('can', 57, 10, _L('空罐'));
 }
 { const _b = SCENES[4]; SCENES[4] = function () { _b(); buildOldWing(); }; }
 // 妃姬子的巡邏延伸到東棟（拿走講台的鑰匙之後）
@@ -46,12 +46,12 @@ const HK_PATROL_WING = [[44.5, 21], [50.5, 21], [50.5, 15], [52.5, 8], [46.5, 4]
 function stairReset() { G.stair13 = [STAIR.x0 + (Math.random() < .5 ? 0 : 1), 12 + Math.floor(Math.random() * 7)]; }
 function stairUpdate() {
   if (!onStair(P.x, P.y)) { G.onStairPrev = false; return; }
-  if (!G.onStairPrev) { stairReset(); G.onStairPrev = true; if (!G.flags.stairSeen) { G.flags.stairSeen = 1; says(['樓梯。白天數過，是十二階。', '……現在數起來，好像多了一階。', '（手電筒照著腳下走。第十三階……踩到的話，會掉到哪裡去？）']); } }
+  if (!G.onStairPrev) { stairReset(); G.onStairPrev = true; if (!G.flags.stairSeen) { G.flags.stairSeen = 1; says([_L('樓梯。白天數過，是十二階。'), _L('……現在數起來，好像多了一階。'), _L('（手電筒照著腳下走。第十三階……踩到的話，會掉到哪裡去？）')]); } }
   const [sx, sy] = G.stair13 || [0, 0];
   if (Math.floor(P.x) === sx && Math.floor(P.y) === sy && P.inv <= 0 && !G.lock) {
     damage(1); sfx.hurt(); shake = 12; setPose('hurt', 1); P.inv = 2;
     P.x = 50.5 + (sx === 50 ? 1 : 0); P.y = 20.6; stairReset();
-    toast('第十三階——腳下是空的。整個人摔回了樓梯底。');
+    toast(_L('第十三階——腳下是空的。整個人摔回了樓梯底。'));
   }
 }
 /* ---------- 隙間女 ---------- */
@@ -65,7 +65,7 @@ function gapUpdate(dt) {
     if (G.scene === 4 && o === GAP.o && !TEST) setTimeout(async () => {
       if (P.hidden !== o) return;
       unhide(); damage(1); sfx.sting(); shake = 12; setPose('hurt', 1); P.inv = 2; G.flags.gapMet = 1;
-      await says(['縫隙的深處——有一隻眼睛。', '「…………這裡，是我的位置。」', '細得像紙一樣的手指，把我推了出去。', '（這個縫隙裡，有人。）']);
+      await says([_L('縫隙的深處——有一隻眼睛。'), _L('「…………這裡，是我的位置。」'), _L('細得像紙一樣的手指，把我推了出去。'), _L('（這個縫隙裡，有人。）')]);
       GAP.t = 0;
     }, 600);
     return r; }; }
@@ -73,7 +73,7 @@ PHOTO_SPOTS.push({ scene: 4, x: 0, y: 0, id: 'gap_dummy', lines: [] });   // 佔
 { const _ph = phonePhoto; phonePhoto = async function () {
     if (G.scene === 4 && GAP.o && G.inv.phone && PH.batt >= 20 && PH.flashCD <= G.t && !P.hidden) {
       const o = GAP.o, dx = o.x + .5 - P.x, dy = o.y + .5 - P.y, d = Math.hypot(dx, dy), [fx, fy] = DIRV[P.dir];
-      if (d < 4.5 && (fx * dx + fy * dy) / d > .55) { await _ph(); GAP.marked = o; G.flags.gapMet = 1; sfx.sting(); await says(['照片裡，書架的縫隙之間——', '有一隻眼睛，正看著鏡頭。', '（那裡面有人。不能躲進去。）']); return; }
+      if (d < 4.5 && (fx * dx + fy * dy) / d > .55) { await _ph(); GAP.marked = o; G.flags.gapMet = 1; sfx.sting(); await says([_L('照片裡，書架的縫隙之間——'), _L('有一隻眼睛，正看著鏡頭。'), _L('（那裡面有人。不能躲進去。）')]); return; }
     }
     return _ph(); }; }
 
@@ -81,26 +81,26 @@ PHOTO_SPOTS.push({ scene: 4, x: 0, y: 0, id: 'gap_dummy', lines: [] });   // 佔
 async function wingAction(o) {
   const F = G.flags, I = G.inv;
   switch (o.act) {
-    case 'wingnote': await says([['舊校舍東棟', '「東棟二樓講堂，因樓梯危險，暫停使用。」'], '底下用鉛筆寫著很小的字：', ['', '「晚上數樓梯的時候，不要數出聲音。」']]); return;
-    case 'auport': await says(['講堂牆上的照片。「2004 年度　畢業典禮」。', '……照片裡的二年級座位區，有兩個位子是空的。', '空位上放著兩束花。']); return;
+    case 'wingnote': await says([[_L('舊校舍東棟'), _L('「東棟二樓講堂，因樓梯危險，暫停使用。」')], _L('底下用鉛筆寫著很小的字：'), ['', _L('「晚上數樓梯的時候，不要數出聲音。」')]]); return;
+    case 'auport': await says([_L('講堂牆上的照片。「2004 年度　畢業典禮」。'), _L('……照片裡的二年級座位區，有兩個位子是空的。'), _L('空位上放著兩束花。')]); return;
     case 'podium':
-      if (I.archkey) { await says(['講台上空空的。']); return; }
-      I.archkey = true; sfx.pick(); updateHUD(); toast('得到【地下書庫的鑰匙】');
-      await says(['講台上放著一把生鏽的鑰匙，名條寫著「地下書庫」。', '旁邊壓著一張紙：「宿直・保管」。', '——講堂的燈，「啪」地全熄了。', '樓下的走廊，傳來拖著麻袋的聲音。……她往這邊來了。']);
+      if (I.archkey) { await says([_L('講台上空空的。')]); return; }
+      I.archkey = true; sfx.pick(); updateHUD(); toast(_L('得到【地下書庫的鑰匙】'));
+      await says([_L('講台上放著一把生鏽的鑰匙，名條寫著「地下書庫」。'), _L('旁邊壓著一張紙：「宿直・保管」。'), _L('——講堂的燈，「啪」地全熄了。'), _L('樓下的走廊，傳來拖著麻袋的聲音。……她往這邊來了。')]);
       F.wingKey = 1; sfx.sting(); shake = 8;
       HK_PATROL.push(...HK_PATROL_WING.filter(w => !HK_PATROL.some(p => p[0] === w[0] && p[1] === w[1])));
       if (HK.state === 'off' || HK.state === 'patrol') { HK.state = 'patrol'; HK.wp = HK_PATROL.length - 1; HK.x = 44.5; HK.y = 21; HK.path = null; }
-      setObj('回到走廊西邊，打開地下書庫'); saveCP('archkey');
+      setObj(_L('回到走廊西邊，打開地下書庫')); saveCP('archkey');
       await wait(TEST ? 10 : 700);
-      await phoneCall(['我是瑪莉。', '我現在……在地下書庫的門口。', '她在下面等你哦。']); return;
+      await phoneCall([_L('我是瑪莉。'), _L('我現在……在地下書庫的門口。'), _L('她在下面等你哦。')]); return;
   }
   return false;
 }
 { const _a = sceneAction; sceneAction = async function (o) {
     if (G.scene === 4) {
       if (o.act === 'lostbox' && !G.inv.archkey) {
-        await says(['失物招領箱。褪色的髮夾、一隻手套、寫著名字的直笛……', '箱底沒有鑰匙。只有一張夾在直笛裡的紙條。', ['紙條', '「地下書庫的鑰匙，我收到東棟二樓講堂的講台上了。不要再讓學生進去。——宿直」'], '……東棟。走廊的最東邊，好像還有路。']);
-        G.flags.lostNote = 1; setObj('從走廊往東，到東棟二樓的講堂（樓梯要小心）'); saveCP('lostnote'); return true;
+        await says([_L('失物招領箱。褪色的髮夾、一隻手套、寫著名字的直笛……'), _L('箱底沒有鑰匙。只有一張夾在直笛裡的紙條。'), [_L('紙條'), _L('「地下書庫的鑰匙，我收到東棟二樓講堂的講台上了。不要再讓學生進去。——宿直」')], _L('……東棟。走廊的最東邊，好像還有路。')]);
+        G.flags.lostNote = 1; setObj(_L('從走廊往東，到東棟二樓的講堂（樓梯要小心）')); saveCP('lostnote'); return true;
       }
       if (['wingnote', 'auport', 'podium'].includes(o.act)) { await wingAction(o); return true; }
     }
@@ -127,8 +127,8 @@ async function wingAction(o) {
 { const _o = sceneOnLoad; sceneOnLoad = function (cp) { _o(cp); if (G.scene !== 4) return; GAP.t = 0; GAP.marked = null;
     if (G.flags.wingKey) HK_PATROL.push(...HK_PATROL_WING.filter(w => !HK_PATROL.some(p => p[0] === w[0] && p[1] === w[1]))); }; }
 LORE.push(
-  ['stair13', '十三階段', '白天是十二階的樓梯，半夜會多出一階。', '第十三階每次都在不同的地方。手電筒照著腳下走。', () => G.flags.stairSeen],
-  ['sukima', '隙間女', '書架、櫃子的縫隙裡，住著一個很薄很薄的女人。', '躲進去之前，先用手機的閃光燈照照看。', () => G.flags.gapMet],
+  ['stair13', _L('十三階段'), _L('白天是十二階的樓梯，半夜會多出一階。'), _L('第十三階每次都在不同的地方。手電筒照著腳下走。'), () => G.flags.stairSeen],
+  ['sukima', _L('隙間女'), _L('書架、櫃子的縫隙裡，住著一個很薄很薄的女人。'), _L('躲進去之前，先用手機的閃光燈照照看。'), () => G.flags.gapMet],
 );
 // 測試：第三章拿鑰匙改走東棟（testCh3 會呼叫）
 async function testOldWing() {

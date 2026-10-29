@@ -36,7 +36,7 @@ function door(x, y, o) { put(x, y, 'D'); DOORS[x + ',' + y] = Object.assign({ x,
 const INDOOR = new Set(['_', ':', 'D']);
 const isInside = (x, y) => { const c = at(Math.floor(x), Math.floor(y)); return c === '_' || c === ':'; };
 const OBJ = [], OBJAT = {}, LIGHTS = [], ITEMS = [];
-const HIDE = { bush: '躲進草叢', trash: '躲進垃圾桶', box: '躲進器材箱', bleach: '躲到看台下', desk: '躲到桌子底下', tdesk: '躲到講台下', locker: '躲進置物櫃', bed: '躲到床簾後', shelf: '擠進書架縫隙', cabinet: '躲進掃除用具櫃' };
+const HIDE = { bush: _L('躲進草叢'), trash: _L('躲進垃圾桶'), box: _L('躲進器材箱'), bleach: _L('躲到看台下'), desk: _L('躲到桌子底下'), tdesk: _L('躲到講台下'), locker: _L('躲進置物櫃'), bed: _L('躲到床簾後'), shelf: _L('擠進書架縫隙'), cabinet: _L('躲進掃除用具櫃') };
 function obj(t, x, y, o) { const b = Object.assign({ t, x, y, solid: true }, o); OBJ.push(b); return b; }
 function item(id, x, y, name) { ITEMS.push({ id, x: x + .5, y: y + .5, name, taken: false, off: ITEM_OFF.has(ITEM_SCENE + ':' + id + '@' + x + ',' + y) }); }
 // 10/23 使用者嫌道具太多：這些不再出現（不從清單刪掉，存檔用索引記錄撿過的道具）
@@ -51,7 +51,7 @@ let STATUE = {}, LAMPS = [];
 /* 場景：每章一張 40x40 地圖。loadScene 清空後重建地圖、物件、光源、道具、巡邏路線，並重畫地板 */
 const SCENES = { 1: buildCh1 };
 function resetMap() { T.fill('X'); for (const k in DOORS) delete DOORS[k]; for (const k in OBJAT) delete OBJAT[k]; OBJ.length = LIGHTS.length = ITEMS.length = 0; }
-function indexObjs() { OBJ.forEach(o => { OBJAT[o.x + ',' + o.y] = o; }); if (Object.keys(OBJAT).length !== OBJ.length) console.warn('物件重疊'); }
+function indexObjs() { OBJ.forEach(o => { OBJAT[o.x + ',' + o.y] = o; }); if (Object.keys(OBJAT).length !== OBJ.length) console.warn(_L('物件重疊')); }
 function loadScene(n) { resetMap(); G.scene = ITEM_SCENE = n; SCENES[n](); indexObjs(); PATROL.splice(0, PATROL.length, ...SCENE_PATROL[n]); if (IMG.floors) buildFloor(); }
 
 /* 第一章：校園（主校舍 y1-12、操場、前庭、器材小屋、警衛室） */
@@ -73,13 +73,13 @@ fill(18, 38, 38, 39, 'r');
 fill(3, 32, 7, 35, '#'); fill(4, 33, 6, 34, '_');
 fill(31, 32, 34, 35, '#'); fill(32, 33, 33, 34, '_');
 
-door(4, 8, { locked: true, sign: '1-A', msg: '一年A班。門鎖著。' });
-door(10, 8, { locked: true, msg: '一年A班。門鎖著。' });
+door(4, 8, { locked: true, sign: '1-A', msg: _L('一年A班。門鎖著。') });
+door(10, 8, { locked: true, msg: _L('一年A班。門鎖著。') });
 door(14, 8, { sign: '2-B' }); door(20, 8, {});
-door(24, 8, { locked: true, sign: '2-A', msg: '二年A班。門從裡面卡住了……裡面好像有什麼在呼吸。' });
-door(30, 8, { locked: true, msg: '二年A班。門鎖著。' });
-door(35, 8, { locked: true, sign: '倉庫', msg: '倉庫。門鎖著。' });
-door(8, 12, { locked: true, key: 'sidekey', msg: '側門鎖著。' });
+door(24, 8, { locked: true, sign: '2-A', msg: _L('二年A班。門從裡面卡住了……裡面好像有什麼在呼吸。') });
+door(30, 8, { locked: true, msg: _L('二年A班。門鎖著。') });
+door(35, 8, { locked: true, sign: _L('倉庫'), msg: _L('倉庫。門鎖著。') });
+door(8, 12, { locked: true, key: 'sidekey', msg: _L('側門鎖著。') });
 door(27, 12, { locked: true, chain: true, msg: 'chain' }); door(28, 12, { locked: true, chain: true, msg: 'chain' });
 door(5, 32, {}); door(31, 33, {});
 
@@ -115,16 +115,16 @@ LIGHTS.push({ x: 32.8, y: 33.8, r: 2.4, c: '255,200,140', id: 'guard' });
 LIGHTS.push({ x: 2.6, y: 10.4, r: 1.7, c: '90,255,140' }, { x: 37.4, y: 10.4, r: 1.7, c: '90,255,140' });
 
 /* 地上物品 */
-item('flashlight', 32, 34, '手電筒');
-item('bandage', 33, 34, '繃帶');
-item('broom', 32, 30, '掃把');
-item('lid', 22, 15, '垃圾桶蓋');
-item('can', 29, 23, '空罐');
-item('can', 11, 17, '空罐');
-item('can', 9, 10, '空罐');
-item('phone', 18, 6, '手機');
-item('drink', 12, 10, '能量飲料'); item('charm', 3, 29, '護身符');
-item('eraser', 21, 5, '板擦');
+item('flashlight', 32, 34, _L('手電筒'));
+item('bandage', 33, 34, _L('繃帶'));
+item('broom', 32, 30, _L('掃把'));
+item('lid', 22, 15, _L('垃圾桶蓋'));
+item('can', 29, 23, _L('空罐'));
+item('can', 11, 17, _L('空罐'));
+item('can', 9, 10, _L('空罐'));
+item('phone', 18, 6, _L('手機'));
+item('drink', 12, 10, _L('能量飲料')); item('charm', 3, 29, _L('護身符'));
+item('eraser', 21, 5, _L('板擦'));
 }
 buildCh1(); indexObjs();   // 開機先建第一章（這時 G 還沒建立，不能呼叫 loadScene）
 
@@ -320,7 +320,7 @@ function press(k) {
   if (k === 'act' && advanceFn) { advanceFn(); return; }
   if (G.mode !== 'play' || G.lock) return;
   if (k === 'act') interact();
-  else if (k === 'flash') { if (G.inv.flashlight) { P.light = !P.light; sfx.click(); } else toast('沒有手電筒'); }
+  else if (k === 'flash') { if (G.inv.flashlight) { P.light = !P.light; sfx.click(); } else toast(_L('沒有手電筒')); }
   else if (k === 'crouch') { P.crouch = !P.crouch; }
   else if (k === 'throwCan') throwItem('can');
   else if (k === 'throwCandy') throwItem('candy');
@@ -334,7 +334,7 @@ function press(k) {
 /* 觸控 */
 const TOUCH = { x: 0, y: 0, id: null };
 const isTouch = !!Q.get('touch') || matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-const KEY = isTouch ? { flash: '按「燈」', act: '按「調查」', can: '點下方道具欄', candy: '點下方道具欄' } : { flash: '按 F', act: '按 E', can: '按 1', candy: '按 2' };
+const KEY = isTouch ? { flash: _L('按「燈」'), act: _L('按「調查」'), can: _L('點下方道具欄'), candy: _L('點下方道具欄') } : { flash: _L('按 F'), act: _L('按 E'), can: _L('按 1'), candy: _L('按 2') };
 (function setupTouch() {
   const st = $('#stick'), kn = st.querySelector('b');
   const upd = (cx, cy) => { const r = st.getBoundingClientRect(); let dx = cx - (r.left + r.width / 2), dy = cy - (r.top + r.height / 2); const m = Math.hypot(dx, dy), mx = r.width / 2; if (m > mx) { dx *= mx / m; dy *= mx / m; } TOUCH.x = dx / mx; TOUCH.y = dy / mx; kn.style.transform = `translate(${dx}px,${dy}px)`; };
@@ -411,11 +411,11 @@ const sfx = {
 };
 
 /* ---------- 主題曲《帰れない放課後》（Gemini 生成，3:00）：標題畫面＋開場漫畫播放、進入遊戲淡出、結局畫面再播 ---------- */
-const LYRICS = [[16, '午前四時四十四分'], [18.6, '止まった時計'], [21.3, '誰もいない廊下'], [26.7, '闇に溶ける足音'], [32, '金次郎の目が動く'],
-  [37.3, '赤い靴の少女'], [42.7, 'マスクの女'], [48, '「わたし、きれい？」'], [53.3, 'ハナコさんの声が'], [58.7, '奥の扉から'], [64, '裂けた口の奥に'],
-  [69.3, '呑み込まれる夜'], [74.7, '鳴り続ける電話'], [112, 'メリーさんの囁き'], [117.3, '帰れない放課後'], [122.7, '迷い込んだ迷路'], [128, '非常口を抜けても'],
-  [133.3, 'また同じ四時四十四分'], [138.7, 'マスクの女'], [144, '「わたし、きれい？」'], [149.3, '逃げ場のない校舎'], [154.7, '四の呪いに満ちて'],
-  [160, 'ハナコさんの笑いが'], [165.3, '木霊する闇へ'], [170.7, '如月']];
+const LYRICS = [[16, _L('午前四時四十四分')], [18.6, _L('止まった時計')], [21.3, _L('誰もいない廊下')], [26.7, _L('闇に溶ける足音')], [32, _L('金次郎の目が動く')],
+  [37.3, _L('赤い靴の少女')], [42.7, _L('マスクの女')], [48, _L('「わたし、きれい？」')], [53.3, _L('ハナコさんの声が')], [58.7, _L('奥の扉から')], [64, _L('裂けた口の奥に')],
+  [69.3, _L('呑み込まれる夜')], [74.7, _L('鳴り続ける電話')], [112, _L('メリーさんの囁き')], [117.3, _L('帰れない放課後')], [122.7, _L('迷い込んだ迷路')], [128, _L('非常口を抜けても')],
+  [133.3, _L('また同じ四時四十四分')], [138.7, _L('マスクの女')], [144, _L('「わたし、きれい？」')], [149.3, _L('逃げ場のない校舎')], [154.7, _L('四の呪いに満ちて')],
+  [160, _L('ハナコさんの笑いが')], [165.3, _L('木霊する闇へ')], [170.7, _L('如月')]];
 const THEME = { el: null, t: 0, f: 0, on: true };
 // 音量設定（音樂 VOL.m、音效 VOL.s，0～1）；舊版的「主題曲 OFF」換成音樂 0
 const VOL = { m: .9, s: 1 };
@@ -514,23 +514,23 @@ let OBJTEXT = '';
 function setObj(t) { OBJTEXT = t; updateHUD(); G.seenAct = {}; }   // 目標換了，可調查的東西重新閃光
 function updateHUD() {
   $('#hearts').innerHTML = Array.from({ length: 5 }, (_, i) => `<i class="${i < G.hearts ? '' : 'off'}"></i>`).join('');
-  $('#obj').innerHTML = OBJTEXT ? `<small>目標</small>${OBJTEXT}` : '';
+  $('#obj').innerHTML = OBJTEXT ? _L`<small>目標</small>${OBJTEXT}` : '';
   const I = G.inv, s = [];
-  if (I.flashlight) s.push(`<div class="s ${P.light ? 'on' : ''} tap" data-k="flash">手電筒<em>${isTouch ? '點按開關' : 'F'}</em></div>`);
-  if (I.weapon) s.push(`<div class="s">${I.weapon.name}<em>耐久 ${I.weapon.dur}</em></div>`);
-  if (I.cans) s.push(`<div class="s tap" data-k="throwCan">空罐×${I.cans}<em>${isTouch ? '點按丟出' : '1 丟出'}</em></div>`);
-  if (I.candy) s.push(`<div class="s tap" data-k="throwCandy">鼈甲糖×${I.candy}<em>${isTouch ? '點按丟出' : '2 丟出'}</em></div>`);
-  const tip = (k, t) => `<em>${isTouch ? t : k + ' ' + t.replace('點按', '')}</em>`;
-  if (I.bandage) s.push(`<div class="s tap" data-k="useBandage">繃帶×${I.bandage}${tip(3, '點按使用')}</div>`);
-  if (I.drink || P.fastT > G.t) s.push(`<div class="s tap ${P.fastT > G.t ? 'on' : ''}" data-k="useDrink">能量飲料×${I.drink || 0}${P.fastT > G.t ? `<em>加速中 ${Math.ceil(P.fastT - G.t)}</em>` : tip(4, '點按喝')}</div>`);
+  if (I.flashlight) s.push(_L`<div class="s ${P.light ? 'on' : ''} tap" data-k="flash">手電筒<em>${isTouch ? _L('點按開關') : 'F'}</em></div>`);
+  if (I.weapon) s.push(_L`<div class="s">${I.weapon.name}<em>耐久 ${I.weapon.dur}</em></div>`);
+  if (I.cans) s.push(_L`<div class="s tap" data-k="throwCan">空罐×${I.cans}<em>${isTouch ? _L('點按丟出') : _L('1 丟出')}</em></div>`);
+  if (I.candy) s.push(_L`<div class="s tap" data-k="throwCandy">鼈甲糖×${I.candy}<em>${isTouch ? _L('點按丟出') : _L('2 丟出')}</em></div>`);
+  const tip = (k, t) => `<em>${isTouch ? t : k + ' ' + t.replace(_L('點按'), '')}</em>`;
+  if (I.bandage) s.push(_L`<div class="s tap" data-k="useBandage">繃帶×${I.bandage}${tip(3, _L('點按使用'))}</div>`);
+  if (I.drink || P.fastT > G.t) s.push(_L`<div class="s tap ${P.fastT > G.t ? 'on' : ''}" data-k="useDrink">能量飲料×${I.drink || 0}${P.fastT > G.t ? _L`<em>加速中 ${Math.ceil(P.fastT - G.t)}</em>` : tip(4, _L('點按喝'))}</div>`);
   const charmOn = (P.invisT || 0) > G.t;   // 只看護身符本身（滅火器的煙不算）
-  if (I.charm || charmOn) s.push(`<div class="s tap ${charmOn ? 'on' : ''}" data-k="useCharm">護身符×${I.charm || 0}${charmOn ? `<em>隱身中 ${Math.ceil(P.invisT - G.t)}</em>` : tip(5, '點按使用')}</div>`);
-  if (I.eraser) s.push(`<div class="s tap" data-k="throwEraser">板擦×${I.eraser}${tip(6, '點按丟出')}</div>`);
-  if (I.ext) s.push(`<div class="s tap" data-k="useExt">滅火器×${I.ext}${tip(7, '點按噴')}</div>`);
-  if (I.key) s.push(`<div class="s">側門鑰匙</div>`);
-  if (I.phone) s.push(`<div class="s">手機</div>`);
+  if (I.charm || charmOn) s.push(_L`<div class="s tap ${charmOn ? 'on' : ''}" data-k="useCharm">護身符×${I.charm || 0}${charmOn ? _L`<em>隱身中 ${Math.ceil(P.invisT - G.t)}</em>` : tip(5, _L('點按使用'))}</div>`);
+  if (I.eraser) s.push(_L`<div class="s tap" data-k="throwEraser">板擦×${I.eraser}${tip(6, _L('點按丟出'))}</div>`);
+  if (I.ext) s.push(_L`<div class="s tap" data-k="useExt">滅火器×${I.ext}${tip(7, _L('點按噴'))}</div>`);
+  if (I.key) s.push(_L`<div class="s">側門鑰匙</div>`);
+  if (I.phone) s.push(_L`<div class="s">手機</div>`);
   if (typeof sceneHUD === 'function') sceneHUD(s);
-  if (P.crouch) s.push(`<div class="s on">蹲下中<em>${isTouch ? '' : 'C'}</em></div>`);
+  if (P.crouch) s.push(_L`<div class="s on">蹲下中<em>${isTouch ? '' : 'C'}</em></div>`);
   $('#inv').innerHTML = s.join('');
   $('#inv').querySelectorAll('.tap').forEach(e => e.addEventListener('pointerdown', ev => { ev.preventDefault(); press(e.dataset.k); }));
 }
@@ -541,12 +541,12 @@ function useItem(k) {
   const I = G.inv;
   if (!I[k]) return;
   if (k === 'bandage') {
-    if (G.hearts >= 5) { toast('現在不需要繃帶'); return; }
-    I.bandage--; G.hearts = Math.min(5, G.hearts + 2); sfx.pick(); toast('包紮好了（＋2 心）');
+    if (G.hearts >= 5) { toast(_L('現在不需要繃帶')); return; }
+    I.bandage--; G.hearts = Math.min(5, G.hearts + 2); sfx.pick(); toast(_L('包紮好了（＋2 心）'));
   } else if (k === 'drink') {
-    I.drink--; P.fastT = G.t + 10; P.stam = 100; P.tired = false; sfx.pick(); toast('喝下能量飲料——腳步變輕了（10 秒）');
+    I.drink--; P.fastT = G.t + 10; P.stam = 100; P.tired = false; sfx.pick(); toast(_L('喝下能量飲料——腳步變輕了（10 秒）'));
   } else if (k === 'charm') {
-    I.charm--; P.invisT = G.t + 8; sfx.pick(); tone(880, .8, 'sine', .05, 1320); toast('握緊護身符……身體變得好淡（8 秒內鬼看不到妳）');
+    I.charm--; P.invisT = G.t + 8; sfx.pick(); tone(880, .8, 'sine', .05, 1320); toast(_L('握緊護身符……身體變得好淡（8 秒內鬼看不到妳）'));
   }
   updateHUD();
 }
@@ -570,7 +570,7 @@ function say(name, text, face) {
     if (TEST) setTimeout(() => advanceFn && advanceFn() || advanceFn && advanceFn(), 5);
   });
 }
-async function says(lines) { for (const l of lines) await (Array.isArray(l) ? say(l[0], l[1], l[2]) : say('咪醬', l)); }
+async function says(lines) { for (const l of lines) await (Array.isArray(l) ? say(l[0], l[1], l[2]) : say(_L('咪醬'), l)); }
 function choose(name, text, options, timeout, face) {
   return new Promise(res => {
     G.lock++;
@@ -615,18 +615,18 @@ function comic(steps) {
     c.classList.add('hide'); G.lock--; res();
   });
 }
-function phoneCall(lines, num = '未知號碼') {
+function phoneCall(lines, num = _L('未知號碼')) {
   return new Promise(async res => {
     G.lock++;
     const p = $('#phone'); p.classList.remove('hide'); p.querySelector('.num').textContent = num;
     const tx = p.querySelector('.ptx'); tx.textContent = '……'; const img = p.querySelector('img'); img.classList.add('ring');
     sfx.ring(); await wait(TEST ? 10 : 900); sfx.ring(); await wait(TEST ? 10 : 1100);
-    img.classList.remove('ring'); p.querySelector('.who').textContent = '通話中';
+    img.classList.remove('ring'); p.querySelector('.who').textContent = _L('通話中');
     for (const l of lines) {
       await new Promise(r2 => { let done = false; const skip = typeText(tx, l, () => { done = true; }); advanceFn = () => { if (!done) { skip(); return; } advanceFn = null; r2(); }; if (TEST) setTimeout(() => { advanceFn && advanceFn(); advanceFn && advanceFn(); }, 5); });
     }
     tone(400, .3, 'square', .04);
-    p.classList.add('hide'); p.querySelector('.who').textContent = '來電'; G.lock--; res();
+    p.classList.add('hide'); p.querySelector('.who').textContent = _L('來電'); G.lock--; res();
   });
 }
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -634,18 +634,18 @@ const wait = ms => new Promise(r => setTimeout(r, ms));
 /* ---------- 互動 ---------- */
 function nearestInteract() {
   let best = null, bd = 1.35;
-  for (const it of ITEMS) if (!it.taken && !it.off && !it.hiddenUntil) { const d = dist(P.x, P.y, it.x, it.y); if (d < bd) { bd = d; best = { kind: 'item', it, label: '撿起' + it.name }; } }
+  for (const it of ITEMS) if (!it.taken && !it.off && !it.hiddenUntil) { const d = dist(P.x, P.y, it.x, it.y); if (d < bd) { bd = d; best = { kind: 'item', it, label: _L('撿起') + it.name }; } }
   if (best) return best;
   bd = 1.3;
   for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
     const tx = Math.floor(P.x) + dx, ty = Math.floor(P.y) + dy, d = dist(P.x, P.y, tx + .5, ty + .5);
     if (d >= bd) continue;
     const dr = DOORS[tx + ',' + ty];
-    if (dr && dr.locked) { bd = d; best = { kind: 'door', dr, label: dr.key && G.inv.key ? '用鑰匙開門' : '調查門' }; continue; }
+    if (dr && dr.locked) { bd = d; best = { kind: 'door', dr, label: dr.key && G.inv.key ? _L('用鑰匙開門') : _L('調查門') }; continue; }
     const o = OBJAT[tx + ',' + ty];
     if (!o || (o.t === 'statue' && o.gone && G.flags.statueSeenGone)) continue;
     if (o.act === 'keybox' && G.inv.key) continue;
-    if (o.act) { bd = d; best = { kind: 'obj', o, label: o.label || { vend: '調查販賣機', statue: '調查雕像', log: '看值班日誌', keybox: '打開器材箱', shoe: '看看鞋箱', board: '看公告欄', fount: '看看噴水池' }[o.act] }; }
+    if (o.act) { bd = d; best = { kind: 'obj', o, label: o.label || { vend: _L('調查販賣機'), statue: _L('調查雕像'), log: _L('看值班日誌'), keybox: _L('打開器材箱'), shoe: _L('看看鞋箱'), board: _L('看公告欄'), fount: _L('看看噴水池') }[o.act] }; }
     else if (HIDE[o.t] && o.hide !== false) { bd = d; best = { kind: 'hide', o, label: HIDE[o.t] }; }
   }
   return best;
@@ -662,7 +662,7 @@ function hide(o) {
   P.hidden = o; P.light = false; P.crouch = false;
   P.hiddenSeen = GH.active && GH.state === 'chase' && G.t - GH.lastSeenT < .9;
   noise(.15, .08, 'lowpass', 600);
-  toast(HIDE[o.t] + '……（' + KEY.act + '出來）');
+  toast(HIDE[o.t] + _L('……（') + KEY.act + _L('出來）'));
   updateHUD();
 }
 function unhide() {
@@ -681,85 +681,85 @@ async function takeItem(it) {
   if (it.id === 'phone') return phoneScene(it);
   if (it.id === 'broom' || it.id === 'lid' || it.id === 'shinai') {
     if (I.weapon) { const old = ITEMS.find(x => x.taken && x.id === I.weapon.id); if (old) { old.taken = false; old.x = P.x; old.y = P.y; } }
-    I.weapon = { broom: { id: 'broom', name: '掃把', dur: 2 }, lid: { id: 'lid', name: '垃圾桶蓋', dur: 3 }, shinai: { id: 'shinai', name: '竹刀', dur: 3 } }[it.id];
+    I.weapon = { broom: { id: 'broom', name: _L('掃把'), dur: 2 }, lid: { id: 'lid', name: _L('垃圾桶蓋'), dur: 3 }, shinai: { id: 'shinai', name: _L('竹刀'), dur: 3 } }[it.id];
   }
   it.taken = true; sfx.pick();
-  if (it.id === 'flashlight') { I.flashlight = true; P.light = true; toast('得到【手電筒】　' + KEY.flash + '開關'); }
-  else if (it.id === 'can') { I.cans++; toast('得到【空罐】　' + KEY.can + '丟出去，可以引開注意'); }
-  else if (it.id === 'bandage') { I.bandage++; toast(`得到【繃帶】　${isTouch ? '點道具欄' : '按 3'}使用，回 2 顆心`); }
-  else if (it.id === 'drink') { I.drink = (I.drink || 0) + 1; toast(`得到【能量飲料】　${isTouch ? '點道具欄' : '按 4'}喝下，10 秒內跑更快`); }
-  else if (it.id === 'charm') { I.charm = (I.charm || 0) + 1; toast(`得到【護身符】　${isTouch ? '點道具欄' : '按 5'}使用，8 秒內鬼看不到妳`); }
-  else if (it.id === 'broom') { toast('拿起【掃把】　被抓住時可以反擊（2 次）'); }
-  else if (it.id === 'lid') { toast('拿起【垃圾桶蓋】　被抓住時可以擋一下（3 次）'); }
-  else if (it.id === 'shinai') { toast('拿起【竹刀】　被任何鬼抓住時都能反擊（3 次）'); }
-  else if (it.id === 'eraser') { I.eraser = (I.eraser || 0) + 1; toast(`得到【板擦】　${isTouch ? '點道具欄' : '按 6'}丟出去，粉筆灰讓鬼 4 秒看不見`); }
-  else if (it.id === 'ext') { I.ext = (I.ext || 0) + 1; toast(`得到【滅火器】　${isTouch ? '點道具欄' : '按 7'}噴出煙霧，鬼會暈眩、看不到妳`); }
+  if (it.id === 'flashlight') { I.flashlight = true; P.light = true; toast(_L('得到【手電筒】　') + KEY.flash + _L('開關')); }
+  else if (it.id === 'can') { I.cans++; toast(_L('得到【空罐】　') + KEY.can + _L('丟出去，可以引開注意')); }
+  else if (it.id === 'bandage') { I.bandage++; toast(_L`得到【繃帶】　${isTouch ? _L('點道具欄') : _L('按 3')}使用，回 2 顆心`); }
+  else if (it.id === 'drink') { I.drink = (I.drink || 0) + 1; toast(_L`得到【能量飲料】　${isTouch ? _L('點道具欄') : _L('按 4')}喝下，10 秒內跑更快`); }
+  else if (it.id === 'charm') { I.charm = (I.charm || 0) + 1; toast(_L`得到【護身符】　${isTouch ? _L('點道具欄') : _L('按 5')}使用，8 秒內鬼看不到妳`); }
+  else if (it.id === 'broom') { toast(_L('拿起【掃把】　被抓住時可以反擊（2 次）')); }
+  else if (it.id === 'lid') { toast(_L('拿起【垃圾桶蓋】　被抓住時可以擋一下（3 次）')); }
+  else if (it.id === 'shinai') { toast(_L('拿起【竹刀】　被任何鬼抓住時都能反擊（3 次）')); }
+  else if (it.id === 'eraser') { I.eraser = (I.eraser || 0) + 1; toast(_L`得到【板擦】　${isTouch ? _L('點道具欄') : _L('按 6')}丟出去，粉筆灰讓鬼 4 秒看不見`); }
+  else if (it.id === 'ext') { I.ext = (I.ext || 0) + 1; toast(_L`得到【滅火器】　${isTouch ? _L('點道具欄') : _L('按 7')}噴出煙霧，鬼會暈眩、看不到妳`); }
   updateHUD();
 }
 async function useDoor(dr) {
   if (dr.key && G.inv.key) {
     dr.locked = false; sfx.door(); G.inv.key = false; updateHUD();
-    toast('側門打開了');
+    toast(_L('側門打開了'));
     return;
   }
   sfx.locked();
   if (dr.chain) {
     sfx.chain();
-    await says(['玄關的門被粗鐵鍊纏了好幾圈，還上了大鎖。',
-      G.flags.log ? '日誌說側門的鑰匙在操場的器材小屋……只能從那邊進去了。' : '……只能找找別的入口了。']);
-    if (!G.flags.log) setObj('去亮著燈的警衛室看看');
+    await says([_L('玄關的門被粗鐵鍊纏了好幾圈，還上了大鎖。'),
+      G.flags.log ? _L('日誌說側門的鑰匙在操場的器材小屋……只能從那邊進去了。') : _L('……只能找找別的入口了。')]);
+    if (!G.flags.log) setObj(_L('去亮著燈的警衛室看看'));
     return;
   }
-  if (dr.key) { await says([G.flags.log ? '側門鎖著。鑰匙應該在操場的器材小屋。' : '側門鎖著。']); return; }
+  if (dr.key) { await says([G.flags.log ? _L('側門鎖著。鑰匙應該在操場的器材小屋。') : _L('側門鎖著。')]); return; }
   await says([dr.msg]);
 }
 async function objAction(o) {
   (G.seenAct = G.seenAct || {})[o.act] = true;   // 同一種東西（例如一排鞋箱）看過一個就不再閃
   if ((G.scene !== 1 || o.g1) && typeof sceneAction === 'function' && await sceneAction(o) !== false) return;   // g1：第一章後來加的物件（gym.js）
   if (o.act === 'vend') {
-    if (G.flags.vend) { await says(['販賣機的燈一閃一閃的。已經沒有東西掉出來了。']); return; }
+    if (G.flags.vend) { await says([_L('販賣機的燈一閃一閃的。已經沒有東西掉出來了。')]); return; }
     G.flags.vend = true; sfx.vend(); G.inv.candy += 2; updateHUD();
-    await says(['咦……還沒投錢，出貨口就「咚」地掉出東西。', '兩包鼈甲糖（べっこう飴）。包裝上的保存期限是……2004年？']);
-    toast('得到【鼈甲糖】×2　' + KEY.candy + '丟出');
+    await says([_L('咦……還沒投錢，出貨口就「咚」地掉出東西。'), _L('兩包鼈甲糖（べっこう飴）。包裝上的保存期限是……2004年？')]);
+    toast(_L('得到【鼈甲糖】×2　') + KEY.candy + _L('丟出'));
     return;
   }
   if (o.act === 'statue') {
-    if (o.gone) { G.flags.statueSeenGone = true; await says(['……台座上什麼都沒有。', '剛剛明明還在這裡的。地上留著一串濕濕的、往校舍方向的腳印。']); return; }
-    await says(['二宮金次郎像。背著柴薪、邊走邊看書的少年。',
-      '聽說他白天要一直保持這個姿勢，沒辦法好好讀書，所以到了半夜，會自己走去圖書室借書……',
-      '……雕像手上那本書，翻開的頁數好像跟白天不一樣。']);
+    if (o.gone) { G.flags.statueSeenGone = true; await says([_L('……台座上什麼都沒有。'), _L('剛剛明明還在這裡的。地上留著一串濕濕的、往校舍方向的腳印。')]); return; }
+    await says([_L('二宮金次郎像。背著柴薪、邊走邊看書的少年。'),
+      _L('聽說他白天要一直保持這個姿勢，沒辦法好好讀書，所以到了半夜，會自己走去圖書室借書……'),
+      _L('……雕像手上那本書，翻開的頁數好像跟白天不一樣。')]);
     return;
   }
-  if (o.act === 'shoe') { await says(['鞋箱。咪醬的室內鞋還好好地放在裡面。', '……旁邊那格的名牌被撕掉了，裡面放著一雙很舊的室內鞋，鞋跟寫著「2004」。']); return; }
+  if (o.act === 'shoe') { await says([_L('鞋箱。咪醬的室內鞋還好好地放在裡面。'), _L('……旁邊那格的名牌被撕掉了，裡面放著一雙很舊的室內鞋，鞋跟寫著「2004」。')]); return; }
   if (o.act === 'keybox' && typeof gymKeybox === 'function') return gymKeybox();   // 10/23：鑰匙被借去游泳社了（gym.js）
   if (o.act === 'keybox') {
-    G.inv.key = true; sfx.pick(); updateHUD(); toast('得到【側門鑰匙】');
-    await says(['找到了，掛著「側門」名牌的鑰匙。']);
+    G.inv.key = true; sfx.pick(); updateHUD(); toast(_L('得到【側門鑰匙】'));
+    await says([_L('找到了，掛著「側門」名牌的鑰匙。')]);
     STATUE.gone = true;
-    setObj('用鑰匙打開校舍側門');
+    setObj(_L('用鑰匙打開校舍側門'));
     saveCP('key');
     if (GH.active && GH.state !== 'chase') investigate(5.5, 31.2);
     return;
   }
   if (o.act === 'log') return readLog();
-  if (o.act === 'board') { await says(['公告欄。運動會的照片、社團招生、校外教學通知……', '角落有一張褪色的尋人啟事。', '「二年級　澄香　2004年2月起下落不明」', '……照片上的臉，被人用紅筆整個塗掉了。']); return; }
-  if (o.act === 'fount') { await says(['乾掉的噴水池，池底積著一層黑色的水。', '水面映出的路燈……比實際上多了一盞。', '那一盞燈下，好像站著一個人。']); return; }
+  if (o.act === 'board') { await says([_L('公告欄。運動會的照片、社團招生、校外教學通知……'), _L('角落有一張褪色的尋人啟事。'), _L('「二年級　澄香　2004年2月起下落不明」'), _L('……照片上的臉，被人用紅筆整個塗掉了。')]); return; }
+  if (o.act === 'fount') { await says([_L('乾掉的噴水池，池底積著一層黑色的水。'), _L('水面映出的路燈……比實際上多了一盞。'), _L('那一盞燈下，好像站著一個人。')]); return; }
 }
 async function readLog() {
-  if (G.flags.log) { await says(['值班日誌。最後一行的墨水……還是濕的。']); return; }
+  if (G.flags.log) { await says([_L('值班日誌。最後一行的墨水……還是濕的。')]); return; }
   G.flags.log = true;
-  await says([['值班日誌', '二月×日　18:30　巡邏完畢。玄關鐵鍊已上鎖。側門鑰匙放回操場器材小屋。'],
-  ['值班日誌', '19:10　操場傳來剪刀的聲音。去看了，沒有人。'],
-  ['值班日誌', '19:40　又是剪刀聲。路燈下有個戴口罩的女人。她問我「我美嗎」。我說了「普普通通」，她就愣住了。趁那時候跑回來。'],
-  ['值班日誌', '——如果有人看到這本日誌：遇到她，就回答「普普通通」。她喜歡甜的東西。'],
-  ['值班日誌', '4:44　時鐘停了。'],
-  ['值班日誌', '4:44　一個綁雙馬尾的女生從校門走進來，拿著——'],
-  '……咦？',
-  ['值班日誌', '4:44　她正在讀這本日誌。'],
-  '…………', '這、這是誰寫的？警衛先生呢？']);
+  await says([[_L('值班日誌'), _L('二月×日　18:30　巡邏完畢。玄關鐵鍊已上鎖。側門鑰匙放回操場器材小屋。')],
+  [_L('值班日誌'), _L('19:10　操場傳來剪刀的聲音。去看了，沒有人。')],
+  [_L('值班日誌'), _L('19:40　又是剪刀聲。路燈下有個戴口罩的女人。她問我「我美嗎」。我說了「普普通通」，她就愣住了。趁那時候跑回來。')],
+  [_L('值班日誌'), _L('——如果有人看到這本日誌：遇到她，就回答「普普通通」。她喜歡甜的東西。')],
+  [_L('值班日誌'), _L('4:44　時鐘停了。')],
+  [_L('值班日誌'), _L('4:44　一個綁雙馬尾的女生從校門走進來，拿著——')],
+  _L('……咦？'),
+  [_L('值班日誌'), _L('4:44　她正在讀這本日誌。')],
+  '…………', _L('這、這是誰寫的？警衛先生呢？')]);
   sfx.sting(); shake = 6;
-  setObj('到操場的器材小屋拿側門鑰匙');
-  chapter('第一章', '操場的口罩女');
+  setObj(_L('到操場的器材小屋拿側門鑰匙'));
+  chapter(_L('第一章'), _L('操場的口罩女'));
   spawnGhost();
   saveCP('log');
 }
@@ -769,8 +769,8 @@ function addNoise(x, y, r) { G.noises.push({ x, y, r, t: G.t }); }
 function throwItem(kind) {
   if (P.hidden) return;
   const I = G.inv;
-  if (kind === 'can' && !I.cans) { toast('沒有空罐'); return; }
-  if (kind === 'candy' && !I.candy) { toast('沒有鼈甲糖'); return; }
+  if (kind === 'can' && !I.cans) { toast(_L('沒有空罐')); return; }
+  if (kind === 'candy' && !I.candy) { toast(_L('沒有鼈甲糖')); return; }
   if (kind === 'eraser' && !I.eraser) return;
   if (kind === 'can') I.cans--; else if (kind === 'eraser') I.eraser--; else I.candy--;
   const [fx, fy] = DIRV[P.dir], m = Math.hypot(fx, fy);
@@ -904,37 +904,37 @@ async function catchPlayer(pulled) {
   GH.state = 'pause'; GH.timer = 99; P.vx = P.vy = 0;
   sfx.snip(); shake = 8;
   const face = faceURL();
-  if (pulled) await say('', '躲藏的地方被一把掀開——', face);
-  const opts = ['「……很美。」', '「不、不美！」', '「普普通通吧。」'];
+  if (pulled) await say('', _L('躲藏的地方被一把掀開——'), face);
+  const opts = [_L('「……很美。」'), _L('「不、不美！」'), _L('「普普通通吧。」')];
   const acts = ['beauty', 'ugly', 'normal'];
-  if (G.inv.weapon) { opts.push({ broom: '用掃把打她！', shinai: '用竹刀打她！', lid: '舉起垃圾桶蓋擋住！' }[G.inv.weapon.id]); acts.push('weapon'); }
-  if (G.inv.candy) { opts.push('把鼈甲糖丟向旁邊'); acts.push('candy'); }
+  if (G.inv.weapon) { opts.push({ broom: _L('用掃把打她！'), shinai: _L('用竹刀打她！'), lid: _L('舉起垃圾桶蓋擋住！') }[G.inv.weapon.id]); acts.push('weapon'); }
+  if (G.inv.candy) { opts.push(_L('把鼈甲糖丟向旁邊')); acts.push('candy'); }
   // 10/23 難度：三個回答的順序每次打亂、只剩 4.5 秒
   const ord = [0, 1, 2].sort(() => TEST ? 0 : Math.random() - .5).concat(opts.slice(3).map((_, k) => k + 3));
-  const i0 = await choose('戴口罩的女人', '「わたし、きれい？」……我，美嗎？', ord.map(k => opts[k]), 4500, face);
+  const i0 = await choose(_L('戴口罩的女人'), _L('「わたし、きれい？」……我，美嗎？'), ord.map(k => opts[k]), 4500, face);
   let a = acts[ord[i0]] || 'silent';
   if (a === 'normal' && (GH.normalN = (GH.normalN || 0) + 1) >= 3) {   // 同一招用到第三次就被識破
-    await say('戴口罩的女人', '「……又是『普通』？」口罩底下的嘴，一路裂到了耳朵。「我已經聽膩了。」', face);
+    await say(_L('戴口罩的女人'), _L('「……又是『普通』？」口罩底下的嘴，一路裂到了耳朵。「我已經聽膩了。」'), face);
     a = 'over';
   }
   P.inv = 2.2;
   if (a === 'normal') {
     sfx.laugh();
-    await say('戴口罩的女人', '「……ふつう？　普……通……？」她歪著頭，整個人僵住了。', face);
+    await say(_L('戴口罩的女人'), _L('「……ふつう？　普……通……？」她歪著頭，整個人僵住了。'), face);
     GH.state = 'confused'; GH.timer = GH.freeze; GH.freeze = Math.max(2.2, GH.freeze - 1.2);
-    toast('她愣住了！快逃！');
+    toast(_L('她愣住了！快逃！'));
   } else if (a === 'weapon') {
     const w = G.inv.weapon; w.dur--; sfx.hit(); shake = 6;
     GH.state = 'stun'; GH.timer = { broom: 4, shinai: 5, lid: 2.8 }[w.id];
-    toast({ broom: '掃把打中了！她踉蹌了一下', shinai: '竹刀狠狠打中了！她往後退了好幾步', lid: '剪刀砍在桶蓋上，被彈開了！' }[w.id]);
-    if (w.dur <= 0) { toast(w.name + '壞掉了'); G.inv.weapon = null; }
+    toast({ broom: _L('掃把打中了！她踉蹌了一下'), shinai: _L('竹刀狠狠打中了！她往後退了好幾步'), lid: _L('剪刀砍在桶蓋上，被彈開了！') }[w.id]);
+    if (w.dur <= 0) { toast(w.name + _L('壞掉了')); G.inv.weapon = null; }
   } else if (a === 'candy') {
     G.inv.candy--; const [fx, fy] = DIRV[(P.dir + 2) % 8];
     G.candies.push({ x: clampFree(P.x + fx * 2.5, P.y + fy * 2.5)[0], y: clampFree(P.x + fx * 2.5, P.y + fy * 2.5)[1] });
-    GH.state = 'search'; GH.searchT = 0; sfx.whoosh(); toast('她轉頭去追那包糖了！');
+    GH.state = 'search'; GH.searchT = 0; sfx.whoosh(); toast(_L('她轉頭去追那包糖了！'));
   } else {
-    const line = a === 'beauty' ? '「……這樣也美嗎？」她扯下了口罩。' : a === 'ugly' ? '「……醜？」剪刀閃了一下。' : a === 'over' ? '剪刀「喀嚓」一聲張開了。' : '沉默。剪刀「喀嚓」一聲張開了。';
-    await say('戴口罩的女人', line, face);
+    const line = a === 'beauty' ? _L('「……這樣也美嗎？」她扯下了口罩。') : a === 'ugly' ? _L('「……醜？」剪刀閃了一下。') : a === 'over' ? _L('剪刀「喀嚓」一聲張開了。') : _L('沉默。剪刀「喀嚓」一聲張開了。');
+    await say(_L('戴口罩的女人'), line, face);
     GH.atk = NOW(); await wait(260);           // 揮剪刀動畫砍到第 2 格時才受傷
     sfx.snip(); sfx.hurt(); damage(a === 'ugly' || a === 'over' ? 2 : 1);
     GH.state = 'stun'; GH.timer = 1.3;
@@ -949,7 +949,7 @@ const NOW = () => performance.now() / 1000;
 function setPose(k, dur) { P.pose = { k, t0: NOW(), until: dur ? NOW() + dur : Infinity }; }
 function damage(n) {
   G.hearts -= n; shake = 10; setPose('hurt', .8);
-  if (G.hearts <= 0 && G.inv.bandage) { G.inv.bandage--; G.hearts = 1; toast('用掉了繃帶……還撐得住'); }
+  if (G.hearts <= 0 && G.inv.bandage) { G.inv.bandage--; G.hearts = 1; toast(_L('用掉了繃帶……還撐得住')); }
   if (G.hearts <= 0) { G.hearts = 0; gameOver(); }
   updateHUD();
 }
@@ -958,16 +958,16 @@ function damage(n) {
 async function intro() {
   G.mode = 'cut';
   await comic([
-    { p: 0, nar: '二月某日，晚上七點。' }, { p: 0, nar: '回家的電車上，咪醬伸手摸口袋——手機不見了。' },
-    { p: 1, say: '啊……忘在教室的抽屜裡了。' },
-    { p: 2, nar: '手機殼裡還夾著定期票。沒有它，明天連學校都去不了。' },
-    { p: 3, nar: '她在下一站下車，沿著來時的路走回學校。' },
+    { p: 0, nar: _L('二月某日，晚上七點。') }, { p: 0, nar: _L('回家的電車上，咪醬伸手摸口袋——手機不見了。') },
+    { p: 1, say: _L('啊……忘在教室的抽屜裡了。') },
+    { p: 2, nar: _L('手機殼裡還夾著定期票。沒有它，明天連學校都去不了。') },
+    { p: 3, nar: _L('她在下一站下車，沿著來時的路走回學校。') },
   ]);
   startPlay(true);   // 新遊戲：主題曲繼續，走進校舍室內走廊（TRIG inside）才淡出
-  chapter('序章', '放學後');
-  setObj('回學校，到二年B班拿手機');
+  chapter(_L('序章'), _L('放學後'));
+  setObj(_L('回學校，到二年B班拿手機'));
   saveCP('start');
-  $('#hint').innerHTML = isTouch ? '左下搖桿移動　調查：撿東西／開門／躲藏' : 'WASD／方向鍵 移動　Shift 跑　C 蹲<br>E／空白鍵 調查・躲藏　F 手電筒　1・2 丟東西';
+  $('#hint').innerHTML = isTouch ? _L('左下搖桿移動　調查：撿東西／開門／躲藏') : _L('WASD／方向鍵 移動　Shift 跑　C 蹲<br>E／空白鍵 調查・躲藏　F 手電筒　1・2 丟東西');
   setTimeout(() => $('#hint').innerHTML = '', 16000);
 }
 function startPlay(keepTheme) {
@@ -975,12 +975,12 @@ function startPlay(keepTheme) {
   G.mode = 'play'; $('#hud').classList.remove('hide'); $('#touch').classList.toggle('hide', !isTouch); $('#title').classList.add('hide'); updateHUD();
 }
 const TRIG = [
-  { id: 'gate', when: () => P.y < 36.6, run: async () => { await says(['校門……沒有鎖。', '整棟校舍黑漆漆的。只有警衛室好像還亮著燈。']); setObj('去亮著燈的警衛室看看'); } },
+  { id: 'gate', when: () => P.y < 36.6, run: async () => { await says([_L('校門……沒有鎖。'), _L('整棟校舍黑漆漆的。只有警衛室好像還亮著燈。')]); setObj(_L('去亮著燈的警衛室看看')); } },
   { id: 'shadow', when: () => dist(P.x, P.y, 26.5, 20.6) < .9 || dist(P.x, P.y, 27.4, 20.4) < .9, run: async () => { shadowScare(); } },
-  { id: 'clock', when: () => P.y < 16 && P.x > 20, run: async () => { await says(['校舍正面的時鐘……停在四點四十四分。', '今天放學的時候，它明明還在走。']); } },
-  { id: 'statueGone', when: () => STATUE.gone && dist(P.x, P.y, 32.5, 17.5) < 3.2, run: async () => { await says(['……咦？', '二宮金次郎像……不見了？']); } },
-  { id: 'inside', when: () => isInside(P.x, P.y) && P.y < 12 && P.y > 8.5, run: async () => { themeStop(6); await says(['走廊好冷。緊急出口的綠色燈是唯一的光。', '二年B班就在前面。']); setObj('到二年B班拿回手機'); saveCP('inside'); } },
-  { id: 'classroom', when: () => P.x > 13 && P.x < 22 && P.y < 8 && P.y > 2, run: async () => { await says(['黑板上寫著明天的值日生……', '「值日生：澄香」……我們班有這個人嗎？']); } },
+  { id: 'clock', when: () => P.y < 16 && P.x > 20, run: async () => { await says([_L('校舍正面的時鐘……停在四點四十四分。'), _L('今天放學的時候，它明明還在走。')]); } },
+  { id: 'statueGone', when: () => STATUE.gone && dist(P.x, P.y, 32.5, 17.5) < 3.2, run: async () => { await says([_L('……咦？'), _L('二宮金次郎像……不見了？')]); } },
+  { id: 'inside', when: () => isInside(P.x, P.y) && P.y < 12 && P.y > 8.5, run: async () => { themeStop(6); await says([_L('走廊好冷。緊急出口的綠色燈是唯一的光。'), _L('二年B班就在前面。')]); setObj(_L('到二年B班拿回手機')); saveCP('inside'); } },
+  { id: 'classroom', when: () => P.x > 13 && P.x < 22 && P.y < 8 && P.y > 2, run: async () => { await says([_L('黑板上寫著明天的值日生……'), _L('「值日生：澄香」……我們班有這個人嗎？')]); } },
 ];
 function checkTriggers() {
   if (G.lock) return;
@@ -992,7 +992,7 @@ function shadowScare() {
   setTimeout(async () => {
     while (G.lock) await wait(100);
     if (!G.shadow) return;
-    await says(['……？', '路燈下面，我的影子……還站在剛剛的地方。']);
+    await says([_L('……？'), _L('路燈下面，我的影子……還站在剛剛的地方。')]);
     G.shadow.turn = true; sfx.sting();
     setTimeout(() => { if (G.shadow) G.shadow.leave = true; }, 900);
   }, 1500);
@@ -1000,17 +1000,17 @@ function shadowScare() {
 async function phoneScene(it) {
   it.taken = true; G.inv.phone = true; sfx.pick(); updateHUD();
   saveCP('phone');
-  await says(['找到了！我的手機。定期票也還在。', '……螢幕亮著。相簿被打開了。', '最新的一張照片——是走廊上，拿著手電筒的我的背影。', '拍攝時間：今天 4:44。', '……手機明明一直在抽屜裡。是誰拍的？']);
-  await phoneCall(['……喂？', '我是瑪莉。', '我現在……在校門口。']);
-  await says(['瑪莉……？', '……走廊有腳步聲。還有，「喀嚓、喀嚓」的剪刀聲。', '要快點躲起來！']);
-  setObj('躲起來，別被發現');
+  await says([_L('找到了！我的手機。定期票也還在。'), _L('……螢幕亮著。相簿被打開了。'), _L('最新的一張照片——是走廊上，拿著手電筒的我的背影。'), _L('拍攝時間：今天 4:44。'), _L('……手機明明一直在抽屜裡。是誰拍的？')]);
+  await phoneCall([_L('……喂？'), _L('我是瑪莉。'), _L('我現在……在校門口。')]);
+  await says([_L('瑪莉……？'), _L('……走廊有腳步聲。還有，「喀嚓、喀嚓」的剪刀聲。'), _L('要快點躲起來！')]);
+  setObj(_L('躲起來，別被發現'));
   Object.assign(GH, { x: 30.5, y: 10.5, active: true, state: 'script', mode: 'script', script: 0, sus: 0, path: null, freeze: Math.max(GH.freeze, 3) });
 }
 async function scriptDone() {
   if (G.mode !== 'play') return;
   await wait(800);
-  await says(['……腳步聲走遠了。']);
-  await phoneCall(['我是瑪莉。', '我現在……在鞋箱前面。', '……我知道你在哪裡哦。']);
+  await says([_L('……腳步聲走遠了。')]);
+  await phoneCall([_L('我是瑪莉。'), _L('我現在……在鞋箱前面。'), _L('……我知道你在哪裡哦。')]);
   if (typeof startCh2 === 'function') return startCh2();
   G.mode = 'end'; $('#hud').classList.add('hide'); $('#touch').classList.add('hide');
   $('#end').classList.remove('hide');
@@ -1039,9 +1039,9 @@ function loadCP(cp) {
   setObj(cp.obj);
 }
 function gameOver() {
-  stat('over', '場景' + G.scene);
+  stat('over', _L('場景') + G.scene);
   G.mode = 'over'; sfx.sting(); setTimeout(() => setPose('down'), 500);
-  $('#overTx').textContent = ['剪刀的聲音，就在耳邊。', '「……下次，要回答得好聽一點哦。」'][Math.floor(Math.random() * 2)];
+  $('#overTx').textContent = [_L('剪刀的聲音，就在耳邊。'), _L('「……下次，要回答得好聽一點哦。」')][Math.floor(Math.random() * 2)];
   setTimeout(() => { $('#hud').classList.add('hide'); $('#touch').classList.add('hide'); $('#over').classList.remove('hide'); }, 1800);
 }
 
@@ -1113,7 +1113,7 @@ function update(dt) {
   // 互動提示
   const n = !P.hidden ? nearestInteract() : null;
   const pr = $('#prompt');
-  const lbl = P.hidden ? '躲藏中…　' + (isTouch ? '按調查出來' : 'E 出來') : n ? n.label + (isTouch ? '' : '　E') : '';
+  const lbl = P.hidden ? _L('躲藏中…　') + (isTouch ? _L('按調查出來') : _L('E 出來')) : n ? n.label + (isTouch ? '' : _L('　E')) : '';
   if (lbl) {
     const [sx, sy] = iso(P.x, P.y); const u = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--u')) || 1;
     pr.textContent = lbl; pr.style.left = sx * u + 'px'; pr.style.top = (sy - 60) * u + 'px'; pr.classList.remove('hide');
@@ -1510,7 +1510,7 @@ function openSnd() {
   $('#snd').classList.remove('hide');
 }
 function closeSnd() { $('#snd').classList.add('hide'); if (sndPaused) { sndPaused = false; G.lock = Math.max(0, G.lock - 1); } }
-function sndLabels() { $('#volMv').textContent = VOL.m ? Math.round(VOL.m * 100) : '關'; $('#volSv').textContent = VOL.s ? Math.round(VOL.s * 100) : '關'; }
+function sndLabels() { $('#volMv').textContent = VOL.m ? Math.round(VOL.m * 100) : _L('關'); $('#volSv').textContent = VOL.s ? Math.round(VOL.s * 100) : _L('關'); }
 $('#volM').addEventListener('input', e => {
   VOL.m = e.target.value / 100; const was = THEME.on; THEME.on = VOL.m > 0; saveVol(); sndLabels();
   if (THEME.el) THEME.el.volume = VOL.m;
@@ -1540,9 +1540,9 @@ const toTitle = () => { location.href = location.pathname + location.search; };
 $('#bToTitle').onclick = toTitle; $('#bEndTitle').onclick = toTitle;
 try { if (localStorage.getItem(SAVE_KEY)) $('#bCont').classList.remove('hide'); } catch (e) { }
 const BLOG = 'https://cashkingw.blogspot.com/2026/10/444.html';
-if (!Q.get('embed')) $('#foot').innerHTML = `戴上耳機遊玩效果最佳　｜　<a href="${Q.get('blog') || BLOG}" target="_top" style="pointer-events:auto">Cash城部落格</a>`;
+if (!Q.get('embed')) $('#foot').innerHTML = _L`戴上耳機遊玩效果最佳　｜　<a href="${Q.get('blog') || BLOG}" target="_top" style="pointer-events:auto">Cash城部落格</a>`;
 
-loadImages(['hikiko', 'anatomy', 'tvwoman', 'beethoven', 'hanako', 'ninomiya_walk', 'mi', 'mi_crouch', 'mi_hurt', 'mi_throw', 'mi_light', 'mi_down', 'kuchisake', 'kuchisake_chase', 'kuchisake_atk', 'ninomiya', 'floors', 'floors2', 'walls', 't_tree', 't_dead1', 't_dead2', 't_dead3', 't_bush1', 't_bush2', 't_bush3', 't_cypress', 't_lamp', 't_rack', 't_bike', 't_bench1', 't_bench2', 't_trash', 't_fount', 't_board']).then(() => {
+loadImages(['hikiko', 'anatomy', 'tvwoman', 'beethoven', 'hanako', 'ninomiya_walk', 'mi', 'mi_crouch', 'mi_hurt', 'mi_throw', 'mi_light', 'mi_down', 'kuchisake', 'kuchisake_chase', 'kuchisake_atk', 'ninomiya', 'floors', 'floors2', 'walls', 't_tree', 't_dead1', 't_dead2', 't_dead3', 't_bush1', 't_bush2', 't_bush3', 't_cypress', 't_lamp', 't_rack', 't_bike', 't_bench1', 't_bench2', 't_trash', 't_fount', 't_board']).then(() => document.readyState === 'loading' ? new Promise(r => addEventListener('DOMContentLoaded', r, { once: true })) : 0).then(() => {   // 等後面的章節檔都載入完才開始（圖片可能比程式先載好）
   buildFloor();
   if (IMG.mi) IMG.mi.rows = 9;
   for (const [k, r] of [['mi_crouch', 4], ['mi_hurt', 2], ['mi_throw', 2], ['mi_light', 1], ['mi_down', 1], ['kuchisake_atk', 4], ['ninomiya_walk', 4], ['anatomy', 4], ['hikiko', 4]]) if (IMG[k]) IMG[k].rows = r;
@@ -1576,11 +1576,11 @@ async function runTest(kind) {
       document.title = (a && b ? 'PASS ' : 'FAIL ') + JSON.stringify(stateSummary()); return;
     }
     if (kind === 'comic') { intro(); document.title = 'COMIC'; return; }
-    if (kind === 'shot') { if (Q.get('scene')) loadScene(+Q.get('scene')); tp(Number(Q.get('x') || 27.5), Number(Q.get('y') || 30)); P.dir = 0; G.inv.flashlight = true; P.light = true; if (Q.get('ghost')) { const ch = Q.get('ghost') === 'chase'; spawnGhost(P.x - (ch ? 6 : 2), P.y - (ch ? 6 : 2)); GH.state = ch ? 'chase' : 'pause'; GH.timer = 99; GH.dir = 4; } if (Q.get('crouch')) P.crouch = true; if (Q.get('pose')) setPose(Q.get('pose')); if (Q.get('atk')) GH.atkLoop = true; if (Q.get('dir')) P.dir = +Q.get('dir'); if (Q.get('hk') && typeof HK === 'object') Object.assign(HK, { x: P.x + 1.5, y: P.y - 1.5, state: 'search', timer: 99, dir: 4 }); if (Q.get('hold')) { G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 }; G.inv.candy = 2; catchPlayer(false); } if (Q.get('items')) { Object.assign(G.inv, { bandage: 1, drink: 2, charm: 1 }); if (Q.get('items') === 'on') { P.fastT = G.t + 99; P.invisT = G.t + 99; } updateHUD(); } if (Q.get('map')) { const fm = OBJ.find(o => o.t === 'floormap'); if (fm) objAction(fm); } document.title = 'SHOT'; return; }
+    if (kind === 'shot') { if (Q.get('scene')) loadScene(+Q.get('scene')); tp(Number(Q.get('x') || 27.5), Number(Q.get('y') || 30)); P.dir = 0; G.inv.flashlight = true; P.light = true; if (Q.get('ghost')) { const ch = Q.get('ghost') === 'chase'; spawnGhost(P.x - (ch ? 6 : 2), P.y - (ch ? 6 : 2)); GH.state = ch ? 'chase' : 'pause'; GH.timer = 99; GH.dir = 4; } if (Q.get('crouch')) P.crouch = true; if (Q.get('pose')) setPose(Q.get('pose')); if (Q.get('atk')) GH.atkLoop = true; if (Q.get('dir')) P.dir = +Q.get('dir'); if (Q.get('hk') && typeof HK === 'object') Object.assign(HK, { x: P.x + 1.5, y: P.y - 1.5, state: 'search', timer: 99, dir: 4 }); if (Q.get('hold')) { G.inv.weapon = { id: 'broom', name: _L('掃把'), dur: 2 }; G.inv.candy = 2; catchPlayer(false); } if (Q.get('items')) { Object.assign(G.inv, { bandage: 1, drink: 2, charm: 1 }); if (Q.get('items') === 'on') { P.fastT = G.t + 99; P.invisT = G.t + 99; } updateHUD(); } if (Q.get('map')) { const fm = OBJ.find(o => o.t === 'floormap'); if (fm) objAction(fm); } document.title = 'SHOT'; return; }
     if (kind === 'chase') {
-      G.flags.log = true; G.inv.flashlight = true; P.light = true; G.inv.candy = 1; G.inv.weapon = { id: 'broom', name: '掃把', dur: 2 };
+      G.flags.log = true; G.inv.flashlight = true; P.light = true; G.inv.candy = 1; G.inv.weapon = { id: 'broom', name: _L('掃把'), dur: 2 };
       spawnGhost(9.5, 20.5); tp(9.5, 24.5); P.dir = 0; GH.state = 'pauseLook'; GH.timer = 9; GH.look = -9; GH.dir = dirFromWorld(P.x - GH.x, P.y - GH.y);
-      const want = Q.get('pick') || '普普通通'; let picked = '';
+      const want = Q.get('pick') || _L('普普通通'); let picked = '';
       TEST_CHOICE = o => { const i = o.findIndex(t => t.includes(want)); picked = o.join('/'); return i < 0 ? 0 : i; };
       const t0 = G.t; while (G.t - t0 < 8 && GH.state !== 'confused' && GH.state !== 'stun' && GH.state !== 'search') await wait(20);
       document.title = 'CHASE ' + GH.state + ' opts=' + picked + ' ' + JSON.stringify(stateSummary()); return;

@@ -18,7 +18,7 @@ const INVM = { open: false };
 #inv .s.bag{border-color:#c9b98a}`;
   document.head.appendChild(st);
   const m = document.createElement('div'); m.id = 'invMenu'; m.className = 'hide';
-  m.innerHTML = `<div class="box"><h3>道具</h3><div class="pz">（時間暫停中）</div><div class="grid"></div><button class="close" type="button">關閉</button></div>`;
+  m.innerHTML = _L`<div class="box"><h3>道具</h3><div class="pz">（時間暫停中）</div><div class="grid"></div><button class="close" type="button">關閉</button></div>`;
   document.body.appendChild(m);
   m.querySelector('.close').addEventListener('click', e => { e.stopPropagation(); invMenu(false); });
   m.addEventListener('click', e => { if (e.target === m) invMenu(false); });
@@ -40,19 +40,19 @@ const KEEP_IN_BAR = new Set(['flash']);
     const inv = $('#inv'), grid = $('#invMenu .grid'); if (!inv || !grid) return;
     const items = [];
     for (const el of [...inv.children]) {
-      if (!el.dataset.k && /^手機/.test(el.textContent)) el.dataset.k = 'phone';
-      if (KEEP_IN_BAR.has(el.dataset.k) || /^蹲下中/.test(el.textContent)) continue;
+      if (!el.dataset.k && el.textContent.startsWith(_L('手機'))) el.dataset.k = 'phone';
+      if (KEEP_IN_BAR.has(el.dataset.k) || el.textContent.startsWith(_L('蹲下中'))) continue;
       items.push(el); el.remove();
     }
     grid.innerHTML = '';
-    if (!items.length) grid.innerHTML = '<div class="s info">（什麼都沒有）</div>';
+    if (!items.length) grid.innerHTML = _L('<div class="s info">（什麼都沒有）</div>');
     for (const el of items) {
       if (!el.dataset.k) el.classList.add('info');
       el.addEventListener('click', ev => { ev.stopPropagation(); const k = el.dataset.k; if (!k) return; invMenu(false); press(k); });
       grid.appendChild(el);
     }
     const b = document.createElement('div'); b.className = 's tap bag';
-    b.innerHTML = `🎒 道具 ${items.length}<em>${isTouch ? '點按打開' : 'I 打開'}</em>`;
+    b.innerHTML = _L`🎒 道具 ${items.length}<em>${isTouch ? _L('點按打開') : _L('I 打開')}</em>`;
     b.addEventListener('pointerdown', ev => { ev.preventDefault(); if (G.mode === 'play' && !G.lock) invMenu(true); });
     const fl = inv.querySelector('[data-k="flash"]'); fl ? fl.after(b) : inv.prepend(b);
   }; }

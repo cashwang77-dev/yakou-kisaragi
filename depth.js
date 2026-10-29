@@ -5,9 +5,9 @@
    全部用「包一層」接進引擎。載入順序：最後（halloween.js 之後）。 */
 const RUN_KEY = 'yakou_kisaragi_runopt', FRAG_KEY = 'yakou_kisaragi_frags';
 const DIFFS = {
-  easy: { name: '簡單', v: { chase: 1, walk: .95, hear: 1, stun: 1, fear: .9 }, desc: '鬼比較慢、耳朵沒那麼靈。想好好看故事的人選這個。' },
-  normal: { name: '普通', v: { ...DIFF }, desc: '標準的恐怖體驗。' },
-  night: { name: '惡夢', v: { chase: 1.32, walk: 1.25, hear: 1.6, stun: .55, fear: 1.6 }, desc: '鬼更快、更敏銳，道具效果更短。給已經通關的人。' },
+  easy: { name: _L('簡單'), v: { chase: 1, walk: .95, hear: 1, stun: 1, fear: .9 }, desc: _L('鬼比較慢、耳朵沒那麼靈。想好好看故事的人選這個。') },
+  normal: { name: _L('普通'), v: { ...DIFF }, desc: _L('標準的恐怖體驗。') },
+  night: { name: _L('惡夢'), v: { chase: 1.32, walk: 1.25, hear: 1.6, stun: .55, fear: 1.6 }, desc: _L('鬼更快、更敏銳，道具效果更短。給已經通關的人。') },
 };
 const DEPTH = { diffNow: 'normal', pendingChap: 0, fragScene: 0, base: PATROL.slice(), patrolKey: '', sceneT: 0, sceneOf: 0, twin: null };
 const jget = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
@@ -18,13 +18,13 @@ const fragsGot = () => jget(FRAG_KEY, []);
 
 /* ---------- 2004 年的遺落物（場景 → [編號, 名稱, 內容]；編號照章節順序） ---------- */
 const FRAGS = {
-  1: [1, '班級聯絡簿的一頁', ['2004．2．□　二年B班　班級聯絡簿', '值日生：澄香——這個名字連續三天，都沒有被劃掉。', '導師欄：「家長已來電。請同學不要再討論這件事。」', '……那一行字，被橡皮擦擦過好幾次。']],
-  2: [2, '撕下來的社團招募單', ['「神秘學同好會　招募中！」', '「成員：澄香、妃姬子（再一個人就能成立！）」', '底下有人用紅筆寫了：「怪胎俱樂部」。', '紅字旁邊，有一行很小的鉛筆字：「沒關係，兩個人也可以。」']],
-  3: [3, '揉成一團的紙條', ['「妃姬子又在翻舊校舍了，超噁。」', '「明天放學把她的書包藏起來。」', '「澄香不在了，看她還能跟誰說。」', '……紙條最後有人寫了「4:44」，又用力塗掉。']],
-  4: [4, '保健室的使用紀錄', ['保健室使用紀錄　2004．2．□　下午 4:30', '姓名：妃姬子　傷處：手掌、膝蓋擦傷', '原因（本人填寫）：「在舊校舍跌倒。」', '保健老師備註：「麻袋裡裝的是別人的課本和制服。她說要『還給她』。」']],
-  6: [5, '手繪的放學路線', ['一張手繪地圖：學校→商店街→田邊的路→平交道→車站。', '角落寫著：「每天跟妃姬子一起走的路。」', '背面是另一個人的字：', '「如果有一天妳迷路了，我就沿著這條路去接妳。」']],
-  7: [6, '洋娃娃的布標', ['平交道旁的草叢裡，勾著一小塊褪色的布標。', '「瑪莉」', '「送給妃姬子　生日快樂　——澄香」', '……瑪莉。整晚打電話給我的，就是這個名字。']],
-  5: [7, '車掌的備忘錄', ['如月車站　乘客備忘', '「乘客：澄香（2004）。狀態：等待中。」', '「備註：等待的人尚未抵達，不予發車。」', '下面多了一行還沒乾的墨水：「另一位乘客：咪醬。帶路中。」']],
+  1: [1, _L('班級聯絡簿的一頁'), [_L('2004．2．□　二年B班　班級聯絡簿'), _L('值日生：澄香——這個名字連續三天，都沒有被劃掉。'), _L('導師欄：「家長已來電。請同學不要再討論這件事。」'), _L('……那一行字，被橡皮擦擦過好幾次。')]],
+  2: [2, _L('撕下來的社團招募單'), [_L('「神秘學同好會　招募中！」'), _L('「成員：澄香、妃姬子（再一個人就能成立！）」'), _L('底下有人用紅筆寫了：「怪胎俱樂部」。'), _L('紅字旁邊，有一行很小的鉛筆字：「沒關係，兩個人也可以。」')]],
+  3: [3, _L('揉成一團的紙條'), [_L('「妃姬子又在翻舊校舍了，超噁。」'), _L('「明天放學把她的書包藏起來。」'), _L('「澄香不在了，看她還能跟誰說。」'), _L('……紙條最後有人寫了「4:44」，又用力塗掉。')]],
+  4: [4, _L('保健室的使用紀錄'), [_L('保健室使用紀錄　2004．2．□　下午 4:30'), _L('姓名：妃姬子　傷處：手掌、膝蓋擦傷'), _L('原因（本人填寫）：「在舊校舍跌倒。」'), _L('保健老師備註：「麻袋裡裝的是別人的課本和制服。她說要『還給她』。」')]],
+  6: [5, _L('手繪的放學路線'), [_L('一張手繪地圖：學校→商店街→田邊的路→平交道→車站。'), _L('角落寫著：「每天跟妃姬子一起走的路。」'), _L('背面是另一個人的字：'), _L('「如果有一天妳迷路了，我就沿著這條路去接妳。」')]],
+  7: [6, _L('洋娃娃的布標'), [_L('平交道旁的草叢裡，勾著一小塊褪色的布標。'), _L('「瑪莉」'), _L('「送給妃姬子　生日快樂　——澄香」'), _L('……瑪莉。整晚打電話給我的，就是這個名字。')]],
+  5: [7, _L('車掌的備忘錄'), [_L('如月車站　乘客備忘'), _L('「乘客：澄香（2004）。狀態：等待中。」'), _L('「備註：等待的人尚未抵達，不予發車。」'), _L('下面多了一行還沒乾的墨水：「另一位乘客：咪醬。帶路中。」')]],
 };
 const BASE_LORE = LORE.filter(l => l[0] !== 'pumpkin').map(l => l[0]);   // 隱藏結局要的怪談（不含活動、二週目限定）
 const hiddenReady = () => fragsGot().length >= 7 && BASE_LORE.every(id => loreGot().includes(id));
@@ -54,7 +54,7 @@ function placeFrag() {
     const r = rng(n * 977 + Math.floor(Math.random() * 1e6)); p = c[Math.floor(r() * c.length)]; G.flags['fragPos' + n] = p;
   }
   if (OBJAT[p[0] + ',' + p[1]]) return;
-  const o = obj('frag', p[0], p[1], { solid: false, act: 'frag', label: '撿起舊紙條', dp: 1 }); OBJAT[p[0] + ',' + p[1]] = o;
+  const o = obj('frag', p[0], p[1], { solid: false, act: 'frag', label: _L('撿起舊紙條'), dp: 1 }); OBJAT[p[0] + ',' + p[1]] = o;
 }
 { const _d = drawObj; drawObj = function (o, a) {
     if (o.t !== 'frag') return _d(o, a);
@@ -70,9 +70,9 @@ objAction = (_o => async function (o) {
   (G.flags.frag = G.flags.frag || []).push(n);
   const got = fragsGot(); if (!got.includes(num)) { got.push(num); if (!TEST || TEST === 'depth') jset(FRAG_KEY, got); }
   const i = OBJ.indexOf(o); if (i >= 0) OBJ.splice(i, 1); delete OBJAT[o.x + ',' + o.y];
-  sfx.pick(); toast(`得到【2004 年的遺落物 ${num}／7：${name}】`);
-  await says([['', '地上有一張泛黃的紙。日期是……2004 年。'], ...lines.map(t => ['遺落物', t])]);
-  if (got.length >= 7) toast(hiddenReady() ? '七張遺落物都找到了。……真結局之後，好像還有什麼在等著。' : `七張遺落物都找到了！（怪談筆記 ${BASE_LORE.filter(id => loreGot().includes(id)).length}／${BASE_LORE.length}）`);
+  sfx.pick(); toast(_L`得到【2004 年的遺落物 ${num}／7：${name}】`);
+  await says([['', _L('地上有一張泛黃的紙。日期是……2004 年。')], ...lines.map(t => [_L('遺落物'), t])]);
+  if (got.length >= 7) toast(hiddenReady() ? _L('七張遺落物都找到了。……真結局之後，好像還有什麼在等著。') : _L`七張遺落物都找到了！（怪談筆記 ${BASE_LORE.filter(id => loreGot().includes(id)).length}／${BASE_LORE.length}）`);
 })(objAction);
 
 /* ---------- 難度、遊玩時間、二週目：每格更新 ---------- */
@@ -107,8 +107,8 @@ startFrom = (_s => function (ch) { DEPTH.pendingChap = ch; return _s(ch); })(sta
 
 /* ---------- 二週目限定怪談 ---------- */
 LORE.push(
-  ['ngtwin', '另一個咪醬', '二週目的走廊上，有個背影跟妳一模一樣。', '她回過頭，用嘴型說：「快回家。」', () => G.flags.ngTwin],
-  ['ngcall', '第二次的來電', '已經走過一次的路，瑪莉又打來了。', '「這次，換妳走在前面。」', () => G.flags.ngCall],
+  ['ngtwin', _L('另一個咪醬'), _L('二週目的走廊上，有個背影跟妳一模一樣。'), _L('她回過頭，用嘴型說：「快回家。」'), () => G.flags.ngTwin],
+  ['ngcall', _L('第二次的來電'), _L('已經走過一次的路，瑪莉又打來了。'), _L('「這次，換妳走在前面。」'), () => G.flags.ngCall],
 );
 function ngTick(dt) {
   const tw = DEPTH.twin;
@@ -124,12 +124,12 @@ function ngTick(dt) {
     tw.ft += dt; if (tw.ft > .18) { tw.ft = 0; tw.frame = (tw.frame + 1) % 4; }
     if (d < 2.6 || tw.t > 22) {
       DEPTH.twin = null; G.flags.ngTwin = 1;
-      says(['……那是我？', '同樣的制服、同樣的髮型。她停下來，回頭看了我一眼。', '嘴型是——「快、回、家」。', '眨眼的瞬間，她就不見了。']);
+      says([_L('……那是我？'), _L('同樣的制服、同樣的髮型。她停下來，回頭看了我一眼。'), _L('嘴型是——「快、回、家」。'), _L('眨眼的瞬間，她就不見了。')]);
     }
   }
   if (G.scene === 3 && !G.flags.ngCall && G.inv.phone && DEPTH.sceneT > 50) {   // 第二章（下）：瑪莉的第二通電話
     const nt = nearestThreat(); if (nt && nt.d < 8) return;
-    G.flags.ngCall = 1; phoneCall(['我是瑪莉。', '這條路……妳已經走過一次了吧？', '那這次，換妳走在前面。', '……她們，都在等妳。'], '瑪莉');
+    G.flags.ngCall = 1; phoneCall([_L('我是瑪莉。'), _L('這條路……妳已經走過一次了吧？'), _L('那這次，換妳走在前面。'), _L('……她們，都在等妳。')], _L('瑪莉'));
   }
 }
 { const _s = sceneSprites; sceneSprites = function (list) {
@@ -177,7 +177,7 @@ function ngTick(dt) {
 .phone #end .btns button{width:calc(var(--u)*130);padding:calc(var(--u)*3);font-size:calc(var(--u)*11)}`;
   document.head.appendChild(st);
   const el = document.createElement('div'); el.id = 'runSet'; el.className = 'ui full hide';
-  el.innerHTML = `<div class="hb"><h2>選擇難度</h2><div class="ds">${Object.entries(DIFFS).map(([k, d]) => `<button type="button" data-d="${k}">${d.name}</button>`).join('')}</div><p class="dd"></p><div class="ng"></div>
+  el.innerHTML = _L`<div class="hb"><h2>選擇難度</h2><div class="ds">${Object.entries(DIFFS).map(([k, d]) => `<button type="button" data-d="${k}">${d.name}</button>`).join('')}</div><p class="dd"></p><div class="ng"></div>
 <div class="btns"><button type="button" id="rsGo">開始</button><button type="button" id="rsBack">返回</button></div></div>`;
   document.getElementById('wrap').appendChild(el);
   let pick = 'normal', go = null;
@@ -186,8 +186,8 @@ function ngTick(dt) {
   window.runSetup = cb => {
     const o = runOpt(); go = cb; show(DIFFS[o.diff] ? o.diff : 'normal');
     el.querySelector('.ng').innerHTML = cleared()
-      ? `<label><input type="checkbox" id="rsNg" ${o.ng ? 'checked' : ''}>二週目：鬼的路線改變、出現新的怪談</label><label><input type="checkbox" id="rsHat" ${o.hat ? 'checked' : ''}>咪醬戴上魔女帽</label>`
-      : `<div class="lockd">通關任一結局後解鎖：二週目、換裝</div>`;
+      ? _L`<label><input type="checkbox" id="rsNg" ${o.ng ? 'checked' : ''}>二週目：鬼的路線改變、出現新的怪談</label><label><input type="checkbox" id="rsHat" ${o.hat ? 'checked' : ''}>咪醬戴上魔女帽</label>`
+      : _L`<div class="lockd">通關任一結局後解鎖：二週目、換裝</div>`;
     el.classList.remove('hide');
   };
   $('#rsGo').onclick = () => {
@@ -201,14 +201,14 @@ function ngTick(dt) {
 })();
 
 /* ---------- 通關評價、分享成績圖、隱藏結局 ---------- */
-ENDINGS.hidden = ['隱藏結局「放學後的約定」', '2004 年沒有說完的話，終於說完了。<br>這一次，大家都準時放學了。'];
+ENDINGS.hidden = [_L('隱藏結局「放學後的約定」'), _L('2004 年沒有說完的話，終於說完了。<br>這一次，大家都準時放學了。')];
 function runGrade(k) {
   const F = G.flags, min = (F.pt || 0) / 60, fr = (F.frag || []).length;
   let s = 100 - (F.hits || 0) * 5 - (F.deaths || 0) * 12 - Math.max(0, min - 120) * .3 + fr * 2 - ({ tunnel: 8, bad: 15 }[k] || 0) + ({ easy: -10, night: 8 }[F.diff] || 0);
   s = Math.round(clamp(s, 0, 100));
   return { s, g: s >= 90 ? 'S' : s >= 75 ? 'A' : s >= 55 ? 'B' : 'C', min, fr, hits: F.hits || 0, deaths: F.deaths || 0, diff: (DIFFS[F.diff] || DIFFS.normal).name, ng: !!F.ng, chap: !!F.fromChap };
 }
-const fmtMin = m => `${Math.floor(m / 60) ? Math.floor(m / 60) + ' 小時 ' : ''}${Math.round(m % 60)} 分`;
+const fmtMin = m => _L`${Math.floor(m / 60) ? Math.floor(m / 60) + _L(' 小時 ') : ''}${Math.round(m % 60)} 分`;
 async function shareCard(k, r) {
   const c = document.createElement('canvas'); c.width = c.height = 1080; const g = c.getContext('2d');
   const bg = await new Promise(res => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = 'assets/' + (k === 'bad' ? 'card_station' : k === 'hidden' ? 'card_class' : 'card_gate') + '.jpg'; });
@@ -217,29 +217,29 @@ async function shareCard(k, r) {
   const gr = g.createLinearGradient(0, 0, 0, 1080); gr.addColorStop(0, 'rgba(0,0,0,.55)'); gr.addColorStop(.5, 'rgba(0,0,0,.72)'); gr.addColorStop(1, 'rgba(0,0,0,.92)'); g.fillStyle = gr; g.fillRect(0, 0, 1080, 1080);
   const T = (t, y, size, color, font = '"Noto Serif TC",serif', w = 600) => { g.font = `${w} ${size}px ${font}`; g.fillStyle = color; g.textAlign = 'center'; g.fillText(t, 540, y); };
   g.shadowColor = '#000'; g.shadowBlur = 12;
-  T('夜校・如月', 150, 92, '#efe8dc'); T('放學後，不要回學校。', 215, 34, '#b8323c', '"Noto Serif TC",serif', 400);
+  T(_L('夜校・如月'), 150, 92, '#efe8dc'); T(_L('放學後，不要回學校。'), 215, 34, '#b8323c', '"Noto Serif TC",serif', 400);
   T(ENDINGS[k][0], 330, 50, '#e8dcc4');
-  if (r.chap) T('章節選擇遊玩', 560, 70, '#c9b98a');
-  else { T('評價', 420, 36, '#c9b98a', '"Noto Sans TC",sans-serif', 400); T(r.g, 640, 230, '#f2c14e'); }
-  const lines = [`難度　${r.diff}${r.ng ? '（二週目）' : ''}`, `遊玩時間　${fmtMin(r.min)}`, `被抓 ${r.hits} 次　重來 ${r.deaths} 次`, `2004 年的遺落物　${r.fr}／7`];
+  if (r.chap) T(_L('章節選擇遊玩'), 560, 70, '#c9b98a');
+  else { T(_L('評價'), 420, 36, '#c9b98a', '"Noto Sans TC",sans-serif', 400); T(r.g, 640, 230, '#f2c14e'); }
+  const lines = [_L`難度　${r.diff}${r.ng ? _L('（二週目）') : ''}`, _L`遊玩時間　${fmtMin(r.min)}`, _L`被抓 ${r.hits} 次　重來 ${r.deaths} 次`, _L`2004 年的遺落物　${r.fr}／7`];
   lines.forEach((t, i) => T(t, 760 + i * 54, 36, '#e6dccb', '"Noto Sans TC",sans-serif', 400));
-  T('Cash城部落格　搜尋「夜校如月」免費線上玩', 1030, 30, '#9a9187', '"Noto Sans TC",sans-serif', 400);
+  T(_L('Cash城部落格　搜尋「夜校如月」免費線上玩'), 1030, 30, '#9a9187', '"Noto Sans TC",sans-serif', 400);
   const blob = await new Promise(res => c.toBlob(res, 'image/png'));
-  const text = `我在《夜校・如月》拿到${ENDINGS[k][0]}${r.chap ? '' : `，評價 ${r.g}`}（難度：${r.diff}）！放學後，你敢回學校嗎？`;
+  const text = _L`我在《夜校・如月》拿到${ENDINGS[k][0]}${r.chap ? '' : _L`，評價 ${r.g}`}（難度：${r.diff}）！放學後，你敢回學校嗎？`;
   return { blob, text };
 }
 async function doShare(k, r) {
   const { blob, text } = await shareCard(k, r), url = BLOG, f = new File([blob], 'yakou_kisaragi.png', { type: 'image/png' });
   try { if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f], text, url }); stat('share', k); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'yakou_kisaragi.png'; document.body.appendChild(a); a.click(); a.remove();
-  try { await navigator.clipboard.writeText(text + ' ' + url); toast('成績圖已下載，分享文字也複製好了'); } catch (e) { toast('成績圖已下載'); }
+  try { await navigator.clipboard.writeText(text + ' ' + url); toast(_L('成績圖已下載，分享文字也複製好了')); } catch (e) { toast(_L('成績圖已下載')); }
   stat('share', k);
 }
 async function hiddenEpilogue() {
   G.mode = 'cut'; $('#hud').classList.add('hide'); $('#touch').classList.add('hide');
-  await card('card_class', ['一週後。', '二年B班的教室裡，那張多出來的課桌不見了。', '黑板角落的值日生，寫著我的名字。', '……我的抽屜裡，放著一個舊舊的洋娃娃。衣服的布標上寫著「瑪莉」。']);
-  await phoneCall(['我是瑪莉。', '我現在……在妳的書包裡。', '她們說，謝謝妳陪她們走完那條路。', '所以這次——換我們陪妳放學回家。'], '瑪莉');
-  await card('card_gate', ['放學的鐘聲響了。', '我背起書包，走出校門。時鐘指著四點四十四分。', '……我沒有回頭。', '因為我知道，背後有兩個女生，正笑著跟我揮手。']);
+  await card('card_class', [_L('一週後。'), _L('二年B班的教室裡，那張多出來的課桌不見了。'), _L('黑板角落的值日生，寫著我的名字。'), _L('……我的抽屜裡，放著一個舊舊的洋娃娃。衣服的布標上寫著「瑪莉」。')]);
+  await phoneCall([_L('我是瑪莉。'), _L('我現在……在妳的書包裡。'), _L('她們說，謝謝妳陪她們走完那條路。'), _L('所以這次——換我們陪妳放學回家。')], _L('瑪莉'));
+  await card('card_gate', [_L('放學的鐘聲響了。'), _L('我背起書包，走出校門。時鐘指著四點四十四分。'), _L('……我沒有回頭。'), _L('因為我知道，背後有兩個女生，正笑著跟我揮手。')]);
 }
 finaleEnd = (_f => async function (k) {
   let kk = k;
@@ -247,27 +247,27 @@ finaleEnd = (_f => async function (k) {
   _f(kk);
   const got = jget(ENDS_KEY, []); if (kk === 'hidden' && !got.includes('true')) { got.push('true'); if (!TEST) jset(ENDS_KEY, got); }
   const e = $('#end'), p = e.querySelector('p'), r = runGrade(kk);
-  p.innerHTML = p.innerHTML.replace(/已收集結局 \d+ \/ 3/, `已收集結局 ${got.length} / 4`);
-  if (kk === 'hidden') p.innerHTML = p.innerHTML.replace(/<small>.*<\/small>/, '<small>感謝遊玩《夜校・如月》。妳找到了這個故事真正的結尾。</small>');
-  else if (k === 'true') p.innerHTML = p.innerHTML.replace(/<small>.*<\/small>/, `<small>2004 年的遺落物 ${fragsGot().length}／7・怪談筆記 ${BASE_LORE.filter(id => loreGot().includes(id)).length}／${BASE_LORE.length}<br>全部收集之後，這個故事還有後續……</small>`);
+  p.innerHTML = p.innerHTML.replace(/\d+ \/ 3(?=<br>)/, `${got.length} / 4`);
+  if (kk === 'hidden') p.innerHTML = p.innerHTML.replace(/<small>.*<\/small>/, _L('<small>感謝遊玩《夜校・如月》。妳找到了這個故事真正的結尾。</small>'));
+  else if (k === 'true') p.innerHTML = p.innerHTML.replace(/<small>.*<\/small>/, _L`<small>2004 年的遺落物 ${fragsGot().length}／7・怪談筆記 ${BASE_LORE.filter(id => loreGot().includes(id)).length}／${BASE_LORE.length}<br>全部收集之後，這個故事還有後續……</small>`);
   let rk = e.querySelector('.rk'); if (!rk) { rk = document.createElement('div'); rk.className = 'rk'; p.after(rk); }
-  rk.innerHTML = r.chap ? `<small>（從章節選擇開始，不列入評價）</small>` : `評價<b>${r.g}</b>難度 ${r.diff}${r.ng ? '（二週目）' : ''}　遊玩 ${fmtMin(r.min)}　被抓 ${r.hits} 次　重來 ${r.deaths} 次　遺落物 ${r.fr}／7`;
-  let sb = $('#bShare'); if (!sb) { sb = document.createElement('button'); sb.id = 'bShare'; sb.type = 'button'; sb.textContent = '📣 分享成績'; $('#bEndTitle').before(sb); }
+  rk.innerHTML = r.chap ? _L`<small>（從章節選擇開始，不列入評價）</small>` : _L`評價<b>${r.g}</b>難度 ${r.diff}${r.ng ? _L('（二週目）') : ''}　遊玩 ${fmtMin(r.min)}　被抓 ${r.hits} 次　重來 ${r.deaths} 次　遺落物 ${r.fr}／7`;
+  let sb = $('#bShare'); if (!sb) { sb = document.createElement('button'); sb.id = 'bShare'; sb.type = 'button'; sb.textContent = _L('📣 分享成績'); $('#bEndTitle').before(sb); }
   sb.onclick = () => doShare(kk, r);
   if (!e.querySelector('.xp')) e.querySelector('.btns').insertAdjacentHTML('afterend', XPROMO);
-  if (cleared() && !TEST) setTimeout(() => toast('🔓 已解鎖：二週目、換裝（開始遊戲時選擇）'), 1500);
+  if (cleared() && !TEST) setTimeout(() => toast(_L('🔓 已解鎖：二週目、換裝（開始遊戲時選擇）')), 1500);
 })(finaleEnd);
 
 /* ---------- 其他遊戲（三款互相導流，連部落格） ---------- */
-const XPROMO = `<div class="xp"><small>Cash城的其他免費遊戲　<a class="xpyt" href="https://www.youtube.com/channel/UC8a84AoYc1exBd_8w69dlog?sub_confirmation=1" target="_blank" rel="noopener">▶ YouTube 怪談短影片</a></small><div class="xpl">
+const XPROMO = _L`<div class="xp"><small>Cash城的其他免費遊戲　<a class="xpyt" href="https://www.youtube.com/channel/UC8a84AoYc1exBd_8w69dlog?sub_confirmation=1" target="_blank" rel="noopener">▶ YouTube 怪談短影片</a></small><div class="xpl">
 <a href="https://cashkingw.blogspot.com/p/cash.html" target="_top" rel="noopener"><img src="assets/x_midnight.jpg" alt=""><b>Cash的午夜檔案室</b><span>台灣法庭推理・找出證詞的矛盾</span></a>
 <a href="https://cashkingw.blogspot.com/2026/10/_69.html" target="_top" rel="noopener"><img src="assets/x_sekigahara.jpg" alt=""><b>關原決戰</b><span>六角格戰國戰略・東西軍任選</span></a></div></div>`;
 /* ---------- 怪談筆記：加上遺落物與隱藏結局進度 ---------- */
 loreOpen = (_lo => function () {
   _lo();
   const el = $('#lore'), got = fragsGot(), byNum = Object.values(FRAGS).sort((a, b) => a[0] - b[0]);
-  el.querySelector('.btns').insertAdjacentHTML('beforebegin', `<h2 style="margin-top:calc(var(--u)*14)">2004 年的遺落物</h2><div class="lc">已找到 ${got.length} / 7　（每一章都掉了一張舊紙條）${hiddenReady() ? '　——真結局之後，還有後續。' : ''}</div><div class="lg">` +
-    byNum.map(([n, name, lines]) => got.includes(n) ? `<div class="le"><b>${n}．${name}</b>${lines.join('<br>')}</div>` : `<div class="le no"><b>${n}．？？？</b>還沒有找到。</div>`).join('') + '</div>');
+  el.querySelector('.btns').insertAdjacentHTML('beforebegin', _L`<h2 style="margin-top:calc(var(--u)*14)">2004 年的遺落物</h2><div class="lc">已找到 ${got.length} / 7　（每一章都掉了一張舊紙條）${hiddenReady() ? _L('　——真結局之後，還有後續。') : ''}</div><div class="lg">` +
+    byNum.map(([n, name, lines]) => got.includes(n) ? _L`<div class="le"><b>${n}．${name}</b>${lines.join('<br>')}</div>` : _L`<div class="le no"><b>${n}．？？？</b>還沒有找到。</div>`).join('') + '</div>');
 })(loreOpen);
 if ($('#bLore')) $('#bLore').onclick = loreOpen;
 

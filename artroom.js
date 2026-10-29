@@ -13,14 +13,14 @@ function buildArt() {
   put(37, 10, ':'); put(37, 11, ':'); put(37, 12, ':');
   for (let y = ART.y0 - 1; y <= ART.y1 + 1; y++) for (let x = ART.x0 - 1; x <= ART.x1 + 1; x++) if (at(x, y) === 'X' || at(x, y) === ':') put(x, y, '#');
   fill(ART.x0, ART.y0, ART.x1, ART.y1, '_');
-  door(41, 11, { sign: '美術室' });
+  door(41, 11, { sign: _L('美術室') });
   BUSTS.forEach((b, i) => obj('bust', b.x, b.y, { i }));
-  obj('easel', 49, 12, { g2: 1, act: 'painting', label: '畫架上的畫' });
+  obj('easel', 49, 12, { g2: 1, act: 'painting', label: _L('畫架上的畫') });
   for (const [x, y] of [[45, 10], [47, 10], [45, 14], [47, 14], [52, 10]]) obj('arttable', x, y);
   for (const x of [43, 54]) obj('shelf', x, 6);
-  obj('cabinet', 56, 15); obj('artnote', 43, 16, { g2: 1, act: 'artnote', label: '看黑板上的字' });
+  obj('cabinet', 56, 15); obj('artnote', 43, 16, { g2: 1, act: 'artnote', label: _L('看黑板上的字') });
   LIGHTS.push({ x: 49.5, y: 12.2, r: 2, c: '255,214,160', id: 'easelL' }, { x: 39.5, y: 11, r: 1.4, c: '150,170,220' });
-  item('can', 53, 15, '空罐'); item('bandage', 44, 15, '繃帶');
+  item('can', 53, 15, _L('空罐')); item('bandage', 44, 15, _L('繃帶'));
 }
 { const _b = SCENES[2]; SCENES[2] = function () { _b(); buildArt(); }; }
 
@@ -49,7 +49,7 @@ function bustUpdate(dt) {
 function bustScream(b) {
   b.turn = 0; b.cd = 20; b.t = 6; G.bustCD = 12; sfx.sting(); shake = 10; addNoise(b.x + .5, b.y + .5, 14); G.fear = Math.min(100, (G.fear || 0) + 25);
   for (let k = 0; k < 4; k++) tone(900 - k * 120, .25, 'sawtooth', .04, 400, 0, k * .08);
-  toast('石膏像張開嘴——發出了刺耳的尖叫！（走廊上的腳步聲，往這邊來了）');
+  toast(_L('石膏像張開嘴——發出了刺耳的尖叫！（走廊上的腳步聲，往這邊來了）'));
   if (GH.active && GH.state !== 'chase' && typeof investigate === 'function') investigate(b.x + .5, b.y + .5);
 }
 
@@ -57,14 +57,14 @@ function bustScream(b) {
 async function artAction(o) {
   const F = G.flags, I = G.inv;
   switch (o.act) {
-    case 'artnote': await says([['黑板', '「石膏素描：不要背對你的模特兒。」'], '……底下有一行很小的字：', ['黑板', '「它們會看你。你不看它們的時候，它們會看你。」']]); return;
+    case 'artnote': await says([[_L('黑板'), _L('「石膏素描：不要背對你的模特兒。」')], _L('……底下有一行很小的字：'), [_L('黑板'), _L('「它們會看你。你不看它們的時候，它們會看你。」')]]); return;
     case 'painting':
-      if (I.libkey) { await says(['畫布上只剩下一張空椅子。', '……畫裡的女孩，去哪裡了？']); return; }
-      if (!F.artPhoto) { await says(['畫架上是一幅還沒畫完的油畫。', '一個穿著舊式水手服的女孩，坐在椅子上，手裡拿著一把鑰匙。', '……畫得好真。好像隨時會動。', '（光線太暗，看不清楚細節。用手機的閃光燈照照看？）']); return; }
-      I.libkey = 1; sfx.pick(); updateHUD(); toast('得到【圖書室的鑰匙】');
-      await says(['把畫框翻過來——背面的木條上，用膠帶貼著一把鑰匙。名牌寫著「圖書室」。', '把畫轉回正面的時候……', '畫裡的女孩不見了。只剩下一張空椅子。', '——身後，三尊石膏像同時轉過了頭。']);
+      if (I.libkey) { await says([_L('畫布上只剩下一張空椅子。'), _L('……畫裡的女孩，去哪裡了？')]); return; }
+      if (!F.artPhoto) { await says([_L('畫架上是一幅還沒畫完的油畫。'), _L('一個穿著舊式水手服的女孩，坐在椅子上，手裡拿著一把鑰匙。'), _L('……畫得好真。好像隨時會動。'), _L('（光線太暗，看不清楚細節。用手機的閃光燈照照看？）')]); return; }
+      I.libkey = 1; sfx.pick(); updateHUD(); toast(_L('得到【圖書室的鑰匙】'));
+      await says([_L('把畫框翻過來——背面的木條上，用膠帶貼著一把鑰匙。名牌寫著「圖書室」。'), _L('把畫轉回正面的時候……'), _L('畫裡的女孩不見了。只剩下一張空椅子。'), _L('——身後，三尊石膏像同時轉過了頭。')]);
       F.artKey = 1; bustScream(BUSTS[1]); BUSTS.forEach(b => { b.turn = 0; b.t = 8; b.cd = 15; }); G.bustCD = 15;   // 只叫一次，給玩家時間逃出去
-      setObj('用鑰匙打開圖書室（走廊西側）'); saveCP('libkey'); return;
+      setObj(_L('用鑰匙打開圖書室（走廊西側）')); saveCP('libkey'); return;
   }
   return false;
 }
@@ -73,12 +73,12 @@ async function artAction(o) {
 { const _ud = useDoor; useDoor = async function (dr) {
     if (G.scene === 2 && dr.key === 'staffkeys' && G.inv.staffkeys && !G.inv.libkey) {
       sfx.locked();
-      await says(['鑰匙串上的鑰匙一把一把試過了。', '……「圖書室」那一把的掛環是空的，只剩一張小名牌：「借・美術社」。', '美術室……走廊的最東邊。']);
-      if (!G.flags.libHint) { G.flags.libHint = 1; setObj('到走廊東邊的美術室，找圖書室的鑰匙'); saveCP('libhint'); }
+      await says([_L('鑰匙串上的鑰匙一把一把試過了。'), _L('……「圖書室」那一把的掛環是空的，只剩一張小名牌：「借・美術社」。'), _L('美術室……走廊的最東邊。')]);
+      if (!G.flags.libHint) { G.flags.libHint = 1; setObj(_L('到走廊東邊的美術室，找圖書室的鑰匙')); saveCP('libhint'); }
       return;
     }
     return _ud(dr); }; }
-PHOTO_SPOTS.push({ scene: 2, x: 49.5, y: 12.5, id: 'painting', lines: ['閃光燈照亮了畫布。', '……照片裡，女孩手上沒有鑰匙。', '她的另一隻手，指著畫框的背面。', '而且——照片裡的她，正看著鏡頭。'], then: () => { G.flags.artPhoto = 1; } });
+PHOTO_SPOTS.push({ scene: 2, x: 49.5, y: 12.5, id: 'painting', lines: [_L('閃光燈照亮了畫布。'), _L('……照片裡，女孩手上沒有鑰匙。'), _L('她的另一隻手，指著畫框的背面。'), _L('而且——照片裡的她，正看著鏡頭。')], then: () => { G.flags.artPhoto = 1; } });
 { const _u = sceneUpdate; sceneUpdate = function (dt) { _u(dt); if (G.scene === 2 && G.mode === 'play') bustUpdate(dt); }; }
 { const _d = sceneDrawObj; sceneDrawObj = function (o, cx, cy, shaking) {
     if (G.scene !== 2) return _d(o, cx, cy, shaking);
@@ -107,12 +107,12 @@ PHOTO_SPOTS.push({ scene: 2, x: 49.5, y: 12.5, id: 'painting', lines: ['閃光�
     }
     return _d(o, cx, cy, shaking);
   }; }
-{ const _h = sceneHUD; sceneHUD = function (s) { _h(s); if (G.scene === 2 && G.inv.libkey) s.push(`<div class="s">圖書室的鑰匙</div>`); }; }
+{ const _h = sceneHUD; sceneHUD = function (s) { _h(s); if (G.scene === 2 && G.inv.libkey) s.push(_L`<div class="s">圖書室的鑰匙</div>`); }; }
 { const _o = sceneOnLoad; sceneOnLoad = function (cp) { _o(cp); if (G.scene === 2) BUSTS.forEach(b => { b.turn = 0; b.t = 2; }); }; }
-TRIG.push({ scene: 2, id: 'artIn', when: () => inArt(P.x, P.y), run: async () => { await says(['美術室。松節油的味道。', '三尊石膏像……都背對著門口。', '……剛剛，好像有一尊動了一下。']); } });
+TRIG.push({ scene: 2, id: 'artIn', when: () => inArt(P.x, P.y), run: async () => { await says([_L('美術室。松節油的味道。'), _L('三尊石膏像……都背對著門口。'), _L('……剛剛，好像有一尊動了一下。')]); } });
 LORE.push(
-  ['bust', '回頭的石膏像', '美術室的石膏像，在你背對它的時候慢慢轉過頭來。', '完全轉過來的時候，它會尖叫。用手電筒照著它，它會轉回去。', () => G.flags.artPhoto || G.flags.artKey],
-  ['painting', '畫中的少女', '還沒畫完的油畫裡，穿著舊式水手服的女孩。', '拿走她手上的東西之後，她就從畫裡消失了。', () => G.flags.artKey],
+  ['bust', _L('回頭的石膏像'), _L('美術室的石膏像，在你背對它的時候慢慢轉過頭來。'), _L('完全轉過來的時候，它會尖叫。用手電筒照著它，它會轉回去。'), () => G.flags.artPhoto || G.flags.artKey],
+  ['painting', _L('畫中的少女'), _L('還沒畫完的油畫裡，穿著舊式水手服的女孩。'), _L('拿走她手上的東西之後，她就從畫裡消失了。'), () => G.flags.artKey],
 );
 // 測試：第二章拿鑰匙串之後，走美術室拿圖書室鑰匙（testCh2 會呼叫）
 async function testArtRoute() {

@@ -10,13 +10,13 @@ const HW = (() => {
 const HW_KEY = 'yakou_kisaragi_pumpkin';   // 找過南瓜頭的章節（跨存檔）
 const hwGot = () => { try { return JSON.parse(localStorage.getItem(HW_KEY)) || []; } catch (e) { return []; } };
 const HW_LINES = {   // 每章南瓜頭說的話
-  1: ['嘻嘻，被妳找到了。', '今天是萬聖夜喔。這間學校的「大家」也想要糖果。', '鬼來跟妳討糖的時候，給牠一顆——牠就會乖乖發呆一下。'],
-  2: ['走廊好長喔。我數過，晚上的階梯比白天多一階。', '糖果分妳。不要全部吃掉喔，要留給「大家」。'],
-  3: ['家政教室的冰箱，我不敢打開。', '妳很勇敢。這個給妳。'],
-  4: ['舊校舍的那個姐姐，一直拖著袋子走來走去。', '我把糖果放在她袋子旁邊，她都沒有拿……她是不是不喜歡甜的？'],
-  5: ['這條路，我以前也跟媽媽一起走過。', '後來媽媽就沒有來接我了。……糖果給妳。'],
-  6: ['火車會不會有萬聖節特別班次呢？', '如果妳要搭的話，記得帶糖果給車掌先生。'],
-  7: ['平交道的燈，一閃一閃的，好像南瓜燈。', '欸，我的頭也是南瓜喔。妳看——（他把南瓜轉了一圈。裡面是空的。）'],
+  1: [_L('嘻嘻，被妳找到了。'), _L('今天是萬聖夜喔。這間學校的「大家」也想要糖果。'), _L('鬼來跟妳討糖的時候，給牠一顆——牠就會乖乖發呆一下。')],
+  2: [_L('走廊好長喔。我數過，晚上的階梯比白天多一階。'), _L('糖果分妳。不要全部吃掉喔，要留給「大家」。')],
+  3: [_L('家政教室的冰箱，我不敢打開。'), _L('妳很勇敢。這個給妳。')],
+  4: [_L('舊校舍的那個姐姐，一直拖著袋子走來走去。'), _L('我把糖果放在她袋子旁邊，她都沒有拿……她是不是不喜歡甜的？')],
+  5: [_L('這條路，我以前也跟媽媽一起走過。'), _L('後來媽媽就沒有來接我了。……糖果給妳。')],
+  6: [_L('火車會不會有萬聖節特別班次呢？'), _L('如果妳要搭的話，記得帶糖果給車掌先生。')],
+  7: [_L('平交道的燈，一閃一閃的，好像南瓜燈。'), _L('欸，我的頭也是南瓜喔。妳看——（他把南瓜轉了一圈。裡面是空的。）')],
 };
 
 /* ---------- 擺裝飾：靠牆、走得到、彼此隔開的空地 ---------- */
@@ -53,7 +53,7 @@ function hwDecorate() {
     const far = cand.filter(([x, y]) => dist(x + .5, y + .5, P.x, P.y) > 9).sort((a, b) => dist(b[0], b[1], P.x, P.y) - dist(a[0], a[1], P.x, P.y));
     const pool = far.slice(0, Math.max(1, Math.floor(far.length * .45)));
     const p = pool.length && pool[Math.floor(r() * pool.length)];
-    if (p) { add('hw_head', p[0], p[1], { solid: true, act: 'hwpk', label: '跟南瓜頭說話', ph: r() * 6 }); HW.head = { x: p[0] + .5, y: p[1] + .5 }; setTimeout(() => toast('🎃 萬聖夜：這一章也躲著一個南瓜頭，找找看！'), 1200); }
+    if (p) { add('hw_head', p[0], p[1], { solid: true, act: 'hwpk', label: _L('跟南瓜頭說話'), ph: r() * 6 }); HW.head = { x: p[0] + .5, y: p[1] + .5 }; setTimeout(() => toast(_L('🎃 萬聖夜：這一章也躲著一個南瓜頭，找找看！')), 1200); }
   } else HW.head = null;
   for (const [x, y] of pick(cand.filter(([x, y]) => !OBJAT[x + ',' + y]), 14, 6)) {
     add('hw_pumpkin', x, y, { v: Math.floor(r() * 3), ph: r() * 6 });
@@ -164,31 +164,31 @@ function hwHat(cx, cy, s, tilt) {
 /* ---------- 南瓜糖：南瓜頭給的，可以吃（恐懼下降），鬼來討糖時給牠 ---------- */
 { const _h = sceneHUD; sceneHUD = function (s) {
     _h(s);
-    if (HW.on && G.inv.hcandy) s.push(`<div class="s tap" data-k="useHCandy">🎃 南瓜糖×${G.inv.hcandy}<em>${isTouch ? '點按吃掉' : '8 吃掉'}</em></div>`);
+    if (HW.on && G.inv.hcandy) s.push(_L`<div class="s tap" data-k="useHCandy">🎃 南瓜糖×${G.inv.hcandy}<em>${isTouch ? _L('點按吃掉') : _L('8 吃掉')}</em></div>`);
   }; }
 { const _p = press; press = function (k) {
     if (k !== 'useHCandy') return _p(k);
     if (G.mode !== 'play' || G.lock || !G.inv.hcandy) return;
     G.inv.hcandy--; G.fear = Math.max(0, (G.fear || 0) - 35); P.stam = 100; P.tired = false; sfx.pick();
-    toast('南瓜糖甜甜的……心跳慢慢平靜下來了'); updateHUD();
+    toast(_L('南瓜糖甜甜的……心跳慢慢平靜下來了')); updateHUD();
   }; }
 addEventListener('keydown', e => { if (e.code === 'Digit8' && !e.repeat) press('useHCandy'); });
 objAction = (_o => async function (o) {
   if (o.act !== 'hwpk') return _o(o);
   const n = G.scene, first = !hwGot().length;
   sfx.laugh();
-  await says([['南瓜頭', 'Trick or treat！'], ...(first ? [['南瓜頭', '……騙妳的，是我要給妳糖果。']] : []), ...(HW_LINES[n] || HW_LINES[1]).map(t => ['南瓜頭', t])]);
+  await says([[_L('南瓜頭'), _L('Trick or treat！')], ...(first ? [[_L('南瓜頭'), _L('……騙妳的，是我要給妳糖果。')]] : []), ...(HW_LINES[n] || HW_LINES[1]).map(t => [_L('南瓜頭'), t])]);
   G.flags['hwpk' + n] = 1; G.inv.hcandy = (G.inv.hcandy || 0) + 2; sfx.pick();
   const got = hwGot(); if (!got.includes(n)) { got.push(n); try { localStorage.setItem(HW_KEY, JSON.stringify(got)); } catch (e) { } }
   const i = OBJ.indexOf(o); if (i >= 0) OBJ.splice(i, 1); delete OBJAT[o.x + ',' + o.y]; HW.head = null;
-  await says([['', '南瓜頭咯咯笑著，咚咚咚地跑進黑暗裡——不見了。']]);
-  toast(`得到【🎃 南瓜糖】×2　鬼來討糖時可以給牠（南瓜頭 ${got.length} / 7）`);
-  if (got.length === 7) setTimeout(() => toast('🎃 七章的南瓜頭全部找到了！Happy Halloween！'), 2600);
+  await says([['', _L('南瓜頭咯咯笑著，咚咚咚地跑進黑暗裡——不見了。')]]);
+  toast(_L`得到【🎃 南瓜糖】×2　鬼來討糖時可以給牠（南瓜頭 ${got.length} / 7）`);
+  if (got.length === 7) setTimeout(() => toast(_L('🎃 七章的南瓜頭全部找到了！Happy Halloween！')), 2600);
   updateHUD();
 })(objAction);
 
 /* ---------- 不給糖就搗蛋：鬼靠近（4 格內）時，偶爾停下來跟妳討糖 ---------- */
-const HW_NAME = () => new Map([[GH, '裂口女'], [typeof AM === 'object' && AM, '人體模型'], [typeof HK === 'object' && HK, '妃姬子'], [typeof TK === 'object' && TK, 'Teke Teke'], [typeof BABA === 'object' && BABA, '高速婆婆']]);
+const HW_NAME = () => new Map([[GH, _L('裂口女')], [typeof AM === 'object' && AM, _L('人體模型')], [typeof HK === 'object' && HK, _L('妃姬子')], [typeof TK === 'object' && TK, 'Teke Teke'], [typeof BABA === 'object' && BABA, _L('高速婆婆')]]);
 function hwTick() {
   if (G.t < HW.darkT) P.light = false;   // 被搗蛋：手電筒暫時打不開
   if (HW.head && !G.flags['hwpk' + G.scene] && G.t > HW.laughT && dist(P.x, P.y, HW.head.x, HW.head.y) < 7) { HW.laughT = G.t + 9; sfx.laugh(); }   // 附近傳來小孩的笑聲
@@ -199,16 +199,16 @@ function hwTick() {
   HW.nextAsk = G.t + 80; hwTrick(t);
 }
 async function hwTrick(t) {
-  const name = HW_NAME().get(t.e) || '黑影', n = G.inv.hcandy || 0;
+  const name = HW_NAME().get(t.e) || _L('黑影'), n = G.inv.hcandy || 0;
   sfx.sting();
-  const opts = n ? [`給牠南瓜糖（剩 ${n} 顆）`, '不給！'] : ['……我沒有糖果'];
-  const r = await choose(name, '「Trick or treat……」不給糖，就搗蛋。', opts, 5000);
+  const opts = n ? [_L`給牠南瓜糖（剩 ${n} 顆）`, _L('不給！')] : [_L('……我沒有糖果')];
+  const r = await choose(name, _L('「Trick or treat……」不給糖，就搗蛋。'), opts, 5000);
   if (n && r === 0) {
-    G.inv.hcandy--; t.stun(6); sfx.pick(); toast(`${name}捧著南瓜糖發呆……（6 秒）`);
+    G.inv.hcandy--; t.stun(6); sfx.pick(); toast(_L`${name}捧著南瓜糖發呆……（6 秒）`);
   } else {
     t.stun(1.2); sfx.laugh(); shake = 10; G.fear = Math.min(100, (G.fear || 0) + 30);
     if (G.inv.flashlight) { HW.darkT = G.t + 4; P.light = false; }
-    toast(G.inv.flashlight ? '「搗蛋！」——手電筒被吹熄了！（4 秒）' : '「搗蛋！」——耳邊有人吹了一口冷氣！');
+    toast(G.inv.flashlight ? _L('「搗蛋！」——手電筒被吹熄了！（4 秒）') : _L('「搗蛋！」——耳邊有人吹了一口冷氣！'));
   }
   updateHUD();
 }
@@ -233,10 +233,10 @@ if (HW.on) {
 .phone #hwNote ul{font-size:calc(var(--u)*9);line-height:1.55;margin-bottom:calc(var(--u)*7)}
 .phone #hwNote .btns button{font-size:calc(var(--u)*11);padding:calc(var(--u)*4)}`;
   const note = document.createElement('div'); note.id = 'hwNote'; note.className = 'ui full hide';
-  note.innerHTML = `<div class="hb"><h2>🎃 萬聖夜限定活動</h2><div class="dt">10/29 – 11/07　期間限定</div><ul>
+  note.innerHTML = _L`<div class="hb"><h2>🎃 萬聖夜限定活動</h2><div class="dt">10/29 – 11/07　期間限定</div><ul>
 <li><b>南瓜頭</b>：每一章都躲著一個南瓜頭小孩，找到他會分妳南瓜糖。七章全部找齊有驚喜！</li>
 <li><b>不給糖就搗蛋</b>：鬼靠近時可能會跟妳討糖——給牠，牠會發呆 6 秒；不給，手電筒會被吹熄。</li>
-<li><b>南瓜糖</b>：也可以自己吃掉（${isTouch ? '道具選單點按' : '按 8'}），讓心跳平靜下來。</li>
+<li><b>南瓜糖</b>：也可以自己吃掉（${isTouch ? _L('道具選單點按') : _L('按 8')}），讓心跳平靜下來。</li>
 <li><b>校園也換上了萬聖節裝飾</b>，咪醬戴上了魔女帽。</li></ul>
 <div class="btns"><button type="button" id="hwOk">知道了</button></div></div>`;
   document.body.appendChild(note);
@@ -246,10 +246,10 @@ if (HW.on) {
     const id = setInterval(() => { if ($('#gate').classList.contains('hide') && !$('#title').classList.contains('hide')) { clearInterval(id); note.classList.remove('hide'); } }, 300);
   };
   showNote();
-  $('#title .btns').insertAdjacentHTML('beforeend', '<button id="bHw">🎃 萬聖夜活動</button>');
+  $('#title .btns').insertAdjacentHTML('beforeend', _L('<button id="bHw">🎃 萬聖夜活動</button>'));
   $('#bHw').onclick = () => note.classList.remove('hide');
-  const sub = $('#title .sub'); if (sub) sub.insertAdjacentHTML('afterend', '<div id="hwBadge">🎃 萬聖夜限定　找出躲在各章的南瓜頭</div>');
-  if (typeof LORE === 'object') LORE.push(['pumpkin', '南瓜頭', '萬聖夜才會出現的小孩，躲在每一章的角落。', '找到他會分妳南瓜糖；鬼來討糖時給牠，牠就會發呆。', () => hwGot().length > 0]);
+  const sub = $('#title .sub'); if (sub) sub.insertAdjacentHTML('afterend', _L('<div id="hwBadge">🎃 萬聖夜限定　找出躲在各章的南瓜頭</div>'));
+  if (typeof LORE === 'object') LORE.push(['pumpkin', _L('南瓜頭'), _L('萬聖夜才會出現的小孩，躲在每一章的角落。'), _L('找到他會分妳南瓜糖；鬼來討糖時給牠，牠就會發呆。'), () => hwGot().length > 0]);
 }
 
 /* ---------- 測試（?test=halloween）：裝飾擺好 → 找南瓜頭拿糖 → 鬼來討糖、給糖後暈眩 ---------- */

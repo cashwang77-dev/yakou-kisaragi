@@ -99,10 +99,10 @@ function drawEkimei(x, y) {
   ctx.fillStyle = '#3a3a3e'; ctx.fillRect(X + 2, Y - 22, 2, 22); const [X2, Y2] = iso(x + 1.3, y + .5); ctx.fillRect(X2 - 4, Y2 - 22, 2, 22);
   ctx.setTransform(1, .5, 0, 1, X, Y - 46);
   ctx.fillStyle = '#ecebe4'; ctx.fillRect(0, 0, 26, 18); ctx.strokeStyle = '#2a2a2e'; ctx.strokeRect(0, 0, 26, 18);
-  ctx.fillStyle = '#1a1a1c'; ctx.font = 'bold 7px "Noto Sans JP","Yu Gothic",sans-serif'; ctx.textAlign = 'center'; ctx.fillText('きさらぎ', 13, 8);
+  ctx.fillStyle = '#1a1a1c'; ctx.font = 'bold 7px "Noto Sans JP","Yu Gothic",sans-serif'; ctx.textAlign = 'center'; ctx.fillText(_L('きさらぎ'), 13, 8);
   ctx.font = '3px sans-serif'; ctx.fillText('kisaragi', 13, 11.5);
   ctx.fillStyle = '#2f6a3c'; ctx.fillRect(0, 13, 26, 5); ctx.fillStyle = '#f0f0e8'; ctx.font = '3.2px sans-serif';
-  ctx.textAlign = 'left'; ctx.fillText('← やみ', 1, 16.8); ctx.textAlign = 'right'; ctx.fillText('かたす →', 25, 16.8);
+  ctx.textAlign = 'left'; ctx.fillText(_L('← やみ'), 1, 16.8); ctx.textAlign = 'right'; ctx.fillText(_L('かたす →'), 25, 16.8);
   ctx.textAlign = 'left'; ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 // 反方向進站的列車（真結局）：每格各自排深度

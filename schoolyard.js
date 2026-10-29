@@ -5,16 +5,16 @@
 
 const TRACK = { cx: 9.5, cy: 25, rx: 5.6, ry: 7.8, w: 1.4 };
 const YARD = [   // [類型, x, y, 擋路, 調查文字]
-  ['goal', 9, 19, true, ['足球門。網子破了一個大洞。', '……球門裡面，好像有人站著。']],
+  ['goal', 9, 19, true, [_L('足球門。網子破了一個大洞。'), _L('……球門裡面，好像有人站著。')]],
   ['goal', 9, 30, true, null],
-  ['flag', 15, 17, true, ['旗桿。繩子在風裡「鏘、鏘」地敲著桿子。', '旗子是白的。……白天升的明明是校旗。']],
-  ['stage', 15, 24, true, ['司令台。朝會的時候，校長站在這裡講話。', '台上留著一雙室內鞋，整整齊齊地擺著。']],
+  ['flag', 15, 17, true, [_L('旗桿。繩子在風裡「鏘、鏘」地敲著桿子。'), _L('旗子是白的。……白天升的明明是校旗。')]],
+  ['stage', 15, 24, true, [_L('司令台。朝會的時候，校長站在這裡講話。'), _L('台上留著一雙室內鞋，整整齊齊地擺著。')]],
   ['bars', 12, 35, true, null], ['jungle', 14, 33, true, null],
   ['hurdle', 4, 22, false, null], ['hurdle', 4, 28, false, null],
-  ['cart', 11, 34, false, null], ['score', 2, 16, true, ['記分板。最後一場比賽的分數還留在上面……', '不對，板子是空白的。是我看錯了。']],
+  ['cart', 11, 34, false, null], ['score', 2, 16, true, [_L('記分板。最後一場比賽的分數還留在上面……'), _L('不對，板子是空白的。是我看錯了。')]],
 ];
 function buildYard() {
-  for (const [t, x, y, solid, lines, flip] of YARD) if (!OBJAT[x + ',' + y]) obj('y_' + t, x, y, Object.assign({ solid, flip: !!flip }, lines ? { g1: 1, act: 'yard', label: '看看', lines } : {}));
+  for (const [t, x, y, solid, lines, flip] of YARD) if (!OBJAT[x + ',' + y]) obj('y_' + t, x, y, Object.assign({ solid, flip: !!flip }, lines ? { g1: 1, act: 'yard', label: _L('看看'), lines } : {}));
 }
 { const _b = SCENES[1]; SCENES[1] = function () { _b(); buildYard(); }; }
 if (G.scene === 1 && !OBJ.some(o => o.t === 'y_goal')) { buildYard(); indexObjs(); }
@@ -90,8 +90,8 @@ function gateSign(x, y) {
   ctx.fillStyle = '#2a2622'; ctx.fillRect(-1, -1, 14, 48);
   ctx.fillStyle = '#e2dccb'; ctx.fillRect(0, 0, 12, 46);
   ctx.fillStyle = '#14100c'; ctx.font = '900 10px "Noto Serif TC","Noto Sans TC",serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ['把', '味', '高', '中'].forEach((c, i) => ctx.fillText(c, 6, 6.5 + i * 11));
+  [_L('把'), _L('味'), _L('高'), _L('中')].forEach((c, i) => ctx.fillText(c, 6, 6.5 + i * 11));
   ctx.restore();
 }
 
-TRIG.push({ scene: 1, id: 'gateSign', when: () => dist(P.x, P.y, 30.5, 38) < 2.6, run: async () => { toast('校門的牌子上寫著：「把味高中」'); } });
+TRIG.push({ scene: 1, id: 'gateSign', when: () => dist(P.x, P.y, 30.5, 38) < 2.6, run: async () => { toast(_L('校門的牌子上寫著：「把味高中」')); } });

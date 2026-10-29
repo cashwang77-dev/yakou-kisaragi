@@ -37,8 +37,8 @@ const DIFF = { chase: 1.22, walk: 1.15, hear: 1.35, stun: .7, fear: 1.3 };
 function weaponBlock(e, stun) {
   const w = G.inv.weapon; if (!w || G.mode !== 'play') return false;
   w.dur--; sfx.hit(); shake = 6; stun((w.id === 'shinai' ? 5 : w.id === 'broom' ? 3.5 : 2.5) * DIFF.stun); P.inv = 1.5;
-  toast(w.id === 'lid' ? '用垃圾桶蓋擋住了！' : `${w.name}打中了！牠退開了`);
-  if (w.dur <= 0) { toast(w.name + '壞掉了'); G.inv.weapon = null; }
+  toast(w.id === 'lid' ? _L('用垃圾桶蓋擋住了！') : _L`${w.name}打中了！牠退開了`);
+  if (w.dur <= 0) { toast(w.name + _L('壞掉了')); G.inv.weapon = null; }
   updateHUD(); return true;
 }
 if (typeof amHit === 'function') { const _f = amHit; amHit = async function () { if (weaponBlock(AM, s => { AM.stunT = G.t + s; })) return; return _f(); }; }
@@ -52,7 +52,7 @@ function eraserHit(x, y) {
   noise(.25, .12, 'highpass', 2500, 1); let hit = 0;
   for (const t of threats()) if (dist(t.e.x, t.e.y, x, y) < 1.8) { t.stun(4 * DIFF.stun); hit++; }
   G.puffs = (G.puffs || []).concat({ x, y, t: G.t, r: 1.4, end: G.t + 1.2, c: '235,235,225' });
-  toast(hit ? '粉筆灰糊住了牠的眼睛！' : '板擦掉在地上，揚起一片粉筆灰');
+  toast(hit ? _L('粉筆灰糊住了牠的眼睛！') : _L('板擦掉在地上，揚起一片粉筆灰'));
 }
 
 /* ---------- 滅火器：周圍噴出煙霧，鬼暈眩 3 秒；7 秒內站在煙裡鬼看不到妳 ---------- */
@@ -61,7 +61,7 @@ function useExt() {
   G.inv.ext--; G.smoke = { x: P.x, y: P.y, end: G.t + 7 * DIFF.stun };
   noise(1.6, .22, 'highpass', 1800, .7); shake = 3;
   for (const t of threats()) if (dist(t.e.x, t.e.y, P.x, P.y) < 3.8) t.stun(3);
-  toast('白煙一下子噴滿了四周！（7 秒）'); updateHUD();
+  toast(_L('白煙一下子噴滿了四周！（7 秒）')); updateHUD();
 }
 const smokeHide = () => !!(G.smoke && G.t < G.smoke.end && dist(P.x, P.y, G.smoke.x, G.smoke.y) < 3.2);
 
@@ -82,7 +82,7 @@ function fearUpdate(dt) {
   // 腿軟：恐懼值滿了 → 尖叫（引鬼過來）、2 秒動不了
   if (G.fear >= 100 && G.t > FEAR.panicT && !(nt && nt.chase && d < 6)) {   // 正在被追的時候不腿軟（不然一定被抓）
     FEAR.panicT = G.t + 12; G.fear = 72; P.stun = G.t + 1; setPose('hurt', 1);
-    addNoise(P.x, P.y, 7); tone(620, .6, 'sawtooth', .05, 300); toast('受不了了——忍不住叫出聲來！');
+    addNoise(P.x, P.y, 7); tone(620, .6, 'sawtooth', .05, 300); toast(_L('受不了了——忍不住叫出聲來！'));
   }
   G.fearSlow = (P.stun || 0) > G.t ? 0 : G.fear > 75 ? .82 : 1;
   // 憋氣：躲起來、鬼在 4.5 格內才需要
@@ -92,12 +92,12 @@ function fearUpdate(dt) {
   if (FEAR.holding) FEAR.breath = Math.max(0, FEAR.breath - 10 * dt);   // 10/23 使用者：憋氣時間加長一倍（5 秒 → 10 秒）
   else FEAR.breath = Math.min(100, FEAR.breath + 28 * dt);
   if (scripted) FEAR.exposeT = 0;
-  else if (need && FEAR.breath <= 0) expose('憋不住了，咳了出來——！');
+  else if (need && FEAR.breath <= 0) expose(_L('憋不住了，咳了出來——！'));
   else if (need && !FEAR.holding && d < 3) {
     FEAR.exposeT += dt;
-    if (FEAR.exposeT > 1) { FEAR.exposeT = 0; if (Math.random() < .3) expose('呼吸聲太大了——被發現了！'); }
+    if (FEAR.exposeT > 1) { FEAR.exposeT = 0; if (Math.random() < .3) expose(_L('呼吸聲太大了——被發現了！')); }
   } else FEAR.exposeT = 0;
-  if (need !== FEAR.need && FEAR.lock == null) { FEAR.need = need; if (need) toast(isTouch ? '牠就在旁邊……按住「跑」憋氣！' : '牠就在旁邊……按住 Shift 憋氣！'); updateHUD(); }
+  if (need !== FEAR.need && FEAR.lock == null) { FEAR.need = need; if (need) toast(isTouch ? _L('牠就在旁邊……按住「跑」憋氣！') : _L('牠就在旁邊……按住 Shift 憋氣！')); updateHUD(); }
 }
 function expose(msg) {
   const o = P.hidden; if (!o) return;
@@ -130,7 +130,7 @@ function fearBar() {
   let el = document.getElementById('fearbar');
   if (!el) {
     el = document.createElement('div'); el.id = 'fearbar';
-    el.innerHTML = '<small>恐懼</small><i><b></b></i><span class="br"><small>憋氣</small><i><b></b></i></span>';
+    el.innerHTML = _L('<small>恐懼</small><i><b></b></i><span class="br"><small>憋氣</small><i><b></b></i></span>');
     const st = document.createElement('style');
     st.textContent = '#fearbar{position:absolute;left:calc(var(--u)*8);top:calc(var(--u)*30);display:flex;align-items:center;gap:calc(var(--u)*3);font-size:calc(var(--u)*7);color:#c9b9d8;pointer-events:none}#fearbar i{display:block;width:calc(var(--u)*46);height:calc(var(--u)*3);background:rgba(255,255,255,.12)}#fearbar b{display:block;height:100%;background:#9a5ac8;transition:width .3s}#fearbar .br{display:none;align-items:center;gap:calc(var(--u)*3);margin-left:calc(var(--u)*6);color:#a8d0e8}#fearbar .br b{background:#6ab0e0}#fearbar.need .br{display:flex}#fearbar.hi>i b{background:#c84a6a}.phone #fearbar{top:calc(var(--u)*34);font-size:calc(var(--u)*9)}';
     document.head.appendChild(st); $('#hud').appendChild(el);
@@ -188,7 +188,7 @@ async function testFear() {
     Object.assign(HK, { x: 19.5, y: 21.2, state: 'search', timer: 99, path: null }); P.x = 19.5; P.y = 23; P.inv = 0;
     G.fear = 0; const t0 = G.t; while (G.t - t0 < 2) await wait(20);
     if (!(G.fear > 5)) throw 'fear ' + G.fear;
-    G.inv.weapon = { id: 'shinai', name: '竹刀', dur: 3 }; G.hearts = 5;
+    G.inv.weapon = { id: 'shinai', name: _L('竹刀'), dur: 3 }; G.hearts = 5;
     await hkDrag(); if (G.inv.weapon.dur !== 2 || G.hearts !== 5 || !stunned(HK)) throw 'shinai';
     G.inv.ext = 1; useExt(); if (!smokeHide() || !pInvis()) throw 'smoke';
     document.title = 'PASS fear=' + Math.round(G.fear);
@@ -228,42 +228,42 @@ setInterval(() => { if (G.mode !== 'play') for (const a of Object.values(AMB)) i
 /* ---------- 怪談筆記（圖鑑）：遇過的鬼與怪事，存在 localStorage，標題畫面「怪談筆記」查看 ---------- */
 const LORE_KEY = 'yakou_kisaragi_lore';
 const LORE = [
-  ['kuchi', '裂口女', '戴口罩的女人，會問「我美嗎？」', '回答「普普通通」她會愣住；丟鼈甲糖她會去撿。', () => GH.active],
-  ['mary', '瑪莉的電話', '整晚打來的洋娃娃，報出越來越近的位置。', '她說的地方，往往就是下一個線索。', () => G.flags.marySeen],
-  ['log', '還在寫的值班日誌', '警衛不在，日誌卻一行一行寫下去。', '最後一行：「4:44　她正在讀這本日誌。」', () => G.flags.log],
-  ['shadow', '慢一拍的影子', '路燈下，影子留在原地，轉頭看著妳。', '……然後自己走進了校舍。', () => G.triggers.shadow],
-  ['photo', '手機裡的照片', '相簿最新一張，是妳在走廊上的背影。', '拍攝時間：4:44。', () => G.inv.phone],
-  ['mareiko', '假死魔靈子', '半夜響起的內線電話，出三道題。', '問到名字要答「假面的假、死人的死、惡魔的魔」。', () => G.flags.quiz],
-  ['ninomiya', '二宮金次郎像', '深夜會去圖書室借書的銅像。', '在圖書室要蹲著走、別用燈照他；把他想借的書放在櫃台。', () => G.scene === 2 && typeof inRoom === 'function' && inRoom('lib', P.x, P.y)],
-  ['desk', '多出來的課桌', '每次回到二年B班，課桌就多一張。', '最後一張桌子上，刻著妳的名字。', () => (G.flags.c2b || 0) > 1],
-  ['hanako', '廁所的花子', '三樓女廁第三間。', '她不是可怕的那一種——她一直陪著被關在裡面的人。', () => G.flags.hanako],
-  ['mirror', '慢半拍的鏡子', '鏡子裡的妳，比妳晚一拍眨眼。', '拆下鏡子後，鏡中的妳還留在牆上揮手。', () => G.flags.mirror1 || G.inv.mirror],
-  ['beethoven', '哭泣的肖像', '音樂教室的貝多芬，眼睛發光時別被看到。', '彈出《月光》開頭的三個音，他就不哭了。', () => G.scene === 3 && typeof in3 === 'function' && in3('music', P.x, P.y)],
-  ['anatomy', '人體模型', '在走廊徘徊，胸口是空的。', '把心臟、肺、胃放回標本台，它就會回去站好。', () => G.scene === 3 && typeof AM === 'object' && AM.state !== 'off' && dist(AM.x, AM.y, P.x, P.y) < 7],
-  ['tv', '電視裡的女人', '電視一台台亮起，她會慢慢爬出來。', '在她爬出來之前拔掉插頭。', () => (G.flags.tvOff || 0) > 0],
-  ['broadcast', '4:44 的放學廣播', '2004 年的廣播，點名還留在校內的學生。', '最後叫到的名字，是妳。', () => G.flags.broadcast],
-  ['hikiko', '妃姬子', '拖著麻袋在舊校舍巡行的女生。', '她怕鏡子——讓她看見自己。', () => G.triggers.oldIn],
-  ['conv', '不打烊的便利商店', '鐵捲門的商店街上，只有這間一直開著。', '收銀機吐出的收據：4:44，「定期票　一張」。', () => G.flags.receipt],
-  ['jinmen', '人面犬', '巷子裡長著中年男人臉的狗。', '牠說的話一半是真的、一半是謊話。理牠太多次會被跟著。', () => G.scene === 6 && dist(DOG.x, DOG.y, P.x, P.y) < 4],
-  ['babaa', '高速婆婆', '從背後用驚人的速度追上來的老婆婆。', '躲進公車亭或水溝，她會跑過頭，再慢慢走回來。', () => G.scene === 6 && BABA.state === 'charge'],
-  ['kune', '扭來扭去', '田裡白色的、一直扭動的東西。', '不要用燈照著它看。', () => G.flags.kuneSeen],
-  ['hachi', '八尺大人', '從圍牆上探頭、戴白色大帽子的女人。「ぽぽぽ」。', '她會學家人的聲音叫妳——不要回應。鹽可以逼退她。', () => G.flags.hachi0],
-  ['plist', '末班車乘客名單', '候車室的名單，列著歷年放學後返校的學生。', '最後一行是妳的名字，墨水還沒乾。', () => G.flags.plistSeen],
-  ['sumika', '澄香', '在如月車站等了二十年的女生。', '她在等的人，叫妃姬子。', () => G.flags.metSumi],
-  ['passenger', '黑影乘客', '月台上排隊等車的黑色人影。', '不要用燈照他們，也不要在他們旁邊跑。', () => G.triggers.p1In],
-  ['teke', 'Teke Teke', '在軌道上爬行的上半身女生。「テケテケ」聲變大就要躲。', '她問腳在哪裡，就告訴她：校後的平交道。', () => G.triggers.p2In],
+  ['kuchi', _L('裂口女'), _L('戴口罩的女人，會問「我美嗎？」'), _L('回答「普普通通」她會愣住；丟鼈甲糖她會去撿。'), () => GH.active],
+  ['mary', _L('瑪莉的電話'), _L('整晚打來的洋娃娃，報出越來越近的位置。'), _L('她說的地方，往往就是下一個線索。'), () => G.flags.marySeen],
+  ['log', _L('還在寫的值班日誌'), _L('警衛不在，日誌卻一行一行寫下去。'), _L('最後一行：「4:44　她正在讀這本日誌。」'), () => G.flags.log],
+  ['shadow', _L('慢一拍的影子'), _L('路燈下，影子留在原地，轉頭看著妳。'), _L('……然後自己走進了校舍。'), () => G.triggers.shadow],
+  ['photo', _L('手機裡的照片'), _L('相簿最新一張，是妳在走廊上的背影。'), _L('拍攝時間：4:44。'), () => G.inv.phone],
+  ['mareiko', _L('假死魔靈子'), _L('半夜響起的內線電話，出三道題。'), _L('問到名字要答「假面的假、死人的死、惡魔的魔」。'), () => G.flags.quiz],
+  ['ninomiya', _L('二宮金次郎像'), _L('深夜會去圖書室借書的銅像。'), _L('在圖書室要蹲著走、別用燈照他；把他想借的書放在櫃台。'), () => G.scene === 2 && typeof inRoom === 'function' && inRoom('lib', P.x, P.y)],
+  ['desk', _L('多出來的課桌'), _L('每次回到二年B班，課桌就多一張。'), _L('最後一張桌子上，刻著妳的名字。'), () => (G.flags.c2b || 0) > 1],
+  ['hanako', _L('廁所的花子'), _L('三樓女廁第三間。'), _L('她不是可怕的那一種——她一直陪著被關在裡面的人。'), () => G.flags.hanako],
+  ['mirror', _L('慢半拍的鏡子'), _L('鏡子裡的妳，比妳晚一拍眨眼。'), _L('拆下鏡子後，鏡中的妳還留在牆上揮手。'), () => G.flags.mirror1 || G.inv.mirror],
+  ['beethoven', _L('哭泣的肖像'), _L('音樂教室的貝多芬，眼睛發光時別被看到。'), _L('彈出《月光》開頭的三個音，他就不哭了。'), () => G.scene === 3 && typeof in3 === 'function' && in3('music', P.x, P.y)],
+  ['anatomy', _L('人體模型'), _L('在走廊徘徊，胸口是空的。'), _L('把心臟、肺、胃放回標本台，它就會回去站好。'), () => G.scene === 3 && typeof AM === 'object' && AM.state !== 'off' && dist(AM.x, AM.y, P.x, P.y) < 7],
+  ['tv', _L('電視裡的女人'), _L('電視一台台亮起，她會慢慢爬出來。'), _L('在她爬出來之前拔掉插頭。'), () => (G.flags.tvOff || 0) > 0],
+  ['broadcast', _L('4:44 的放學廣播'), _L('2004 年的廣播，點名還留在校內的學生。'), _L('最後叫到的名字，是妳。'), () => G.flags.broadcast],
+  ['hikiko', _L('妃姬子'), _L('拖著麻袋在舊校舍巡行的女生。'), _L('她怕鏡子——讓她看見自己。'), () => G.triggers.oldIn],
+  ['conv', _L('不打烊的便利商店'), _L('鐵捲門的商店街上，只有這間一直開著。'), _L('收銀機吐出的收據：4:44，「定期票　一張」。'), () => G.flags.receipt],
+  ['jinmen', _L('人面犬'), _L('巷子裡長著中年男人臉的狗。'), _L('牠說的話一半是真的、一半是謊話。理牠太多次會被跟著。'), () => G.scene === 6 && dist(DOG.x, DOG.y, P.x, P.y) < 4],
+  ['babaa', _L('高速婆婆'), _L('從背後用驚人的速度追上來的老婆婆。'), _L('躲進公車亭或水溝，她會跑過頭，再慢慢走回來。'), () => G.scene === 6 && BABA.state === 'charge'],
+  ['kune', _L('扭來扭去'), _L('田裡白色的、一直扭動的東西。'), _L('不要用燈照著它看。'), () => G.flags.kuneSeen],
+  ['hachi', _L('八尺大人'), _L('從圍牆上探頭、戴白色大帽子的女人。「ぽぽぽ」。'), _L('她會學家人的聲音叫妳——不要回應。鹽可以逼退她。'), () => G.flags.hachi0],
+  ['plist', _L('末班車乘客名單'), _L('候車室的名單，列著歷年放學後返校的學生。'), _L('最後一行是妳的名字，墨水還沒乾。'), () => G.flags.plistSeen],
+  ['sumika', _L('澄香'), _L('在如月車站等了二十年的女生。'), _L('她在等的人，叫妃姬子。'), () => G.flags.metSumi],
+  ['passenger', _L('黑影乘客'), _L('月台上排隊等車的黑色人影。'), _L('不要用燈照他們，也不要在他們旁邊跑。'), () => G.triggers.p1In],
+  ['teke', 'Teke Teke', _L('在軌道上爬行的上半身女生。「テケテケ」聲變大就要躲。'), _L('她問腳在哪裡，就告訴她：校後的平交道。'), () => G.triggers.p2In],
 ];
 function loreGot() { try { return JSON.parse(localStorage.getItem(LORE_KEY)) || []; } catch (e) { return []; } }
 function loreCheck() {
   if (G.mode !== 'play' || TEST) return;
   const got = loreGot(); let add = null;
   for (const [id, name, , , cond] of LORE) { if (got.includes(id)) continue; let ok = false; try { ok = !!cond(); } catch (e) { } if (ok) { got.push(id); add = name; } }
-  if (add) { try { localStorage.setItem(LORE_KEY, JSON.stringify(got)); } catch (e) { } toast(`📖 怪談筆記：記下了「${add}」（${got.length} / ${LORE.length}）`); }
+  if (add) { try { localStorage.setItem(LORE_KEY, JSON.stringify(got)); } catch (e) { } toast(_L`📖 怪談筆記：記下了「${add}」（${got.length} / ${LORE.length}）`); }
 }
 setInterval(loreCheck, 1000);
 // 沒有旗標可判斷的：瑪莉來電、末班車名單
 const _phoneCallL = phoneCall;
-phoneCall = function (lines, num) { if (!num || num === '未知號碼' || num === '瑪莉') G.flags.marySeen = true; return _phoneCallL.apply(this, arguments); };
+phoneCall = function (lines, num) { if (!num || num === _L('未知號碼') || num === _L('瑪莉')) G.flags.marySeen = true; return _phoneCallL.apply(this, arguments); };
 const _objActionL = objAction;
 objAction = async function (o) { if (o.act === 'plist') G.flags.plistSeen = true; return _objActionL(o); };
 function loreOpen() {
@@ -275,9 +275,9 @@ function loreOpen() {
     document.head.appendChild(st); document.getElementById('wrap').appendChild(el);
   }
   const got = loreGot();
-  el.innerHTML = `<h2>怪談筆記</h2><div class="lc">已記下 ${got.length} / ${LORE.length}　（遇到了就會自動記下來）</div><div class="lg">` +
-    LORE.map(([id, name, desc, rule]) => got.includes(id) ? `<div class="le"><b>${name}</b>${desc}<br><em>${rule}</em></div>` : `<div class="le no"><b>？？？</b>還沒有遇到。</div>`).join('') +
-    `</div><div class="btns" style="margin-top:calc(var(--u)*12)"><button id="bLoreBack">返回</button></div>`;
+  el.innerHTML = _L`<h2>怪談筆記</h2><div class="lc">已記下 ${got.length} / ${LORE.length}　（遇到了就會自動記下來）</div><div class="lg">` +
+    LORE.map(([id, name, desc, rule]) => got.includes(id) ? `<div class="le"><b>${name}</b>${desc}<br><em>${rule}</em></div>` : _L`<div class="le no"><b>？？？</b>還沒有遇到。</div>`).join('') +
+    _L`</div><div class="btns" style="margin-top:calc(var(--u)*12)"><button id="bLoreBack">返回</button></div>`;
   el.classList.remove('hide');
   document.getElementById('bLoreBack').onclick = () => el.classList.add('hide');
 }

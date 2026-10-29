@@ -9,13 +9,13 @@ const ROOM3 = {
   music: [2, 2, 11, 8], bio: [13, 2, 21, 8], av: [23, 2, 31, 8], bc: [33, 2, 37, 8],
   hall: [2, 10, 37, 12], landing: [2, 14, 6, 19], stair3: [34, 14, 37, 15], wc: [26, 17, 37, 24],
 };
-const MAP3_LABEL = { music: '音樂教室', bio: '生物教室', av: '視聽教室', bc: '廣播室', hall: '走廊', landing: '樓梯（往一樓）', stair3: '往三樓', wc: '三樓女廁' };
+const MAP3_LABEL = { music: _L('音樂教室'), bio: _L('生物教室'), av: _L('視聽教室'), bc: _L('廣播室'), hall: _L('走廊'), landing: _L('樓梯（往一樓）'), stair3: _L('往三樓'), wc: _L('三樓女廁') };
 const in3 = (r, x, y) => { const [x0, y0, x1, y1] = ROOM3[r]; return x >= x0 && x < x1 + 1 && y >= y0 && y < y1 + 1; };
 const AM_PATROL = [[18.5, 5.5], [17.5, 10.5], [30.5, 11.5], [36.5, 11.5], [24.5, 11.5], [10.5, 11.5], [3.5, 11.5], [12.5, 11.5], [17.5, 10.5]];
 const AM = { x: 18.5, y: 5.5, dir: 4, state: 'patrol', wp: 0, frame: 0, animD: 0, path: null, timer: 0, r: .27 };
 const NOTES = ['C', 'C#', 'D', 'E', 'F', 'G', 'G#', 'A', 'B'], MOON = ['G#', 'C#', 'E'];   // 音名用英文（使用者要求，原本是日文ドレミ）
 const TVS = [];   // { o, state:'idle'|'on'|'off', t }
-Object.assign(HIDE, { curtain: '躲到窗簾後', labtable: '躲到實驗桌下', specshelf: '擠進標本架之間' });
+Object.assign(HIDE, { curtain: _L('躲到窗簾後'), labtable: _L('躲到實驗桌下'), specshelf: _L('擠進標本架之間') });
 SCENE_PATROL[3] = [[18.5, 11.5]];   // 裂口女不上樓
 SCENES[3] = buildCh2b;
 
@@ -24,28 +24,28 @@ function buildCh2b() {
   for (const r of ['music', 'bio', 'av', 'bc']) room(r, '_');
   room('hall', ':'); room('landing', ':'); room('stair3', ':'); room('wc', ':');
   put(3, 13, ':'); put(4, 13, ':');
-  door(7, 9, { sign: '音樂教室' }); door(17, 9, { sign: '生物教室' }); door(27, 9, { sign: '視聽教室' });
-  door(35, 9, { locked: true, sign: '廣播室', msg: '廣播室。門鎖著，門縫透出紅色的「ON AIR」燈。', key: 'tvs' });
-  door(35, 13, { sign: '往三樓' }); door(35, 16, { sign: '女廁' });
+  door(7, 9, { sign: _L('音樂教室') }); door(17, 9, { sign: _L('生物教室') }); door(27, 9, { sign: _L('視聽教室') });
+  door(35, 9, { locked: true, sign: _L('廣播室'), msg: _L('廣播室。門鎖著，門縫透出紅色的「ON AIR」燈。'), key: 'tvs' });
+  door(35, 13, { sign: _L('往三樓') }); door(35, 16, { sign: _L('女廁') });
   // 音樂教室
-  obj('portrait', 6, 2); obj('piano', 5, 5, { act: 'piano', label: '彈鋼琴' }); obj('chalk', 9, 2, { act: 'score', label: '看黑板上的樂譜', solid: false });
+  obj('portrait', 6, 2); obj('piano', 5, 5, { act: 'piano', label: _L('彈鋼琴') }); obj('chalk', 9, 2, { act: 'score', label: _L('看黑板上的樂譜'), solid: false });
   obj('curtain', 2, 4); obj('curtain', 2, 7);
   // 生物教室
   for (const x of [14, 16, 18]) for (const y of [4, 6]) obj('labtable', x, y);
-  obj('stand', 21, 3, { act: 'stand', label: '空的標本台' }); obj('specshelf', 13, 2); obj('specshelf', 15, 2);
+  obj('stand', 21, 3, { act: 'stand', label: _L('空的標本台') }); obj('specshelf', 13, 2); obj('specshelf', 15, 2);
   // 視聽教室、廣播室
   TVS.length = 0;
-  [[24, 3], [26, 3], [28, 3], [30, 3], [25, 6], [29, 6]].forEach(([x, y], i) => TVS.push({ o: obj('tv', x, y, { act: 'tv', label: '關掉電視', i }), state: 'idle', t: 0 }));
-  obj('mic', 36, 3, { act: 'mic', label: '廣播設備' });
+  [[24, 3], [26, 3], [28, 3], [30, 3], [25, 6], [29, 6]].forEach(([x, y], i) => TVS.push({ o: obj('tv', x, y, { act: 'tv', label: _L('關掉電視'), i }), state: 'idle', t: 0 }));
+  obj('mic', 36, 3, { act: 'mic', label: _L('廣播設備') });
   // 走廊、樓梯
   for (const x of [8, 9, 24, 30]) obj('locker', x, 12);
-  obj('cabinet', 20, 10); obj('downstair', 3, 18, { act: 'downstair', label: '往一樓的樓梯' });
-  obj('floormap', 2, 16, { act: 'floormap3', label: '看牆上的平面圖' });   // 樓梯口牆上的平面圖（使用者反映找不到往三樓的路）
-  obj('stairsign', 34, 12, { act: 'stairsign', label: '看指示牌', solid: false });
+  obj('cabinet', 20, 10); obj('downstair', 3, 18, { act: 'downstair', label: _L('往一樓的樓梯') });
+  obj('floormap', 2, 16, { act: 'floormap3', label: _L('看牆上的平面圖') });   // 樓梯口牆上的平面圖（使用者反映找不到往三樓的路）
+  obj('stairsign', 34, 12, { act: 'stairsign', label: _L('看指示牌'), solid: false });
   // 三樓女廁
-  [27, 29, 31, 33].forEach((x, i) => obj('stall', x, 18, { act: 'stall', label: '敲敲廁所門', n: i + 1 }));
-  obj('sink', 37, 20); obj('mirror', 37, 21, { act: 'mirror', label: '看鏡子' }); obj('sink', 37, 22);
-  obj('graffiti', 26, 20, { act: 'graffiti', label: '看牆上的塗鴉' }); obj('cabinet', 26, 24);
+  [27, 29, 31, 33].forEach((x, i) => obj('stall', x, 18, { act: 'stall', label: _L('敲敲廁所門'), n: i + 1 }));
+  obj('sink', 37, 20); obj('mirror', 37, 21, { act: 'mirror', label: _L('看鏡子') }); obj('sink', 37, 22);
+  obj('graffiti', 26, 20, { act: 'graffiti', label: _L('看牆上的塗鴉') }); obj('cabinet', 26, 24);
   // 光源（電視的光由 tvLights 控制）
   LIGHTS.push({ x: 2.6, y: 11.4, r: 1.7, c: '90,255,140' }, { x: 37.4, y: 11.4, r: 1.7, c: '90,255,140' });
   LIGHTS.push({ x: 31.5, y: 21, r: 2.6, c: '220,230,255', id: 'wc' });
@@ -54,47 +54,47 @@ function buildCh2b() {
   LIGHTS.push({ x: 6.5, y: 3, r: 0, c: '255,40,40', id: 'eyes' });
   TVS.forEach((tv, i) => LIGHTS.push({ x: tv.o.x + .5, y: tv.o.y + 1, r: 0, c: '170,200,255', id: 'tv' + i }));
   // 道具：三個器官模型
-  item('organ_heart', 10, 7, '心臟模型'); item('organ_lung', 23, 8, '肺臟模型'); item('organ_stomach', 30, 23, '胃的模型');
-  item('can', 12, 11, '空罐'); item('can', 33, 11, '空罐');
-  item('bandage', 15, 11, '繃帶'); item('drink', 4, 15, '能量飲料'); item('charm', 32, 12, '護身符');   // 加在最後：舊存檔的道具順序不變
-  item('shinai', 10, 11, '竹刀'); item('eraser', 3, 6, '板擦');
+  item('organ_heart', 10, 7, _L('心臟模型')); item('organ_lung', 23, 8, _L('肺臟模型')); item('organ_stomach', 30, 23, _L('胃的模型'));
+  item('can', 12, 11, _L('空罐')); item('can', 33, 11, _L('空罐'));
+  item('bandage', 15, 11, _L('繃帶')); item('drink', 4, 15, _L('能量飲料')); item('charm', 32, 12, _L('護身符'));   // 加在最後：舊存檔的道具順序不變
+  item('shinai', 10, 11, _L('竹刀')); item('eraser', 3, 6, _L('板擦'));
 }
 
 /* ---------- 開場（從第二章（上）接過來） ---------- */
 async function startCh2b() {
   markReach(3);   // 解鎖章節選擇
-  await card('card_hall', ['堆在樓梯上的桌椅倒了一地。', '樓上很安靜。安靜到聽得見自己的心跳。', '……還有，遠遠地，一台電視沒關的沙沙聲。']);
+  await card('card_hall', [_L('堆在樓梯上的桌椅倒了一地。'), _L('樓上很安靜。安靜到聽得見自己的心跳。'), _L('……還有，遠遠地，一台電視沒關的沙沙聲。')]);
   loadScene(3);
   Object.assign(P, { x: 4.5, y: 17, dir: 0, hidden: null, crouch: false, pose: null });
   GH.active = false; Object.assign(AM, { x: 18.5, y: 5.5, state: TEST ? 'off' : 'patrol', wp: 0, path: null });
-  chapter('第二章', '七大不思議（下）');
+  chapter(_L('第二章'), _L('七大不思議（下）'));
   saveCP('ch2b');
   await wait(TEST ? 10 : 1600);
-  await phoneCall(['我是瑪莉。', '我現在……在音樂教室。', '那個人，一直在哭哦。']);
-  await says(['（樓梯口的牆上，也掛著一張平面圖。）']);
-  setObj('二樓還有四頁日記（音樂教室、生物教室、視聽教室、三樓女廁）');
+  await phoneCall([_L('我是瑪莉。'), _L('我現在……在音樂教室。'), _L('那個人，一直在哭哦。')]);
+  await says([_L('（樓梯口的牆上，也掛著一張平面圖。）')]);
+  setObj(_L('二樓還有四頁日記（音樂教室、生物教室、視聽教室、三樓女廁）'));
 }
 
 /* ---------- 日記第 3～6 頁 ---------- */
 Object.assign(PAGE_TEXT, {
-  3: ['她們把我關在三樓廁所的第三間。', '門外有人小聲地說：「別哭，我陪你。」', '是花子。', '……原來，不是所有的怪談都可怕。'],
-  4: ['音樂教室的肖像在哭。', '澄香以前最喜歡彈《月光》。', '她只彈得出開頭那三個音，每次都笑著說：「剩下的，等你教我。」'],
-  5: ['生物教室的人體模型少了心臟、肺和胃。', '我把保健室的模型偷來放回去，它就讓我過去了。', '……它是不是也在找自己少掉的東西？'],
-  6: ['還差一頁。', '最後一頁，我藏在舊校舍的地下書庫。', '今晚 4:44，我要打開那扇門。', '澄香，等我。'],
+  3: [_L('她們把我關在三樓廁所的第三間。'), _L('門外有人小聲地說：「別哭，我陪你。」'), _L('是花子。'), _L('……原來，不是所有的怪談都可怕。')],
+  4: [_L('音樂教室的肖像在哭。'), _L('澄香以前最喜歡彈《月光》。'), _L('她只彈得出開頭那三個音，每次都笑著說：「剩下的，等你教我。」')],
+  5: [_L('生物教室的人體模型少了心臟、肺和胃。'), _L('我把保健室的模型偷來放回去，它就讓我過去了。'), _L('……它是不是也在找自己少掉的東西？')],
+  6: [_L('還差一頁。'), _L('最後一頁，我藏在舊校舍的地下書庫。'), _L('今晚 4:44，我要打開那扇門。'), _L('澄香，等我。')],
 });
 async function ch2bCheck(cp) {   // cp：要存的檢查點名稱——一定要在更新目標「之後」才存，不然讀檔會顯示舊目標
   const p = G.inv.pages || [];
   const left = [3, 4, 5, 6].filter(n => !p.includes(n));
-  if (left.length) { setObj(`樓上還有 ${left.length} 頁日記`); if (cp) saveCP(cp); return; }
+  if (left.length) { setObj(_L`樓上還有 ${left.length} 頁日記`); if (cp) saveCP(cp); return; }
   await wait(TEST ? 10 : 900);
-  await phoneCall(['我是瑪莉。', '我現在……在舊校舍。', '最後一頁，在「她」那裡哦。']);
-  await says(['六頁了。', '……窗外，校園後面那棟早就封起來的舊校舍，亮起了一盞燈。']);
+  await phoneCall([_L('我是瑪莉。'), _L('我現在……在舊校舍。'), _L('最後一頁，在「她」那裡哦。')]);
+  await says([_L('六頁了。'), _L('……窗外，校園後面那棟早就封起來的舊校舍，亮起了一盞燈。')]);
   ch2bEnd();
 }
 function ch2bEnd() {
   G.mode = 'end'; $('#hud').classList.add('hide'); $('#touch').classList.add('hide');
-  const e = $('#end'); e.querySelector('h2').textContent = '第二章　完';
-  e.querySelector('p').innerHTML = '交換日記　6 / 7<br>最後一頁，在拖著麻袋的她手上。<br>第三章「舊校舍與妃姬子」製作中。';
+  const e = $('#end'); e.querySelector('h2').textContent = _L('第二章　完');
+  e.querySelector('p').innerHTML = _L('交換日記　6 / 7<br>最後一頁，在拖著麻袋的她手上。<br>第三章「舊校舍與妃姬子」製作中。');
   e.classList.remove('hide');
   try { localStorage.removeItem(SAVE_KEY); } catch (er) { }
   if (TEST) document.title = 'END ' + JSON.stringify(stateSummary());
@@ -104,40 +104,40 @@ function ch2bEnd() {
 async function ch2bAction(o) {
   const I = G.inv, F = G.flags;
   switch (o.act) {
-    case 'score': F.score = true; await says(['黑板上留著用粉筆畫的五線譜，旁邊寫著：', ['黑板', '《月光》第一樂章　開頭：G#　C#　E　（一直反覆）'], '……字跡跟交換日記的很像。']); return;
+    case 'score': F.score = true; await says([_L('黑板上留著用粉筆畫的五線譜，旁邊寫著：'), [_L('黑板'), _L('《月光》第一樂章　開頭：G#　C#　E　（一直反覆）')], _L('……字跡跟交換日記的很像。')]); return;
     case 'piano': {
-      if (F.piano) { await says(['鋼琴蓋闔上了。肖像安安靜靜的。']); return; }
-      await says(['（掀開琴蓋……要彈哪幾個音？）']);
+      if (F.piano) { await says([_L('鋼琴蓋闔上了。肖像安安靜靜的。')]); return; }
+      await says([_L('（掀開琴蓋……要彈哪幾個音？）')]);
       for (let k = 0; k < 3; k++) {
-        const i = await choose('鋼琴', `第 ${k + 1} 個音`, NOTES, 0);
+        const i = await choose(_L('鋼琴'), _L`第 ${k + 1} 個音`, NOTES, 0);
         sfx.click(); tone(330 * Math.pow(2, i / 12), .5, 'triangle', .06);
-        if (NOTES[i] !== MOON[k]) { F.cryT = G.t; sfx.sting(); amAlarm(7.5, 10.5); await says(['……不對。', '牆上的肖像流下了紅色的眼淚，眼睛直直瞪著這邊——', '（走廊上有腳步聲往這邊來了！）']); return; }
+        if (NOTES[i] !== MOON[k]) { F.cryT = G.t; sfx.sting(); amAlarm(7.5, 10.5); await says([_L('……不對。'), _L('牆上的肖像流下了紅色的眼淚，眼睛直直瞪著這邊——'), _L('（走廊上有腳步聲往這邊來了！）')]); return; }
       }
       F.piano = true; sfx.laugh();
-      await says(['G#、C#、E……', '琴聲在空教室裡迴盪。肖像的眼淚停了。', '……畫框裡掉出一張摺起來的紙。']);
-      item('page4', 6, 3, '交換日記'); return;
+      await says([_L('G#、C#、E……'), _L('琴聲在空教室裡迴盪。肖像的眼淚停了。'), _L('……畫框裡掉出一張摺起來的紙。')]);
+      item('page4', 6, 3, _L('交換日記')); return;
     }
     case 'stand': {
       const n = (I.organs || []).length;
-      if (F.organsPlaced) { await says(['人體模型站回標本台上，一動也不動。']); return; }
-      if (n < 3) { await says(['空的標本台。名牌寫著「人體模型」。', `……地上有拖行的痕跡，往走廊去了。（器官模型 ${n} / 3）`]); return; }
+      if (F.organsPlaced) { await says([_L('人體模型站回標本台上，一動也不動。')]); return; }
+      if (n < 3) { await says([_L('空的標本台。名牌寫著「人體模型」。'), _L`……地上有拖行的痕跡，往走廊去了。（器官模型 ${n} / 3）`]); return; }
       F.organsPlaced = true; I.organs = []; updateHUD(); sfx.click();
-      await says(['把心臟、肺、胃的模型，一個一個放回標本台的托盤上。', '……走廊那頭的腳步聲，停了。然後，慢慢地往這邊走回來。']);
+      await says([_L('把心臟、肺、胃的模型，一個一個放回標本台的托盤上。'), _L('……走廊那頭的腳步聲，停了。然後，慢慢地往這邊走回來。')]);
       AM.state = 'toStand'; AM.path = null; return;
     }
     case 'tv': return tvOff(o);
     case 'mic': {
-      if (F.broadcast) { await says(['麥克風的紅燈熄了。']); return; }
+      if (F.broadcast) { await says([_L('麥克風的紅燈熄了。')]); return; }
       F.broadcast = true; sfx.ring();
-      await says(['……廣播設備自己開始運作了。', ['廣播', '（叮咚——）'], ['廣播', '現在時間，下午四點四十四分。'], ['廣播', '還留在校內的同學，請注意。'],
-        ['廣播', '二年B班，澄香同學。'], ['廣播', '二年B班，妃姬子同學。'], ['廣播', '……二年B班，咪醬同學。'], ['廣播', '請立刻到——舊校舍。'], ['廣播', '（叮咚——）'],
-        '……是 2004 年的放學廣播。', '為什麼會叫到我的名字？', '……桌上的點名簿裡，夾著一張紙。']);
+      await says([_L('……廣播設備自己開始運作了。'), [_L('廣播'), _L('（叮咚——）')], [_L('廣播'), _L('現在時間，下午四點四十四分。')], [_L('廣播'), _L('還留在校內的同學，請注意。')],
+        [_L('廣播'), _L('二年B班，澄香同學。')], [_L('廣播'), _L('二年B班，妃姬子同學。')], [_L('廣播'), _L('……二年B班，咪醬同學。')], [_L('廣播'), _L('請立刻到——舊校舍。')], [_L('廣播'), _L('（叮咚——）')],
+        _L('……是 2004 年的放學廣播。'), _L('為什麼會叫到我的名字？'), _L('……桌上的點名簿裡，夾著一張紙。')]);
       sfx.sting(); shake = 6; await getPage(6); return ch2bCheck('p6');
     }
-    case 'floormap3': G.flags.sawMap3 = true; return showFloorMap(ROOM3, MAP3_LABEL, '校舍二樓　平面圖（附三樓女廁）', 'stair3', '往三樓↑', '※ 三樓女廁：走廊最東邊（廣播室旁）的樓梯上去');
-    case 'stairsign': await says(['指示牌：「↑ 三樓　女廁」', '……樓梯就在走廊的盡頭，廣播室的旁邊。']); return;
-    case 'downstair': await says(['往一樓的樓梯。……樓下的走廊，傳來剪刀的聲音。不回去了。']); return;
-    case 'graffiti': F.graffiti = true; await says(['廁所牆上的塗鴉被刷過好幾次油漆，還是透出來：', ['塗鴉', '「花子さん、あそびましょ」　→ 第三間'], ['塗鴉', '「妃姬子去死」'], '……後面那行字，被人用指甲刮掉了一半。']); return;
+    case 'floormap3': G.flags.sawMap3 = true; return showFloorMap(ROOM3, MAP3_LABEL, _L('校舍二樓　平面圖（附三樓女廁）'), 'stair3', _L('往三樓↑'), _L('※ 三樓女廁：走廊最東邊（廣播室旁）的樓梯上去'));
+    case 'stairsign': await says([_L('指示牌：「↑ 三樓　女廁」'), _L('……樓梯就在走廊的盡頭，廣播室的旁邊。')]); return;
+    case 'downstair': await says([_L('往一樓的樓梯。……樓下的走廊，傳來剪刀的聲音。不回去了。')]); return;
+    case 'graffiti': F.graffiti = true; await says([_L('廁所牆上的塗鴉被刷過好幾次油漆，還是透出來：'), [_L('塗鴉'), _L('「花子さん、あそびましょ」　→ 第三間')], [_L('塗鴉'), _L('「妃姬子去死」')], _L('……後面那行字，被人用指甲刮掉了一半。')]); return;
     case 'stall': return knock(o);
     case 'mirror': return mirror();
   }
@@ -145,40 +145,40 @@ async function ch2bAction(o) {
 }
 async function knock(o) {
   const F = G.flags;
-  if (F.hanako) { await says([o.n === 3 ? '第三間的門開著一條縫。裡面空空的，只有一股洗衣粉的味道。' : '一般的廁所隔間。']); return; }
-  const i = await choose('三樓女廁', `第 ${o.n} 間。要敲門嗎？`, ['敲三下，問「花子，出來玩嗎？」', '算了'], 0);
+  if (F.hanako) { await says([o.n === 3 ? _L('第三間的門開著一條縫。裡面空空的，只有一股洗衣粉的味道。') : _L('一般的廁所隔間。')]); return; }
+  const i = await choose(_L('三樓女廁'), _L`第 ${o.n} 間。要敲門嗎？`, [_L('敲三下，問「花子，出來玩嗎？」'), _L('算了')], 0);
   if (i !== 0) return;
   sfx.locked(); await wait(300); sfx.locked(); await wait(300); sfx.locked();
   if (o.n !== 3) {
     sfx.sting(); shake = 10; damage(1); setPose('hurt', .8);
-    await says(['……門猛地打開，一隻濕冷的手抓住了手腕，把人往裡面拖——', '（拼命甩開了。不是這一間……）']);
+    await says([_L('……門猛地打開，一隻濕冷的手抓住了手腕，把人往裡面拖——'), _L('（拼命甩開了。不是這一間……）')]);
     return;
   }
   const face = 'assets/hanako_face.png';
   F.hanakoOut = true;
-  await says([['', '……門，自己慢慢地打開了。', face], ['紅裙子的女孩', '「……要玩什麼？」', face], ['紅裙子的女孩', '「好久沒有人來找我玩了。上一次，是一個一直在哭的女生。」', face],
-    ['紅裙子的女孩', '「她們把她關在這裡。我陪她到天亮。她說，她要去接一個朋友回來。」', face]]);
-  const a = await choose('花子', '「你……是來帶她們回家的嗎？」', ['「是。我想帶她們回家。」', '「不是，我只想拿回手機……」', '「……我不知道。」'], 0, face);
+  await says([['', _L('……門，自己慢慢地打開了。'), face], [_L('紅裙子的女孩'), _L('「……要玩什麼？」'), face], [_L('紅裙子的女孩'), _L('「好久沒有人來找我玩了。上一次，是一個一直在哭的女生。」'), face],
+    [_L('紅裙子的女孩'), _L('「她們把她關在這裡。我陪她到天亮。她說，她要去接一個朋友回來。」'), face]]);
+  const a = await choose(_L('花子'), _L('「你……是來帶她們回家的嗎？」'), [_L('「是。我想帶她們回家。」'), _L('「不是，我只想拿回手機……」'), _L('「……我不知道。」')], 0, face);
   if (a !== 0) {
     F.hanakoOut = false; sfx.laugh(); damage(1);
-    await says([['花子', '「……那你就留下來陪我吧。」', face], '門砰地關上，冰冷的水從頭頂澆下來——', '（……再想想該怎麼回答。）']);
+    await says([[_L('花子'), _L('「……那你就留下來陪我吧。」'), face], _L('門砰地關上，冰冷的水從頭頂澆下來——'), _L('（……再想想該怎麼回答。）')]);
     return;
   }
   F.hanako = true;
-  await says([['花子', '「……嗯。那這個給你。」', face], ['花子', '「她留下來的。還有，把洗手台那面鏡子帶走吧。拖麻袋的那個女生……很怕鏡子。」', face]]);
+  await says([[_L('花子'), _L('「……嗯。那這個給你。」'), face], [_L('花子'), _L('「她留下來的。還有，把洗手台那面鏡子帶走吧。拖麻袋的那個女生……很怕鏡子。」'), face]]);
   F.hanakoOut = false;
   await getPage(3);
-  setObj('拿走洗手台的鏡子'); saveCP('p3');
+  setObj(_L('拿走洗手台的鏡子')); saveCP('p3');
 }
 async function mirror() {
   const F = G.flags, I = G.inv;
-  if (I.mirror) { await says(['牆上只剩下鏡框。', '……框裡的咪醬，還留在那裡。']); return; }
+  if (I.mirror) { await says([_L('牆上只剩下鏡框。'), _L('……框裡的咪醬，還留在那裡。')]); return; }
   if (!F.hanako) {
-    if (!F.mirror1) { F.mirror1 = true; await says(['洗手台的鏡子。', '……咦？', '鏡子裡的我，比我晚一拍才眨眼。']); sfx.sting(); return; }
-    await says(['不想再看那面鏡子了。']); return;
+    if (!F.mirror1) { F.mirror1 = true; await says([_L('洗手台的鏡子。'), _L('……咦？'), _L('鏡子裡的我，比我晚一拍才眨眼。')]); sfx.sting(); return; }
+    await says([_L('不想再看那面鏡子了。')]); return;
   }
-  I.mirror = true; sfx.pick(); updateHUD(); toast('得到【鏡子碎片】');
-  await says(['把鏡子從牆上拆下來……', '鏡子拆下來了。', '可是，牆上的鏡框裡，鏡中的咪醬還站在那裡——', '對我揮了揮手。']);
+  I.mirror = true; sfx.pick(); updateHUD(); toast(_L('得到【鏡子碎片】'));
+  await says([_L('把鏡子從牆上拆下來……'), _L('鏡子拆下來了。'), _L('可是，牆上的鏡框裡，鏡中的咪醬還站在那裡——'), _L('對我揮了揮手。')]);
   sfx.sting(); shake = 6;
   return ch2bCheck('mirror');
 }
@@ -186,14 +186,14 @@ async function mirror() {
 /* ---------- 電視 ---------- */
 async function tvOff(o) {
   const tv = TVS[o.i];
-  if (tv.state === 'off') { await says(['插頭拔掉了。螢幕黑漆漆的，映著自己的臉。']); return; }
-  if (tv.state !== 'on') { await says(['舊型的映像管電視，沒有開。']); return; }
+  if (tv.state === 'off') { await says([_L('插頭拔掉了。螢幕黑漆漆的，映著自己的臉。')]); return; }
+  if (tv.state !== 'on') { await says([_L('舊型的映像管電視，沒有開。')]); return; }
   tv.state = 'off'; tv.t = 0; sfx.click(); noise(.15, .1, 'lowpass', 600);
-  G.flags.tvOff = (G.flags.tvOff || 0) + 1; toast(`拔掉插頭（${G.flags.tvOff} / 6）`);
+  G.flags.tvOff = (G.flags.tvOff || 0) + 1; toast(_L`拔掉插頭（${G.flags.tvOff} / 6）`);
   if (G.flags.tvOff >= 6) {
     G.flags.tvDone = true; DOORS['35,9'].locked = false; sfx.door();
-    await says(['最後一台電視也暗了。', '……走廊盡頭傳來「喀」的一聲。廣播室的門開了。']);
-    setObj('去廣播室看看'); saveCP('tvs');
+    await says([_L('最後一台電視也暗了。'), _L('……走廊盡頭傳來「喀」的一聲。廣播室的門開了。')]);
+    setObj(_L('去廣播室看看')); saveCP('tvs');
   } else G.tvNext = G.t + 1.2;
 }
 function tvUpdate(dt) {
@@ -205,7 +205,7 @@ function tvUpdate(dt) {
     cur.t += dt;
     if (cur.t > 7) {   // 她爬出來了
       cur.t = 0; G.tvScare = { x: cur.o.x + .5, y: cur.o.y + 1.4, t: NOW() };
-      sfx.sting(); shake = 10; damage(1); setPose('hurt', .8); toast('她從電視裡爬出來了！');
+      sfx.sting(); shake = 10; damage(1); setPose('hurt', .8); toast(_L('她從電視裡爬出來了！'));
     }
   }
   TVS.forEach((t, i) => { const l = LIGHTS.find(l => l.id === 'tv' + i); if (l) l.r = t.state === 'on' ? 2.4 + Math.sin(G.t * 30) * .2 : 0; });
@@ -235,11 +235,11 @@ function amUpdate(dt) {
   AM.moving = false;
   if (['off', 'frozen'].includes(AM.state)) return;
   if (AM.state === 'toStand') {
-    if (walker(AM, 20.5, 3.5, 1.6, dt)) { AM.state = 'frozen'; AM.dir = 4; if (!G.flags.page5Drop) { G.flags.page5Drop = true; item('page5', 20, 4, '交換日記'); toast('……人體模型的胸腔裡，夾著一張紙。'); } }
+    if (walker(AM, 20.5, 3.5, 1.6, dt)) { AM.state = 'frozen'; AM.dir = 4; if (!G.flags.page5Drop) { G.flags.page5Drop = true; item('page5', 20, 4, _L('交換日記')); toast(_L('……人體模型的胸腔裡，夾著一張紙。')); } }
     return;
   }
   const sees = amSees();
-  if (sees && AM.state !== 'chase') { AM.state = 'chase'; AM.path = null; sfx.sting(); toast('人體模型轉過頭來了！'); }
+  if (sees && AM.state !== 'chase') { AM.state = 'chase'; AM.path = null; sfx.sting(); toast(_L('人體模型轉過頭來了！')); }
   for (const n of G.noises) if (G.t - n.t < .05 && dist(n.x, n.y, AM.x, AM.y) < n.r && AM.state !== 'chase') amAlarm(n.x, n.y);
   switch (AM.state) {
     case 'patrol': { const w = AM_PATROL[AM.wp]; if (walker(AM, w[0], w[1], 1.3, dt)) AM.wp = (AM.wp + 1) % AM_PATROL.length; break; }
@@ -258,7 +258,7 @@ async function amHit() {
   AM.state = 'pause'; AM.timer = 2.5; AM.path = null;
   sfx.snip(); shake = 10; damage(1); setPose('hurt', .8); P.inv = 2;
   const [fx, fy] = DIRV[AM.dir]; for (let k = 0; k < 8; k++) moveEnt(P, fx * .15, fy * .15);
-  await says(['冰冷的塑膠手指抓住了肩膀——解剖刀劃過袖子。', '「……ない。……ない。」（沒有了……沒有了……）', '（掙脫了！快跑！）']);
+  await says([_L('冰冷的塑膠手指抓住了肩膀——解剖刀劃過袖子。'), _L('「……ない。……ない。」（沒有了……沒有了……）'), _L('（掙脫了！快跑！）')]);
 }
 
 /* ---------- 撿道具：器官、日記 ---------- */
@@ -267,8 +267,8 @@ takeItem = async function (it) {
   if (G.scene !== 3) return _takeItem2(it);
   if (it.id.startsWith('organ_')) {
     it.taken = true; sfx.pick(); (G.inv.organs = G.inv.organs || []).push(it.id); updateHUD();
-    toast(`得到【${it.name}】（${G.inv.organs.length} / 3）`);
-    if (G.inv.organs.length === 1) await says(['塑膠做的器官模型，背面寫著「生物教室」。', '……那個在走廊上晃的人體模型，胸口是空的。']);
+    toast(_L`得到【${it.name}】（${G.inv.organs.length} / 3）`);
+    if (G.inv.organs.length === 1) await says([_L('塑膠做的器官模型，背面寫著「生物教室」。'), _L('……那個在走廊上晃的人體模型，胸口是空的。')]);
     return;
   }
   const m = it.id.match(/^page(\d)$/);
@@ -278,9 +278,9 @@ takeItem = async function (it) {
 
 /* ---------- 包一層：把場景 3 接進 ch2.js 的掛勾 ---------- */
 TRIG.push(
-  { scene: 3, id: 'avIn', when: () => in3('av', P.x, P.y), run: async () => { G.flags.tvStart = true; G.tvNext = G.t + 1; await says(['視聽教室。六台舊電視排成兩排。', '……其中一台，自己亮了起來。螢幕裡的雪花，好像有什麼在動。', '（在她爬出來之前，拔掉插頭！）']); } },
-  { scene: 3, id: 'musicIn', when: () => in3('music', P.x, P.y), run: async () => { await says(['音樂教室。牆上掛著作曲家的肖像。', '……肖像的眼睛，好像會發光。被看到的話，一定會出事。', '（眼睛發光的時候，躲到窗簾後面）']); } },
-  { scene: 3, id: 'wcIn', when: () => in3('wc', P.x, P.y), run: async () => { await says(['三樓的女廁。燈管一閃一閃的。', '四間隔間，門都關著。']); } },
+  { scene: 3, id: 'avIn', when: () => in3('av', P.x, P.y), run: async () => { G.flags.tvStart = true; G.tvNext = G.t + 1; await says([_L('視聽教室。六台舊電視排成兩排。'), _L('……其中一台，自己亮了起來。螢幕裡的雪花，好像有什麼在動。'), _L('（在她爬出來之前，拔掉插頭！）')]); } },
+  { scene: 3, id: 'musicIn', when: () => in3('music', P.x, P.y), run: async () => { await says([_L('音樂教室。牆上掛著作曲家的肖像。'), _L('……肖像的眼睛，好像會發光。被看到的話，一定會出事。'), _L('（眼睛發光的時候，躲到窗簾後面）')]); } },
+  { scene: 3, id: 'wcIn', when: () => in3('wc', P.x, P.y), run: async () => { await says([_L('三樓的女廁。燈管一閃一閃的。'), _L('四間隔間，門都關著。')]); } },
 );
 const eyesOn = () => G.scene === 3 && !G.flags.piano && (G.t % 9) > 6;   // 每 9 秒有 3 秒眼睛發光
 const _sceneUpdate = sceneUpdate;
@@ -289,7 +289,7 @@ sceneUpdate = function (dt) {
   amUpdate(dt); tvUpdate(dt);
   const eyes = LIGHTS.find(l => l.id === 'eyes'); if (eyes) eyes.r = eyesOn() ? 2.2 : 0;
   if (eyesOn() && in3('music', P.x, P.y) && !P.hidden && G.t - (G.flags.seenT || -9) > 4) {
-    G.flags.seenT = G.t; sfx.sting(); shake = 5; toast('肖像的眼睛盯住你了！'); amAlarm(7.5, 10.5);
+    G.flags.seenT = G.t; sfx.sting(); shake = 5; toast(_L('肖像的眼睛盯住你了！')); amAlarm(7.5, 10.5);
   }
 };
 const _sceneAction = sceneAction;
@@ -306,8 +306,8 @@ const _sceneHUD = sceneHUD;
 sceneHUD = function (s) {
   _sceneHUD(s);
   const I = G.inv;
-  if (I.organs && I.organs.length) s.push(`<div class="s">器官模型<em>${I.organs.length} / 3</em></div>`);
-  if (I.mirror) s.push(`<div class="s">鏡子碎片</div>`);
+  if (I.organs && I.organs.length) s.push(_L`<div class="s">器官模型<em>${I.organs.length} / 3</em></div>`);
+  if (I.mirror) s.push(_L`<div class="s">鏡子碎片</div>`);
 };
 const _sceneOnLoad = sceneOnLoad;
 sceneOnLoad = function (cp) {
@@ -316,7 +316,7 @@ sceneOnLoad = function (cp) {
   TVS.forEach(t => { t.state = 'idle'; t.t = 0; });
   for (let i = 0; i < (G.flags.tvOff || 0); i++) TVS[i].state = 'off';
   if (G.flags.tvDone) DOORS['35,9'].locked = false;
-  for (const [f, id, x, y] of [['piano', 'page4', 6, 3], ['page5Drop', 'page5', 20, 4]]) if (G.flags[f] && !ITEMS.some(i => i.id === id)) { item(id, x, y, '交換日記'); if ((G.inv.pages || []).includes(+id[4])) ITEMS.at(-1).taken = true; }
+  for (const [f, id, x, y] of [['piano', 'page4', 6, 3], ['page5Drop', 'page5', 20, 4]]) if (G.flags[f] && !ITEMS.some(i => i.id === id)) { item(id, x, y, _L('交換日記')); if ((G.inv.pages || []).includes(+id[4])) ITEMS.at(-1).taken = true; }
 };
 // 第二章（上）結束 → 直接上樓
 ch2End = function () { return startCh2b(); };

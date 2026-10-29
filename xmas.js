@@ -30,7 +30,7 @@ function xmDecorate() {
   if (!G.flags['xmg' + G.scene]) {
     const far = c.filter(([x, y]) => dist(x + .5, y + .5, P.x, P.y) > 9 && !OBJAT[x + ',' + y]);
     const p = far[Math.floor(r() * far.length)];
-    if (p) { const o = obj('xm_gift', p[0], p[1], { solid: false, xm: 1, act: 'xmgift', label: '打開聖誕禮物', col: ['#c62828', '#2e7d32', '#1565c0'][G.scene % 3] }); OBJAT[p[0] + ',' + p[1]] = o; }
+    if (p) { const o = obj('xm_gift', p[0], p[1], { solid: false, xm: 1, act: 'xmgift', label: _L('打開聖誕禮物'), col: ['#c62828', '#2e7d32', '#1565c0'][G.scene % 3] }); OBJAT[p[0] + ',' + p[1]] = o; }
   }
 }
 { const _u = update; update = function (dt) {
@@ -71,9 +71,9 @@ objAction = (_o => async function (o) {
   I[gift] = (I[gift] || 0) + 1; G.flags['xmg' + n] = 1; sfx.pick();
   const got = xmGot(); if (!got.includes(n)) { got.push(n); if (!TEST || TEST === 'xmas') try { localStorage.setItem(XM_KEY, JSON.stringify(got)); } catch (e) { } }
   const i = OBJ.indexOf(o); if (i >= 0) OBJ.splice(i, 1); delete OBJAT[o.x + ',' + o.y];
-  const nm = { bandage: '繃帶', drink: '能量飲料', charm: '護身符' }[gift];
-  await says([['', '包裝紙上寫著：「給今晚還留在學校的妳。」'], ['', `打開一看，是【${nm}】。`]]);
-  toast(`🎁 聖誕禮物 ${got.length} / 7`); if (got.length === 7) setTimeout(() => toast('🎄 七個禮物都找到了！Merry Christmas！'), 2400);
+  const nm = { bandage: _L('繃帶'), drink: _L('能量飲料'), charm: _L('護身符') }[gift];
+  await says([['', _L('包裝紙上寫著：「給今晚還留在學校的妳。」')], ['', _L`打開一看，是【${nm}】。`]]);
+  toast(_L`🎁 聖誕禮物 ${got.length} / 7`); if (got.length === 7) setTimeout(() => toast(_L('🎄 七個禮物都找到了！Merry Christmas！')), 2400);
   updateHUD();
 })(objAction);
 /* ---------- 限定怪談「紅色背心」：躲起來超過 3 秒時，有一定機率被問 ---------- */
@@ -85,19 +85,19 @@ function xmTick() {
 }
 async function xmVest() {
   sfx.sting();
-  const r = await choose('？？？', '躲著的地方，旁邊傳來很輕的聲音：「……要不要，穿上紅色的背心？」', ['要', '不要', '（屏住呼吸，不出聲）'], 6000);
-  if (r === 0) { damage(1); shake = 12; await says([['', '背上突然一陣溫熱，濕濕的，一路往下滲——'], ['', '……是血。像一件紅色的背心。']]); }
-  else if (r === 1) { await says([['？？？', '「……是嗎。」'], ['', '聲音嘆了一口氣，慢慢走遠了。']]); }
-  else { G.inv.charm = (G.inv.charm || 0) + 1; updateHUD(); await says([['', '……等了很久，聲音沒有再出現。'], ['', '腳邊多了一個用紅布包著的護身符。']]); }
+  const r = await choose(_L('？？？'), _L('躲著的地方，旁邊傳來很輕的聲音：「……要不要，穿上紅色的背心？」'), [_L('要'), _L('不要'), _L('（屏住呼吸，不出聲）')], 6000);
+  if (r === 0) { damage(1); shake = 12; await says([['', _L('背上突然一陣溫熱，濕濕的，一路往下滲——')], ['', _L('……是血。像一件紅色的背心。')]]); }
+  else if (r === 1) { await says([[_L('？？？'), _L('「……是嗎。」')], ['', _L('聲音嘆了一口氣，慢慢走遠了。')]]); }
+  else { G.inv.charm = (G.inv.charm || 0) + 1; updateHUD(); await says([['', _L('……等了很久，聲音沒有再出現。')], ['', _L('腳邊多了一個用紅布包著的護身符。')]]); }
   G.flags.xmVestSeen = 1;
 }
 if (XM.on) {
-  if (typeof LORE === 'object') LORE.push(['xmvest', '紅色背心', '聖誕夜，躲起來的時候會有聲音問妳：「要不要穿紅色背心？」', '回答「要」的人，背上會被染紅。最好什麼都不要說。', () => G.flags.xmVestSeen]);
+  if (typeof LORE === 'object') LORE.push(['xmvest', _L('紅色背心'), _L('聖誕夜，躲起來的時候會有聲音問妳：「要不要穿紅色背心？」'), _L('回答「要」的人，背上會被染紅。最好什麼都不要說。'), () => G.flags.xmVestSeen]);
   const st = document.createElement('style');
   st.textContent = `#xmBadge{display:inline-block;margin-top:calc(var(--u)*4);padding:calc(var(--u)*2) calc(var(--u)*10);border:1px solid #c62828;color:#ffcdd2;background:rgba(40,4,4,.7);font-size:calc(var(--u)*9);letter-spacing:.15em;text-shadow:0 0 8px rgba(255,80,80,.7)}`;
   document.head.appendChild(st);
-  const sub = $('#title .sub'); if (sub) sub.insertAdjacentHTML('afterend', '<div id="xmBadge">🎄 聖誕夜限定　每一章都藏著一個禮物</div>');
-  setTimeout(() => { if (!TEST) toast('🎄 聖誕夜限定：校園下雪了，每一章都藏著一個禮物'); }, 2500);
+  const sub = $('#title .sub'); if (sub) sub.insertAdjacentHTML('afterend', _L('<div id="xmBadge">🎄 聖誕夜限定　每一章都藏著一個禮物</div>'));
+  setTimeout(() => { if (!TEST) toast(_L('🎄 聖誕夜限定：校園下雪了，每一章都藏著一個禮物')); }, 2500);
 }
 /* ---------- 測試（?test=xmas） ---------- */
 async function testXmas() {

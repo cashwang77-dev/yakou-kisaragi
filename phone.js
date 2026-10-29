@@ -19,7 +19,7 @@ const phSeen = () => PH.seen[G.scene] || (PH.seen[G.scene] = new Set());
 #flashFx{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:29;transition:opacity .45s}`;
   document.head.appendChild(st);
   const d = document.createElement('div'); d.id = 'phoneApp'; d.className = 'hide';
-  d.innerHTML = `<div class="bar"><span>4:44</span><span id="phBatt"></span></div><canvas id="phMap" width="360" height="300"></canvas>
+  d.innerHTML = _L`<div class="bar"><span>4:44</span><span id="phBatt"></span></div><canvas id="phMap" width="360" height="300"></canvas>
 <div class="btns"><button data-a="photo">📷 拍照</button><button data-a="silent">🔔 鈴聲</button><button data-a="close">收起</button></div>`;
   document.body.appendChild(d);
   const f = document.createElement('div'); f.id = 'flashFx'; document.body.appendChild(f);
@@ -28,7 +28,7 @@ const phSeen = () => PH.seen[G.scene] || (PH.seen[G.scene] = new Set());
 })();
 function phoneBtn(a) {
   if (a === 'photo') phonePhoto();
-  else if (a === 'silent') { PH.silent = !PH.silent; sfx.click(); toast(PH.silent ? '切成靜音（來電只會震動）' : '鈴聲開啟'); }
+  else if (a === 'silent') { PH.silent = !PH.silent; sfx.click(); toast(PH.silent ? _L('切成靜音（來電只會震動）') : _L('鈴聲開啟')); }
   else if (a === 'close') phoneToggle(false);
   phoneUI();
 }
@@ -36,11 +36,11 @@ function phoneUI() {
   const d = $('#phoneApp'); d.classList.toggle('hide', !PH.open);
   $('#phBatt').textContent = `🔋 ${Math.round(PH.batt)}%`;
   const [bp, bs] = d.querySelectorAll('button');
-  bp.disabled = PH.batt < 20 || PH.flashCD > G.t; bs.classList.toggle('on', PH.silent); bs.textContent = PH.silent ? '🔕 靜音' : '🔔 鈴聲';
+  bp.disabled = PH.batt < 20 || PH.flashCD > G.t; bs.classList.toggle('on', PH.silent); bs.textContent = PH.silent ? _L('🔕 靜音') : _L('🔔 鈴聲');
 }
 function phoneToggle(on = !PH.open) {
-  if (!G.inv.phone) { toast('手機不在身上'); return; }
-  if (on && PH.batt <= 0) { toast('手機沒電了（到存檔的地方充電）'); return; }
+  if (!G.inv.phone) { toast(_L('手機不在身上')); return; }
+  if (on && PH.batt <= 0) { toast(_L('手機沒電了（到存檔的地方充電）')); return; }
   PH.open = on; sfx.click(); phoneUI(); updateHUD();
 }
 
@@ -64,8 +64,8 @@ function phoneMap() {
 const PHOTO_SPOTS = [];   // {scene, x, y, id, lines}：對著這裡拍照會照出東西（各章自己 push）
 async function phonePhoto() {
   if (!G.inv.phone || G.mode !== 'play' || G.lock || P.hidden) return;
-  if (PH.batt < 20) { toast('電量不足，沒辦法開閃光燈'); return; }
-  if (PH.flashCD > G.t) { toast('閃光燈還在充電'); return; }
+  if (PH.batt < 20) { toast(_L('電量不足，沒辦法開閃光燈')); return; }
+  if (PH.flashCD > G.t) { toast(_L('閃光燈還在充電')); return; }
   PH.batt -= 20; PH.flashCD = G.t + 8; sfx.click(); tone(1800, .08, 'square', .05);
   const fx = $('#flashFx'); fx.style.transition = 'none'; fx.style.opacity = .85; requestAnimationFrame(() => { fx.style.transition = 'opacity .5s'; fx.style.opacity = 0; });
   addNoise(P.x, P.y, 2.5);
@@ -73,10 +73,10 @@ async function phonePhoto() {
   const inFront = (x, y, r) => { const vx = x - P.x, vy = y - P.y, d = Math.hypot(vx, vy); return d < r && (d < .6 || (vx * dx + vy * dy) / d > .55) && los(P.x, P.y, x, y); };
   for (const t of threats()) if (inFront(t.e.x, t.e.y, 4.5)) { t.stun(2.5 * DIFF.stun); hit++; }
   phoneUI();
-  if (hit) { toast('閃光正面打在牠臉上——牠僵住了！'); return; }
+  if (hit) { toast(_L('閃光正面打在牠臉上——牠僵住了！')); return; }
   const sp = PHOTO_SPOTS.find(s => s.scene === G.scene && !G.flags['photo_' + s.id] && inFront(s.x, s.y, 4));
   if (sp) { G.flags['photo_' + sp.id] = 1; sfx.sting(); await says(sp.lines); if (sp.then) sp.then(); return; }
-  toast('喀嚓。照片裡只有一片黑。');
+  toast(_L('喀嚓。照片裡只有一片黑。'));
 }
 
 /* ---------- 接進引擎 ---------- */
@@ -89,19 +89,19 @@ async function phonePhoto() {
     if (G.mode !== 'play') { if (PH.open) phoneToggle(false); return; }
     const seen = phSeen(), r = P.light ? 5 : 3;
     for (let y = Math.floor(P.y - r); y <= P.y + r; y++) for (let x = Math.floor(P.x - r); x <= P.x + r; x++) if (x >= 0 && y >= 0 && x < W && y < H && dist(x + .5, y + .5, P.x, P.y) <= r) seen.add(y * W + x);
-    if (PH.open) { PH.batt = Math.max(0, PH.batt - .35 * dt); if (PH.batt <= 0) { phoneToggle(false); toast('手機沒電了'); } else phoneMap(); }
+    if (PH.open) { PH.batt = Math.max(0, PH.batt - .35 * dt); if (PH.batt <= 0) { phoneToggle(false); toast(_L('手機沒電了')); } else phoneMap(); }
     if (PH.open && Math.floor(G.t * 2) !== PH.tick) { PH.tick = Math.floor(G.t * 2); phoneUI(); }
   }; }
 { const _s = saveCP; saveCP = function (...a) { if (PH.batt < 70) { PH.batt = 70; } return _s(...a); }; }   // 存檔點順便充電
 { const _c = phoneCall; phoneCall = function (lines, num) {   // 沒有靜音：鈴聲會把附近的鬼引過來
-    if (G.mode === 'play' && G.inv.phone) { if (PH.silent) toast('口袋裡的手機在震動……'); else addNoise(P.x, P.y, 7); }
+    if (G.mode === 'play' && G.inv.phone) { if (PH.silent) toast(_L('口袋裡的手機在震動……')); else addNoise(P.x, P.y, 7); }
     return _c(lines, num); }; }
 { const _h = updateHUD; updateHUD = function () {
     _h();
     if (!G.inv.phone) return;
-    const inv = $('#inv'), old = [...inv.children].find(e => e.textContent === '手機');
+    const inv = $('#inv'), old = [...inv.children].find(e => e.textContent === _L('手機'));
     const el = document.createElement('div'); el.className = 'tap s' + (PH.open ? ' on' : '');
-    el.innerHTML = `手機 ${Math.round(PH.batt)}%<em>${isTouch ? '點按打開' : 'P 打開・Q 拍照'}</em>`;
+    el.innerHTML = _L`手機 ${Math.round(PH.batt)}%<em>${isTouch ? _L('點按打開') : _L('P 打開・Q 拍照')}</em>`;
     el.addEventListener('pointerdown', ev => { ev.preventDefault(); press('phone'); });
     old ? old.replaceWith(el) : inv.appendChild(el);
   }; }
