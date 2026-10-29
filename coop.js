@@ -65,7 +65,7 @@ const coopMe = () => ({ x: +P.x.toFixed(2), y: +P.y.toFixed(2), d: P.dir, m: P.m
   $('#coopHost').onclick = () => coopNet(true);
   $('#coopJoinB').onclick = () => coopNet(false);
   $('#coopStart').onclick = () => { if (Object.keys(COOP.P).length < 2) return; coopStartHost(); };
-  $('#coopInv').onclick = async () => { const u = location.origin + location.pathname + '?join=' + $('#coopCode').textContent; try { await navigator.clipboard.writeText(`來玩《夜校・如月》多人合作！房號 ${$('#coopCode').textContent}：${u}`); $('#coopInv').textContent = '✓ 已複製，貼給朋友'; } catch (e) { $('#coopMsgP').textContent = u; } };
+  $('#coopInv').onclick = async () => { const u = BLOG + '?join=' + $('#coopCode').textContent; /* 邀請連結走部落格，文章裡的小程式會把房號轉給遊戲 */ try { await navigator.clipboard.writeText(`來玩《夜校・如月》多人合作！房號 ${$('#coopCode').textContent}：${u}`); $('#coopInv').textContent = '✓ 已複製，貼給朋友'; } catch (e) { $('#coopMsgP').textContent = u; } };
   const jc = new URLSearchParams(location.search).get('join'); if (jc) { $('#coopJoin').value = jc.toUpperCase().slice(0, 4); setTimeout(() => { el.classList.remove('hide'); try { $('#coopName').value = localStorage.getItem('yko_name') || ''; } catch (e) { } $('#coopMsgP').textContent = '朋友邀請你加入！輸入名字後按「加入」'; }, 600); }
   $('#coopMsg').addEventListener('keydown', e => { e.stopPropagation(); if (e.key !== 'Enter') return; const s = e.target.value.trim(); e.target.value = ''; e.target.blur(); if (!s) return; if (COOP.host) coopChat(COOP.P[COOP.id].n, s, true); else coopSend({ t: 'chat', s }); });
 })();
