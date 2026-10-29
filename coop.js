@@ -17,7 +17,9 @@ const coopMe = () => ({ x: +P.x.toFixed(2), y: +P.y.toFixed(2), d: P.dir, m: P.m
 /* ---------- 大廳介面 ---------- */
 (() => {
   const st = document.createElement('style');
-  st.textContent = `#coopP{z-index:13}#coopP .hb{width:min(92vw,calc(var(--u)*380));text-align:center}
+  st.textContent = `#coopP{z-index:13;overflow-y:auto;touch-action:pan-y;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;justify-content:flex-start;padding:calc(var(--u)*10) 0}
+#coopP .hb{width:min(92vw,calc(var(--u)*380));text-align:center;margin:auto 0}#coopMsgP{word-break:break-all}
+#coopB .btns{flex-wrap:wrap;justify-content:center}#coopStart{font-weight:700;color:#ffd36a;border-color:#ffd36a}
 #coopP h2{font-family:"Noto Serif TC",serif;letter-spacing:.2em;font-size:calc(var(--u)*16);margin:0 0 calc(var(--u)*4)}
 #coopP p{color:var(--dim);font-size:calc(var(--u)*9);margin:calc(var(--u)*4) 0}
 #coopP input{font:inherit;font-size:calc(var(--u)*11);padding:calc(var(--u)*4);width:100%;background:#0c0a0d;color:var(--ink);border:1px solid #6b655c;margin:calc(var(--u)*3) 0;touch-action:manipulation}
@@ -30,7 +32,7 @@ const coopMe = () => ({ x: +P.x.toFixed(2), y: +P.y.toFixed(2), d: P.dir, m: P.m
   el.innerHTML = `<div class="hb"><h2>多人合作（測試版）</h2><p>2～4 人。每場隨機場景、隨機怪物。<br>一起找到 3 把鑰匙，再回到出發的地方。被抓會倒地——隊友靠近 2 秒可以扶起來。</p>
 <div id="coopA"><input id="coopName" placeholder="你的名字" maxlength="8"><div class="btns"><button id="coopHost">建立房間</button></div>
 <input id="coopJoin" placeholder="房號（4 碼）" maxlength="4" style="text-transform:uppercase"><div class="btns"><button id="coopJoinB">加入</button><button id="coopBack">返回</button></div></div>
-<div id="coopB" class="hide"><p>把房號告訴朋友，用同一個網址按「多人合作」→「加入」</p><div id="coopCode"></div><div class="btns"><button id="coopInv">📋 複製邀請連結</button></div><p id="coopWho"></p><div class="btns"><button id="coopStart">開始</button></div></div>
+<div id="coopB" class="hide"><p>把房號告訴朋友，用同一個網址按「多人合作」→「加入」</p><div id="coopCode"></div><p id="coopWho"></p><div class="btns"><button id="coopInv">📋 複製邀請連結</button><button id="coopStart">▶ 立刻開始</button></div></div>
 <p id="coopMsgP"></p></div>`;
   document.getElementById('wrap').appendChild(el);
   const ch = document.createElement('div'); ch.id = 'coopChat'; ch.className = 'hide'; ch.innerHTML = '<div id="coopLog"></div><input id="coopMsg" placeholder="Enter 聊天" maxlength="50">';
