@@ -163,7 +163,7 @@ function ngTick(dt) {
 #end .xpl{display:flex;gap:calc(var(--u)*8);justify-content:center;flex-wrap:wrap}
 #end .xpl a{display:grid;grid-template-columns:calc(var(--u)*64) 1fr;grid-template-rows:auto auto;column-gap:calc(var(--u)*6);align-items:center;width:calc(var(--u)*190);background:rgba(0,0,0,.65);border:1px solid #6b655c;color:var(--ink);text-decoration:none;text-align:left;font-size:calc(var(--u)*7.5);line-height:1.35;padding:calc(var(--u)*3)}
 #end .xpl a:hover{border-color:var(--red)}
-#end .xpyt{display:inline-block;margin-top:calc(var(--u)*5);padding:calc(var(--u)*2.5) calc(var(--u)*8);background:#c4302b;color:#fff;text-decoration:none;font-size:calc(var(--u)*7.5);border-radius:calc(var(--u)*3)}
+#end .xpyt{display:inline-block;margin-left:calc(var(--u)*4);padding:calc(var(--u)*1) calc(var(--u)*5);background:#c4302b;color:#fff;text-decoration:none;letter-spacing:.05em;border-radius:calc(var(--u)*2)}
 #end .xpyt:hover{background:#e0403a}
 #end .xpl img{grid-row:1/3;width:100%;aspect-ratio:1.91;object-fit:cover}
 #end .xpl b{font-family:"Noto Serif TC",serif;font-size:calc(var(--u)*9.5);color:#efe8dc;align-self:end}
@@ -259,9 +259,9 @@ finaleEnd = (_f => async function (k) {
 })(finaleEnd);
 
 /* ---------- 其他遊戲（三款互相導流，連部落格） ---------- */
-const XPROMO = `<div class="xp"><small>Cash城的其他免費遊戲</small><div class="xpl">
+const XPROMO = `<div class="xp"><small>Cash城的其他免費遊戲　<a class="xpyt" href="https://www.youtube.com/channel/UC8a84AoYc1exBd_8w69dlog?sub_confirmation=1" target="_blank" rel="noopener">▶ YouTube 怪談短影片</a></small><div class="xpl">
 <a href="https://cashkingw.blogspot.com/p/cash.html" target="_top" rel="noopener"><img src="assets/x_midnight.jpg" alt=""><b>Cash的午夜檔案室</b><span>台灣法庭推理・找出證詞的矛盾</span></a>
-<a href="https://cashkingw.blogspot.com/2026/10/_69.html" target="_top" rel="noopener"><img src="assets/x_sekigahara.jpg" alt=""><b>關原決戰</b><span>六角格戰國戰略・東西軍任選</span></a></div><a class="xpyt" href="https://www.youtube.com/channel/UC8a84AoYc1exBd_8w69dlog?sub_confirmation=1" target="_blank" rel="noopener">▶ 怪談短影片・訂閱 YouTube 頻道「Cash」</a></div>`;
+<a href="https://cashkingw.blogspot.com/2026/10/_69.html" target="_top" rel="noopener"><img src="assets/x_sekigahara.jpg" alt=""><b>關原決戰</b><span>六角格戰國戰略・東西軍任選</span></a></div></div>`;
 /* ---------- 怪談筆記：加上遺落物與隱藏結局進度 ---------- */
 loreOpen = (_lo => function () {
   _lo();
