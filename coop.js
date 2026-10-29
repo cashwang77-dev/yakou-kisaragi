@@ -113,7 +113,7 @@ async function coopNet(host, tries) {
     const pr = COOP.peer = new Peer(COOP_PEER_OPT); coopKeepAlive(pr); let done = false, joined = false;
     const retry = why => { if (done) return; done = true; if (tries < 2) { msg(why + _L`——自動重試（${tries + 1}/2）……`); setTimeout(() => { if (COOP.peer === pr) coopNet(false, tries + 1); }, 2500); } else msg(why); };
     pr.on('open', id => {
-      COOP.id = id; const c = COOP.hc = pr.connect('yakou-coop-' + code, { reliable: true });
+      COOP.id = id; const c = COOP.hc = pr.connect('yakou-coop-' + code, { reliable: true, serialization: 'raw' });
       c.on('open', () => { done = joined = true; c.send(JSON.stringify({ t: 'hi', n: COOP.name, lk: COOP.look || 0 })); $('#coopA').classList.add('hide'); msg(_L('已加入，等房主開始……')); });
       c.on('data', raw => coopClientMsg(JSON.parse(raw)));
       c.on('error', e => retry(coopErrText({ type: 'webrtc' })));
