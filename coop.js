@@ -11,6 +11,20 @@ const COOP_SCENES = {
 };
 const COOP_NAME = { kuchi: '裂口女', am: '人體模型', hk: '妃姬子' };
 const COOP_COLS = ['#ff8a80', '#82b1ff', '#a5d6a7', '#ffe082'];
+/* 外觀：咪醬的 sprite 換髮色／制服色（tools/coop_looks.py 產生 assets/<sheet>_v1~3.png） */
+const COOP_LOOKS = ['深藍水手服', '茶髮・酒紅', '黑髮・墨綠', '銀髮・紫'];
+const LOOK_ROWS = { mi: 9, mi_crouch: 4, mi_light: 1, mi_down: 1, mi_hurt: 2, mi_throw: 2 }, LOOK_IMG = {};
+function coopLookImg(lk, k) {
+  const base = (COOP.imgBak && COOP.imgBak[k]) || IMG[k];
+  if (!lk) return base;
+  const id = k + '_v' + lk; let im = LOOK_IMG[id];
+  if (!im) { im = LOOK_IMG[id] = new Image(); im.rows = LOOK_ROWS[k]; im.src = 'assets/' + id + '.png'; }
+  return im.complete && im.naturalWidth ? im : base;
+}
+function coopWear(on) {   // 開局：把自己的 sprite 換成選的外觀；結束換回來
+  if (on) { if (COOP.imgBak) return; COOP.imgBak = {}; for (const k in LOOK_ROWS) { COOP.imgBak[k] = IMG[k]; const im = coopLookImg(COOP.look, k); if (im !== IMG[k]) IMG[k] = im; } }
+  else if (COOP.imgBak) { Object.assign(IMG, COOP.imgBak); COOP.imgBak = null; }
+}
 const coopSend = o => { const s = JSON.stringify(o); if (COOP.host) COOP.conns.forEach(c => c.open && c.send(s)); else if (COOP.hc && COOP.hc.open) COOP.hc.send(s); };
 const coopMe = () => ({ x: +P.x.toFixed(2), y: +P.y.toFixed(2), d: P.dir, m: P.moving ? 1 : 0, r: P.run ? 1 : 0, f: P.frame || 0, cr: P.crouch ? 1 : 0, li: P.light ? 1 : 0, hd: P.hidden ? P.hidden.x + ',' + P.hidden.y : null });
 
@@ -24,25 +38,33 @@ const coopMe = () => ({ x: +P.x.toFixed(2), y: +P.y.toFixed(2), d: P.dir, m: P.m
 #coopP p{color:var(--dim);font-size:calc(var(--u)*9);margin:calc(var(--u)*4) 0}
 #coopP input{font:inherit;font-size:calc(var(--u)*11);padding:calc(var(--u)*4);width:100%;background:#0c0a0d;color:var(--ink);border:1px solid #6b655c;margin:calc(var(--u)*3) 0;touch-action:manipulation}
 #coopCode{font:700 calc(var(--u)*24)/1 monospace;letter-spacing:.3em;color:#ffd36a;margin:calc(var(--u)*6) 0}
-#coopChat{position:absolute;left:calc(var(--u)*8);bottom:calc(var(--u)*48);width:min(50%,calc(var(--u)*240));z-index:9;pointer-events:none}
+#coopChat{position:absolute;left:50%;transform:translateX(-50%);top:calc(var(--u)*6);width:min(46%,calc(var(--u)*250));z-index:9;pointer-events:none}
+#coopBtns{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--u)*42);z-index:9;pointer-events:auto;display:flex;gap:calc(var(--u)*6)}
+#coopLook{display:flex;justify-content:center;gap:calc(var(--u)*5);margin:calc(var(--u)*3) 0}#coopLook button{padding:calc(var(--u)*2);border:1px solid #514c47;background:#0c0a0d;color:var(--dim);font-size:calc(var(--u)*7.5);display:flex;flex-direction:column;align-items:center;touch-action:manipulation}
+#coopLook button.on{border-color:#ffd36a;color:#ffd36a}#coopLook i{display:block;width:calc(var(--u)*30);height:calc(var(--u)*37);background-size:800% 900%;background-position:57.14% 0;image-rendering:pixelated}
+#coopStart:disabled{opacity:.45;color:var(--dim);border-color:#514c47}#coopWho{color:var(--ink)!important;font-size:calc(var(--u)*10)!important}
 #coopLog div{font-size:calc(var(--u)*8.5);text-shadow:0 0 4px #000;animation:cfade 10s forwards}@keyframes cfade{85%{opacity:1}100%{opacity:0}}
 #coopMsg{pointer-events:auto;width:100%;font:inherit;font-size:calc(var(--u)*9);background:rgba(0,0,0,.55);color:var(--ink);border:1px solid #514c47;padding:calc(var(--u)*2) calc(var(--u)*4)}`;
   document.head.appendChild(st);
   const el = document.createElement('div'); el.id = 'coopP'; el.className = 'ui full hide';
   el.innerHTML = `<div class="hb"><h2>多人合作（測試版）</h2><p>2～4 人。每場隨機場景、隨機怪物。<br>一起找到 3 把鑰匙，再回到出發的地方。被抓會倒地——隊友靠近 2 秒可以扶起來。</p>
-<div id="coopA"><input id="coopName" placeholder="你的名字" maxlength="8"><div class="btns"><button id="coopHost">建立房間</button></div>
+<div id="coopA"><input id="coopName" placeholder="你的名字" maxlength="8"><p style="margin:0">選擇外觀</p><div id="coopLook">${COOP_LOOKS.map((n, i) => `<button type="button" data-lk="${i}"><i style="background-image:url(assets/mi${i ? '_v' + i : ''}.png)"></i>${n}</button>`).join('')}</div><div class="btns"><button id="coopHost">建立房間</button></div>
 <input id="coopJoin" placeholder="房號（4 碼）" maxlength="4" style="text-transform:uppercase"><div class="btns"><button id="coopJoinB">加入</button><button id="coopBack">返回</button></div></div>
-<div id="coopB" class="hide"><p>把房號告訴朋友，用同一個網址按「多人合作」→「加入」</p><div id="coopCode"></div><p id="coopWho"></p><div class="btns"><button id="coopInv">📋 複製邀請連結</button><button id="coopStart">▶ 立刻開始</button></div></div>
+<div id="coopB" class="hide"><p>把房號告訴朋友，用同一個網址按「多人合作」→「加入」</p><div id="coopCode"></div><p id="coopWho"></p><div class="btns"><button id="coopInv">📋 複製邀請連結</button><button id="coopStart" disabled>等待隊友加入…</button></div></div>
 <p id="coopMsgP"></p></div>`;
   document.getElementById('wrap').appendChild(el);
   const ch = document.createElement('div'); ch.id = 'coopChat'; ch.className = 'hide'; ch.innerHTML = '<div id="coopLog"></div><input id="coopMsg" placeholder="Enter 聊天" maxlength="50">';
   document.getElementById('wrap').appendChild(ch);
+  const cb = document.createElement('div'); cb.id = 'coopBtns'; cb.className = 'hide'; document.getElementById('wrap').appendChild(cb);
   $('#title .btns').insertAdjacentHTML('beforeend', '<button id="bCoop">👥 多人合作（測試）</button>');
+  const setLook = i => { COOP.look = i; for (const k in LOOK_ROWS) coopLookImg(i, k); el.querySelectorAll('#coopLook button').forEach(b => b.classList.toggle('on', +b.dataset.lk === i)); try { localStorage.setItem('yko_look', i); } catch (e) { } };
+  el.querySelectorAll('#coopLook button').forEach(b => b.onclick = () => setLook(+b.dataset.lk));
+  let lk0 = 0; try { lk0 = +localStorage.getItem('yko_look') || 0; } catch (e) { } setLook(lk0 < COOP_LOOKS.length ? lk0 : 0);
   $('#bCoop').onclick = () => { try { $('#coopName').value = localStorage.getItem('yko_name') || ''; } catch (e) { } el.classList.remove('hide'); };
   $('#coopBack').onclick = () => el.classList.add('hide');
   $('#coopHost').onclick = () => coopNet(true);
   $('#coopJoinB').onclick = () => coopNet(false);
-  $('#coopStart').onclick = () => coopStartHost();
+  $('#coopStart').onclick = () => { if (Object.keys(COOP.P).length < 2) return; coopStartHost(); };
   $('#coopInv').onclick = async () => { const u = location.origin + location.pathname + '?join=' + $('#coopCode').textContent; try { await navigator.clipboard.writeText(`來玩《夜校・如月》多人合作！房號 ${$('#coopCode').textContent}：${u}`); $('#coopInv').textContent = '✓ 已複製，貼給朋友'; } catch (e) { $('#coopMsgP').textContent = u; } };
   const jc = new URLSearchParams(location.search).get('join'); if (jc) { $('#coopJoin').value = jc.toUpperCase().slice(0, 4); setTimeout(() => { el.classList.remove('hide'); try { $('#coopName').value = localStorage.getItem('yko_name') || ''; } catch (e) { } $('#coopMsgP').textContent = '朋友邀請你加入！輸入名字後按「加入」'; }, 600); }
   $('#coopMsg').addEventListener('keydown', e => { e.stopPropagation(); if (e.key !== 'Enter') return; const s = e.target.value.trim(); e.target.value = ''; e.target.blur(); if (!s) return; if (COOP.host) coopChat(COOP.P[COOP.id].n, s, true); else coopSend({ t: 'chat', s }); });
@@ -61,7 +83,7 @@ async function coopNet(host) {
   if (host) {
     const code = Array.from({ length: 4 }, () => 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'[Math.random() * 31 | 0]).join('');
     const pr = COOP.peer = new Peer('yakou-coop-' + code);
-    pr.on('open', id => { COOP.id = id; COOP.P = {}; coopAdd(id, COOP.name); $('#coopA').classList.add('hide'); $('#coopB').classList.remove('hide'); $('#coopCode').textContent = code; coopWho(); msg(''); });
+    pr.on('open', id => { COOP.id = id; COOP.P = {}; coopAdd(id, COOP.name, COOP.look || 0); $('#coopA').classList.add('hide'); $('#coopB').classList.remove('hide'); $('#coopCode').textContent = code; coopWho(); msg(''); });
     pr.on('connection', c => {
       c.on('open', () => { if (Object.keys(COOP.P).length >= 4 || COOP.on) { c.send(JSON.stringify({ t: 'full' })); return; } COOP.conns.push(c); });
       c.on('data', raw => coopHostMsg(c.peer, JSON.parse(raw)));
@@ -73,7 +95,7 @@ async function coopNet(host) {
     const pr = COOP.peer = new Peer();
     pr.on('open', id => {
       COOP.id = id; const c = COOP.hc = pr.connect('yakou-coop-' + code, { reliable: true });
-      c.on('open', () => { c.send(JSON.stringify({ t: 'hi', n: COOP.name })); $('#coopA').classList.add('hide'); msg('已加入，等房主開始……'); });
+      c.on('open', () => { c.send(JSON.stringify({ t: 'hi', n: COOP.name, lk: COOP.look || 0 })); $('#coopA').classList.add('hide'); msg('已加入，等房主開始……'); });
       c.on('data', raw => coopClientMsg(JSON.parse(raw)));
       c.on('close', () => { coopLog('與房主的連線中斷了'); if (COOP.on && G.mode === 'play') { toast('與房主的連線中斷了，這場結束'); setTimeout(() => { G.mode = 'play'; coopEnd(0); $('#end h2').textContent = '連線中斷'; }, 1500); } });
       setTimeout(() => { if (!c.open) msg('找不到這個房間（房號錯誤，或網路擋住了點對點連線，可以改用手機網路試試）'); }, 9000);
@@ -81,10 +103,15 @@ async function coopNet(host) {
     pr.on('error', e => msg('連線錯誤：' + e.type));
   }
 }
-function coopAdd(id, n) { const i = Object.keys(COOP.P).length; COOP.P[id] = { n, c: COOP_COLS[i % 4], i, kc: 0, sv: 0, dn: 0, sh: 0, fs: 0, x: 0, y: 0, d: 4, m: 0, r: 0, f: 0, cr: 0, li: 0, hd: null, down: 0, rv: 0 }; }
-function coopWho() { $('#coopWho').textContent = '目前：' + Object.values(COOP.P).map(p => p.n).join('、'); }
+function coopAdd(id, n, lk) { const i = Object.keys(COOP.P).length; COOP.P[id] = { n, lk: lk || 0, c: COOP_COLS[i % 4], i, kc: 0, sv: 0, dn: 0, sh: 0, fs: 0, x: 0, y: 0, d: 4, m: 0, r: 0, f: 0, cr: 0, li: 0, hd: null, down: 0, rv: 0 }; }
+function coopWho() {
+  const ns = Object.values(COOP.P).map(p => p.n), n = ns.length, b = $('#coopStart');
+  $('#coopWho').innerHTML = `房間裡 ${n} 人：${ns.join('、')}` + (COOP.host && n < 2 ? '<br><small style="color:#ffd36a">⏳ 還沒有人加入——把房號或邀請連結傳給朋友，有人加入後才能開始</small>' : '');
+  b.disabled = n < 2; b.textContent = n < 2 ? '等待隊友加入…' : `▶ 立刻開始（${n} 人）`;
+  if (COOP.host && !COOP.on) { $('#coopMsgP').textContent = n < 2 ? '' : '隊友到齊就可以開始了（最多 4 人）'; coopSend({ t: 'lobby', ns }); }
+}
 function coopHostMsg(id, m) {
-  if (m.t === 'hi') { coopAdd(id, m.n); coopWho(); coopSys(m.n + ' 加入了'); }
+  if (m.t === 'hi') { coopAdd(id, m.n, m.lk); coopWho(); coopSys(m.n + ' 加入了'); if (!COOP.on) { toast('🔔 ' + m.n + ' 加入了！'); try { audioInit(); tone(660, .12, 'sine', .08, 990); } catch (e) { } } }
   else if (m.t === 'in') { const p = COOP.P[id]; if (p && !p.down) Object.assign(p, m, { t: undefined }); }
   else if (m.t === 'key') coopTakeKey(m.i, id);
   else if (m.t === 'shout') coopShout(id);
@@ -97,6 +124,7 @@ function coopClientMsg(m) {
   else if (m.t === 'chat') coopChat(m.n, m.s);
   else if (m.t === 'pg') coopAddPing(m);
   else if (m.t === 'end') coopEnd(m.win);
+  else if (m.t === 'lobby' && !COOP.on) $('#coopMsgP').textContent = `已加入！房間裡 ${m.ns.length} 人：${m.ns.join('、')}。等房主按開始……`;
   else if (m.t === 'full') $('#coopMsgP').textContent = '房間已滿或已經開始了';
 }
 
@@ -111,7 +139,7 @@ function coopStartHost() {
   coopSend({ t: 'start', cfg });
 }
 function coopBegin(cfg) {
-  COOP.on = true; COOP.cfg = cfg; $('#coopP').classList.add('hide'); $('#coopChat').classList.remove('hide');
+  COOP.on = true; COOP.cfg = cfg; $('#coopP').classList.add('hide'); $('#coopChat').classList.remove('hide'); $('#coopBtns').classList.remove('hide'); coopWear(true);
   audioInit(); resetWorld(); if (G.scene !== cfg.scene) loadScene(cfg.scene);
   const S = COOP_SCENES[cfg.scene], me = COOP.P[COOP.id] || { i: 0 };
   Object.assign(P, { x: S.spawn[0] + ((me.i || 0) % 2) * .6, y: S.spawn[1] - Math.floor((me.i || 0) / 2) * .6, dir: 0, hidden: null, crouch: false, pose: null, stun: 0 });
@@ -133,7 +161,7 @@ function coopBegin(cfg) {
     for (let i = 0; i < 400 && out.length < 3; i++) { const p = c[Math.random() * c.length | 0]; if (p && out.every(o => dist(o[0], o[1], p[0], p[1]) > 7)) out.push(p); }
     COOP.keys = out.map(([x, y]) => ({ x: x + .5, y: y + .5, t: 0 }));
   }
-  chapter('多人合作', ['', '操場', '二年B班的樓層', '特別教室棟', '舊校舍'][cfg.scene] + '・' + cfg.mons.map(m => COOP_NAME[m]).join('、'));
+  chapter('多人合作', ['', '操場', '二年B班的樓層', '特別教室棟', '舊校舍'][cfg.scene]);
   coopObj();
   coopLog(`這次的地點：${['', '操場', '二年B班的樓層', '特別教室棟', '舊校舍'][cfg.scene]}。出沒的是——${cfg.mons.map(m => COOP_NAME[m]).join('、')}。`);
 }
@@ -238,13 +266,15 @@ function coopSprites(list) {
   for (const k of COOP.keys) if (!k.t) list.push({ d: k.x + k.y, f: () => { const [sx, sy] = iso(k.x, k.y), on = Math.sin(G.t * 4 + k.x) > 0; ctx.fillStyle = on ? '#ffe08a' : '#b08f3e'; ctx.fillRect(sx - 4, sy - 7, 7, 3); ctx.fillRect(sx + 1, sy - 5, 2, 5); ctx.fillStyle = 'rgba(255,224,138,.25)'; ctx.beginPath(); ctx.arc(sx, sy - 5, 7, 0, 7); ctx.fill(); } });
   for (const [id, p] of Object.entries(COOP.P)) {
     if (id === COOP.id || p.hd || !isFinite(p.x)) continue;
-    let v = COOP.view[id]; if (!v || !isFinite(v.x) || dist(v.x, v.y, p.x, p.y) > 6) v = COOP.view[id] = { x: p.x, y: p.y };   // 第一次或瞬移：直接放到位置上 v.x += (p.x - v.x) * .35; v.y += (p.y - v.y) * .35;
+    let v = COOP.view[id]; if (!v || !isFinite(v.x) || dist(v.x, v.y, p.x, p.y) > 6) v = COOP.view[id] = { x: p.x, y: p.y };   // 第一次或瞬移：直接放到位置上
+    v.x += (p.x - v.x) * .35; v.y += (p.y - v.y) * .35;
     list.push({ d: v.x + v.y, f: () => {
       { const [fx, fy] = iso(v.x, v.y); ctx.strokeStyle = p.c; ctx.lineWidth = 1.5; ctx.globalAlpha = .8; ctx.beginPath(); ctx.ellipse(fx, fy, 9, 4.2, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; }   // 腳下的代表色圈
-      if (p.down && IMG.mi_down) drawSprite(IMG.mi_down, v.x, v.y, p.d, { sc: MI_SC, noShadow: true });
-      else if (p.cr && IMG.mi_crouch) drawSprite(IMG.mi_crouch, v.x, v.y, p.d, p.m ? p.f % 4 : 0, { sc: MI_SC });
-      else if (p.li && !p.m && IMG.mi_light) drawSprite(IMG.mi_light, v.x, v.y, p.d, { sc: MI_SC });
-      else drawSprite(IMG.mi, v.x, v.y, p.d, { sc: MI_SC, frame: p.m ? (p.r ? 4 : 0) + p.f : 0, lean: p.r ? .09 : 0 });
+      const L = k => coopLookImg(p.lk, k);
+      if (p.down && IMG.mi_down) drawSprite(L('mi_down'), v.x, v.y, p.d, { sc: MI_SC, noShadow: true });
+      else if (p.cr && IMG.mi_crouch) drawSprite(L('mi_crouch'), v.x, v.y, p.d, p.m ? p.f % 4 : 0, { sc: MI_SC });
+      else if (p.li && !p.m && IMG.mi_light) drawSprite(L('mi_light'), v.x, v.y, p.d, { sc: MI_SC });
+      else drawSprite(L('mi'), v.x, v.y, p.d, { sc: MI_SC, frame: p.m ? (p.r ? 4 : 0) + p.f : 0, lean: p.r ? .09 : 0 });
     } });
   }
 }
@@ -259,7 +289,7 @@ function coopSprites(list) {
     }
   }; }
 function coopEnd(win) {
-  if (G.mode !== 'play') return; G.mode = 'end'; $('#hud').classList.add('hide'); $('#touch').classList.add('hide'); $('#coopChat').classList.add('hide');
+  if (G.mode !== 'play') return; G.mode = 'end'; $('#hud').classList.add('hide'); $('#touch').classList.add('hide'); $('#coopChat').classList.add('hide'); $('#coopBtns').classList.add('hide'); coopWear(false);
   const e = $('#end'); e.style.backgroundImage = 'url(assets/' + (win ? 'card_gate' : 'card_class') + '.jpg)';
   e.querySelector('h2').textContent = win ? '全員逃出！' : '全員倒下……';
   e.querySelector('p').innerHTML = win ? `${Object.values(COOP.P).map(p => p.n).join('、')}——一起看著天亮。<br><small>想再玩一場：回到標題 → 多人合作</small>` : '走廊盡頭，腳步聲停了下來。<br><small>回到標題 → 多人合作，可以再挑戰一次</small>';
@@ -285,10 +315,10 @@ function coopAct(k) {
   else if (k === 'ping') { if (COOP.host) coopPing(COOP.id, +P.x.toFixed(1), +P.y.toFixed(1)); else coopSend({ t: 'ping', x: +P.x.toFixed(1), y: +P.y.toFixed(1) }); }
 }
 addEventListener('keydown', e => { if (!COOP.on || e.repeat || document.activeElement === $('#coopMsg')) return; if (e.code === 'KeyV') coopAct('shout'); if (e.code === 'KeyG') coopAct('ping'); });
-(() => { const b = document.createElement('div'); b.id = 'coopBtns'; b.style.cssText = 'pointer-events:auto;display:flex;gap:calc(var(--u)*4);margin-top:calc(var(--u)*4)';
+(() => { const b = $('#coopBtns');
   b.innerHTML = '<button type="button" data-k="shout">📢 引開<small> V</small></button><button type="button" data-k="ping">📍 標記<small> G</small></button>';
   b.querySelectorAll('button').forEach(x => { x.style.cssText = 'font:inherit;font-size:calc(var(--u)*9);padding:calc(var(--u)*3) calc(var(--u)*6);background:rgba(20,16,18,.8);color:var(--ink);border:1px solid #6b655c;touch-action:manipulation'; x.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); coopAct(x.dataset.k); }); });
-  $('#coopChat').appendChild(b); })();
+})();
 // 互相壯膽：隊友在 2.2 格內，恐懼值慢慢下降
 { const _u = update; update = function (dt) { const r = _u(dt);
     if (COOP.on && G.mode === 'play' && !P.downC && Object.entries(COOP.P).some(([id, p]) => id !== COOP.id && !p.down && dist(p.x, p.y, P.x, P.y) < 2.2)) G.fear = Math.max(0, (G.fear || 0) - 6 * dt);
@@ -352,3 +382,23 @@ async function testCoopClient() {
   } catch (e) { document.title = 'ERR ' + e + ' ' + R.join(' | '); }
 }
 { const _t = runTest; runTest = async function (kind) { if (kind === 'coopc') return testCoopClient(); return _t(kind); }; }
+// 大廳測試（?test=coopl）：一個人不能開始、有人加入才能開始、外觀換裝與還原；&hold=1 停在大廳畫面（截圖用）
+async function testCoopLobby() {
+  const R = [];
+  try {
+    $('#title').classList.add('hide'); $('#coopP').classList.remove('hide');
+    $('#coopLook button[data-lk="1"]').click(); await wait(400); if (Q.get('hold') === 'a') return;
+    COOP.host = true; COOP.id = 'H'; COOP.P = {}; coopAdd('H', '房主', COOP.look); $('#coopA').classList.add('hide'); $('#coopB').classList.remove('hide'); $('#coopCode').textContent = 'K7QX'; coopWho();
+    R.push('solo=' + $('#coopStart').disabled);
+    if (Q.get('hold') === '1') return;
+    coopHostMsg('C', { t: 'hi', n: '小美', lk: 2 });
+    R.push('two=' + !$('#coopStart').disabled + ' ' + $('#coopStart').textContent + ' lk=' + COOP.P.C.lk);
+    if (Q.get('hold') === '2') return;
+    const base = IMG.mi; coopBegin({ scene: 1, mons: ['kuchi'], keys: null }); await wait(300);
+    R.push('wear=' + /mi_v1/.test(IMG.mi.src) + ' mate=' + /mi_v2/.test(coopLookImg(2, 'mi').src || '') + ' btns=' + !$('#coopBtns').classList.contains('hide'));
+    if (Q.get('hold') === '3') { coopHostMsg('C', { t: 'in', x: P.x + 1.2, y: P.y + .3, d: 4, m: 0, r: 0, f: 0, cr: 0, li: 0, hd: null }); GH.x = 1.5; GH.y = 1.5; GH.state = 'pause'; GH.timer = 99; coopLog('房主：測試聊天位置'); return; }
+    G.mode = 'play'; coopEnd(1); R.push('restore=' + (IMG.mi === base));
+    document.title = (R.every(x => !/=false/.test(x)) ? 'PASS ' : 'FAIL ') + R.join(' | ');
+  } catch (e) { document.title = 'ERR ' + e + ' ' + R.join(' | '); }
+}
+{ const _t = runTest; runTest = async function (kind) { if (kind === 'coopl') return testCoopLobby(); return _t(kind); }; }
