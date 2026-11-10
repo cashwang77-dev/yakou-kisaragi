@@ -140,6 +140,7 @@ function coopHostMsg(id, m) {
   else if (m.t === 'shout') coopShout(id);
   else if (m.t === 'ping') coopPing(id, m.x, m.y);
   else if (m.t === 'chat') coopChat(COOP.P[id] ? COOP.P[id].n : '?', m.s, true);
+  else if (m.t === 'down') coopDown(id);
 }
 function coopClientMsg(m) {
   if (m.t === 'start') coopBegin(m.cfg);
@@ -178,6 +179,16 @@ function coopBegin(cfg) {
   GH.active = false;
   if (typeof AM === 'object') AM.state = 'off';
   if (typeof HK === 'object') HK.state = 'off';
+  // 單人版裂口女在場景 3／4 只有 1 個巡邏點（「不上樓」「不進舊校舍」；場景 4 那點就在出發點上）→ 多人模式改用走得到的地方自動排 7 個分散的點
+  if (cfg.mons.includes('kuchi') && PATROL.length < 3) {
+    const all = reachTiles(true).filter(([x, y]) => dist(x + .5, y + .5, P.x, P.y) > 7 && !solidTile(x + 1, y) && !solidTile(x - 1, y) || dist(x + .5, y + .5, P.x, P.y) > 7 && !solidTile(x, y + 1) && !solidTile(x, y - 1)), pts = [];
+    if (all.length) {
+      pts.push(all.reduce((a, b) => dist(b[0], b[1], P.x, P.y) > dist(a[0], a[1], P.x, P.y) ? b : a));
+      while (pts.length < 7) { let best = null, bd = 0; for (const t of all) { const d = Math.min(...pts.map(q => dist(q[0], q[1], t[0], t[1]))); if (d > bd) { bd = d; best = t; } } if (!best || bd < 4) break; pts.push(best); }
+      const tour = [pts.shift()]; while (pts.length) { const l = tour[tour.length - 1]; pts.sort((a, b) => dist(a[0], a[1], l[0], l[1]) - dist(b[0], b[1], l[0], l[1])); tour.push(pts.shift()); }
+      const wp = tour.map(([x, y]) => [x + .5, y + .5]); PATROL.splice(0, PATROL.length, ...wp); if (typeof DEPTH === 'object') { DEPTH.base = wp.slice(); DEPTH.patrolKey = ''; }
+    }
+  }
   if (cfg.mons.includes('kuchi')) { const far = PATROL.map(w => [dist(w[0], w[1], P.x, P.y), w]).sort((a, b) => b[0] - a[0])[0][1]; spawnGhost(far[0], far[1]); }
   if (cfg.mons.includes('am') && typeof AM === 'object') Object.assign(AM, { state: 'patrol', wp: 0, x: AM_PATROL[0][0], y: AM_PATROL[0][1] });
   if (cfg.mons.includes('hk') && typeof HK === 'object') Object.assign(HK, { state: 'patrol', wp: 0, x: HK_PATROL[2][0], y: HK_PATROL[2][1] });
@@ -238,6 +249,22 @@ objAction = (_o => async function (o) {
   if (o.act === 'frag' || o.act === 'hwpk' || o.act === 'xmgift') return _o(o);
   toast(_L('（多人模式：先找鑰匙！）'));
 })(objAction);
+// 場景機關（體育館的球、十三階段、隙間女、座敷童子…）扣血：多人模式血扣光＝倒地（等隊友扶），不跳單人的 Game Over
+{ const _d = damage; damage = function (n) {
+    if (!COOP.on) return _d(n);
+    if (P.downC || G.mode !== 'play') return;
+    G.hearts -= n; shake = 10; setPose('hurt', .8);
+    if (G.hearts <= 0 && G.inv.bandage) { G.inv.bandage--; G.hearts = 1; toast(_L('用掉了繃帶……還撐得住')); }
+    if (G.hearts <= 0) { G.hearts = 0; if (COOP.host) coopDown(COOP.id); else coopSend({ t: 'down' }); }
+    updateHUD();
+  }; }
+{ const _g = gameOver; gameOver = function () { if (!COOP.on) return _g(); if (COOP.host) coopDown(COOP.id); else coopSend({ t: 'down' }); }; }
+// 場景的旁白／對話：多人模式不鎖畫面（鎖住時主機的怪物也會停），改成左上角的文字紀錄
+{ const _s = say; say = function (name, text, face) {
+    if (!COOP.on) return _s(name, text, face);
+    const k = name + text; if (COOP.lastSay !== k) { COOP.lastSay = k; coopLog((name && name !== _L('咪醬') && name !== '' ? name + _L('：') : '') + text); }
+    return Promise.resolve();
+  }; }
 function coopTakeKey(i, id) {
   const k = COOP.keys[i]; if (!k || k.t) return;
   k.t = 1; k.p = 0; addNoise(k.x, k.y, 9); COOP.lastKeyT = G.t; if (COOP.P[id]) COOP.P[id].kc = (COOP.P[id].kc || 0) + 1; const n = COOP.keys.filter(q => q.t).length; coopSys(_L`${COOP.P[id] ? COOP.P[id].n : '?'} 找到了一把鑰匙（${n} / ${COOP.keys.length}）`); coopObj(); if (n === COOP.keys.length) { const S = COOP_SCENES[COOP.cfg.scene].spawn, m = { t: 'pg', x: S[0], y: S[1], n: _L('出口'), c: '#8cffaa' }; coopAddPing(m); coopSend(m); coopSys(_L('🔑 鑰匙全部到手！所有人回到出發點（地上發光的圈）就能逃出去')); }
@@ -287,7 +314,7 @@ function coopApply(m) {
   if (m.kp) m.kp.forEach((v, i) => { if (COOP.keys[i]) COOP.keys[i].p = v; });
   const mine = COOP.P[COOP.id];
   if (mine && mine.down && !P.downC) { P.downC = 1; P.stun = G.t + 9999; setPose('down', 9999); P.light = false; }
-  else if (mine && !mine.down && P.downC) { P.downC = 0; P.stun = 0; P.pose = null; toast(_L('被扶起來了！')); }
+  else if (mine && !mine.down && P.downC) { P.downC = 0; P.stun = 0; P.pose = null; G.hearts = Math.max(G.hearts, 3); updateHUD(); toast(_L('被扶起來了！')); }
 }
 { const _u = update; update = function (dt) {
     const r = _u(dt);
@@ -296,7 +323,7 @@ function coopApply(m) {
       coopHostTick(dt);
       const meP = COOP.P[COOP.id];
       if (meP.down && !P.downC) { P.downC = 1; P.stun = G.t + 9999; setPose('down', 9999); P.light = false; }
-      else if (!meP.down && P.downC) { P.downC = 0; P.stun = 0; P.pose = null; toast(_L('被扶起來了！')); }
+      else if (!meP.down && P.downC) { P.downC = 0; P.stun = 0; P.pose = null; G.hearts = Math.max(G.hearts, 3); updateHUD(); toast(_L('被扶起來了！')); }
     }
     COOP.sendT -= dt;
     if (COOP.sendT <= 0) {
@@ -503,3 +530,52 @@ async function testCoopKeys() {
   } catch (e) { document.title = 'ERR ' + e + ' ' + R.join(' | '); }
 }
 { const _t = runTest; runTest = async function (kind) { if (kind === 'coopkeys') return testCoopKeys(); return _t(kind); }; }
+// 巡檢（?test=coopaudit&scene=N）：怪物全關，一格一格走過所有可達格，記錄扣血／對話／換場景／鎖住
+async function testCoopAudit() {
+  const R = [], sc = +(Q.get('scene') || 1), ev = {};
+  try {
+    COOP.host = true; COOP.id = 'H'; COOP.P = {}; coopAdd('H', _L('房主')); coopAdd('C', _L('小美')); COOP.P.C.x = 99; COOP.P.C.y = 99;
+    coopBegin({ scene: sc, mons: [], keys: [[1, 1]] }); await wait(100);
+    const S = COOP_SCENES[sc].spawn, sx = Math.floor(S[0]), sy = Math.floor(S[1]), seen = new Uint8Array(W * H), qu = [[sx, sy]], tiles = []; seen[sy * W + sx] = 1;
+    while (qu.length) { const [x, y] = qu.shift(); tiles.push([x, y]); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H || seen[ny * W + nx] || solidTile(nx, ny)) continue; seen[ny * W + nx] = 1; qu.push([nx, ny]); } }
+    R.push('tiles=' + tiles.length);
+    const note = (k, x, y) => { (ev[k] = ev[k] || []).length < 6 && ev[k].push(x + ',' + y); ev[k].n = (ev[k].n || 0) + 1; };
+    let cur = '';
+    const hk = (name, k) => { const o = window[name]; if (typeof o !== 'function') return; window[name] = function (...a) { note(k + (k === 'say' || k === 'choose' ? ':' + String(a[1] || a[0]).slice(0, 14) : ''), ...cur.split(',')); return o.apply(this, a); }; };
+    hk('damage', 'damage'); hk('choose', 'choose'); hk('loadScene', 'loadScene'); hk('card', 'card'); hk('comic', 'comic');
+    for (const [x, y] of tiles) {
+      cur = x + ',' + y; P.x = x + .5; P.y = y + .5; P.hidden = null; P.inv = 0; P.stun = 0;
+      for (let f = 0; f < 6; f++) { P.dir = f % 8; await wait(9); }
+      if (P.downC || COOP.P.H.down) { note('down', x, y); COOP.P.H.down = 0; P.downC = 0; P.stun = 0; P.pose = null; }
+      if (G.hearts < 5) { note('hurt', x, y); G.hearts = 5; }
+      if (G.mode !== 'play') { note('mode:' + G.mode, x, y); if (typeof advanceFn === 'function') try { for (let i = 0; i < 30 && G.mode !== 'play'; i++) { if (advanceFn) advanceFn(); await wait(20); } } catch (e) { } G.mode = 'play'; $('#over').classList.add('hide'); }
+      if (G.lock) { note('lock', x, y); G.lock = 0; }
+      if (G.scene !== sc) { note('scene→' + G.scene, x, y); loadScene(sc); }
+    }
+    const bad = Object.keys(ev).filter(k => !/^(hurt|damage|down)/.test(k));   // 扣血/倒地是正常機關；換畫面、鎖住、選項、換場景才算問題
+    document.title = (bad.length ? 'FOUND ' : 'CLEAN ') + R.join(' ') + ' ' + Object.entries(ev).map(([k, v]) => `${k}×${v.n}[${v.join(' ')}]`).join(' | ');
+  } catch (e) { document.title = 'ERR ' + e + ' ' + R.join(' | ') + JSON.stringify(ev); }
+}
+{ const _t = runTest; runTest = async function (kind) { if (kind === 'coopaudit') return testCoopAudit(); return _t(kind); }; }
+// 怪物巡檢（?test=coopmon&scene=N）：玩家躲在出發點，怪物跑 90 秒；記錄走過的範圍、有沒有踩進牆／鎖住的門、離出生點多近。另測：血扣光＝倒地（不是 Game Over）
+async function testCoopMon() {
+  const R = [], sc = +(Q.get('scene') || 1);
+  try {
+    COOP.host = true; COOP.id = 'H'; COOP.P = {}; coopAdd('H', _L('房主')); coopAdd('C', _L('小美')); COOP.P.C.x = 99; COOP.P.C.y = 99;
+    coopBegin({ scene: sc, mons: COOP_SCENES[sc].mons.slice(), keys: [[1, 1]] }); await wait(100);
+    G.hearts = 1; G.inv.bandage = 0; damage(1); await wait(50); R.push('dmg0: down=' + COOP.P.H.down + ' mode=' + G.mode + ' overShown=' + !$('#over').classList.contains('hide'));
+    COOP.P.H.down = 0; P.downC = 0; P.stun = 0; P.pose = null; G.hearts = 5;
+    const S = COOP_SCENES[sc].spawn, mons = [['kuchi', GH], ['am', typeof AM === 'object' ? AM : null], ['hk', typeof HK === 'object' ? HK : null]].filter(([k, e]) => e && COOP.cfg.mons.includes(k));
+    const st = {}; for (const [k, e] of mons) st[k] = { tiles: new Set(), solid: 0, minS: 1e9, x0: e.x, y0: e.y };
+    P.inv = 9999;   // 不被抓：只看牠們怎麼走
+    for (let t = 0; t < 900; t++) {
+      P.x = S[0]; P.y = S[1]; P.inv = 9999; COOP.P.H.down = 0; P.downC = 0;
+      for (const [k, e] of mons) { const s = st[k], tx = Math.floor(e.x), ty = Math.floor(e.y); s.tiles.add(tx + ',' + ty); if (solidTile(tx, ty)) s.solid++; s.minS = Math.min(s.minS, dist(e.x, e.y, S[0], S[1])); }
+      await wait(30);
+    }
+    R.push('patrol=' + PATROL.length); for (const [k] of mons) { const s = st[k]; R.push(`${k}: start=${s.x0.toFixed(1)},${s.y0.toFixed(1)} d0=${dist(s.x0, s.y0, S[0], S[1]).toFixed(1)} tiles=${s.tiles.size} inSolid=${s.solid} minDistToSpawn=${s.minS.toFixed(1)}`); }
+    const ok = COOP.P.H !== undefined && R[0].includes('mode=play') && R[0].includes('overShown=false') && mons.every(([k]) => st[k].solid === 0 && st[k].tiles.size > 8 && dist(st[k].x0, st[k].y0, S[0], S[1]) > 7);
+    document.title = (ok ? 'PASS ' : 'CHECK ') + R.join(' | ');
+  } catch (e) { document.title = 'ERR ' + e + ' ' + R.join(' | '); }
+}
+{ const _t = runTest; runTest = async function (kind) { if (kind === 'coopmon') return testCoopMon(); return _t(kind); }; }
