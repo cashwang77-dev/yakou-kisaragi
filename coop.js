@@ -184,7 +184,7 @@ function coopBegin(cfg) {
   // 鑰匙
   if (cfg.keys) COOP.keys = cfg.keys.map(([x, y]) => ({ x, y, t: 0 }));
   else {
-    const nk = cfg.nk || 3, all = reachTiles(), out = [];
+    const nk = cfg.nk || 3, all = reachTiles(true), out = [];
     for (const [far, gap] of [[10, 7], [8, 5], [6, 3]]) {   // 盡量放遠、彼此分散；地圖太小就放寬
       const c = all.filter(([x, y]) => dist(x + .5, y + .5, P.x, P.y) > far);
       for (let i = 0; i < 600 && out.length < nk; i++) { const p = c[Math.random() * c.length | 0]; if (p && out.every(o => dist(o[0], o[1], p[0], p[1]) > gap)) out.push(p); }
@@ -197,7 +197,7 @@ function coopBegin(cfg) {
   coopObj();
   coopLog(_L`這次的地點：${['', _L('操場'), _L('二年B班的樓層'), _L('特別教室棟'), _L('舊校舍')][cfg.scene]}。出沒的是——${cfg.mons.map(m => COOP_NAME[m]).join(_L('、'))}。`);
 }
-const coopObj = () => { const n = COOP.keys.filter(k => k.t).length, c = COOP.cfg || {}, st = c.total ? _L`第 ${c.stage + 1}/${c.total} 關　` : ''; setObj(st + (n < COOP.keys.length ? _L`找鑰匙 ${n} / ${COOP.keys.length}` : _L('全員回到出發的地方！'))); };
+const coopObj = () => { const n = COOP.keys.filter(k => k.t).length, c = COOP.cfg || {}, st = c.total ? _L`第 ${c.stage + 1}/${c.total} 關　` : ''; setObj(st + (n < COOP.keys.length ? _L`找鑰匙 ${n} / ${COOP.keys.length}` : _L('全員回到出發點（地上發光的圈）！'))); };
 
 /* ---------- 主機：怪物鎖定最近的玩家、倒地救援、勝負 ---------- */
 function coopFocus(e) {   // 這隻怪物最近、還站著的玩家；有人大喊「這邊！」的 4 秒內，14 格內的怪物改追她
@@ -240,7 +240,7 @@ objAction = (_o => async function (o) {
 })(objAction);
 function coopTakeKey(i, id) {
   const k = COOP.keys[i]; if (!k || k.t) return;
-  k.t = 1; k.p = 0; addNoise(k.x, k.y, 9); COOP.lastKeyT = G.t; if (COOP.P[id]) COOP.P[id].kc = (COOP.P[id].kc || 0) + 1; const n = COOP.keys.filter(q => q.t).length; coopSys(_L`${COOP.P[id] ? COOP.P[id].n : '?'} 找到了一把鑰匙（${n} / ${COOP.keys.length}）`); coopObj();
+  k.t = 1; k.p = 0; addNoise(k.x, k.y, 9); COOP.lastKeyT = G.t; if (COOP.P[id]) COOP.P[id].kc = (COOP.P[id].kc || 0) + 1; const n = COOP.keys.filter(q => q.t).length; coopSys(_L`${COOP.P[id] ? COOP.P[id].n : '?'} 找到了一把鑰匙（${n} / ${COOP.keys.length}）`); coopObj(); if (n === COOP.keys.length) { const S = COOP_SCENES[COOP.cfg.scene].spawn, m = { t: 'pg', x: S[0], y: S[1], n: _L('出口'), c: '#8cffaa' }; coopAddPing(m); coopSend(m); coopSys(_L('🔑 鑰匙全部到手！所有人回到出發點（地上發光的圈）就能逃出去')); }
 }
 function coopHostTick(dt) {
   const me = COOP.P[COOP.id]; Object.assign(me, coopMe());
@@ -309,6 +309,11 @@ function coopApply(m) {
 /* ---------- 畫：隊友與鑰匙 ---------- */
 function coopSprites(list) {
   if (!COOP.on) return;
+  if (COOP.keys.length && COOP.keys.every(k => k.t)) { const S = COOP_SCENES[COOP.cfg.scene].spawn; list.push({ d: S[0] + S[1] - 2, f: () => {   // 鑰匙齊了：出發點畫發光的圈（半徑＝判定的 2.6 格）＋箭頭
+    const [sx, sy] = iso(S[0], S[1]), a = .45 + .3 * Math.sin(G.t * 4); ctx.save(); ctx.strokeStyle = `rgba(140,255,170,${a})`; ctx.fillStyle = `rgba(140,255,170,${a * .25})`; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.ellipse(sx, sy, 2.6 * TW / Math.SQRT2, 2.6 * TH / Math.SQRT2, 0, 0, 7); ctx.fill(); ctx.stroke();
+    const by = sy - 30 + 4 * Math.sin(G.t * 5); ctx.fillStyle = `rgba(140,255,170,${a + .2})`; ctx.beginPath(); ctx.moveTo(sx - 6, by); ctx.lineTo(sx + 6, by); ctx.lineTo(sx, by + 9); ctx.fill();
+    ctx.font = 'bold 9px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(_L('出口'), sx, by - 3); ctx.restore(); } }); }
   for (const k of COOP.keys) if (!k.t) list.push({ d: k.x + k.y, f: () => { const [sx, sy] = iso(k.x, k.y), on = Math.sin(G.t * 4 + k.x) > 0; ctx.fillStyle = on ? '#ffe08a' : '#b08f3e'; ctx.fillRect(sx - 4, sy - 7, 7, 3); ctx.fillRect(sx + 1, sy - 5, 2, 5); ctx.fillStyle = 'rgba(255,224,138,.25)'; ctx.beginPath(); ctx.arc(sx, sy - 5, 7, 0, 7); ctx.fill(); if (k.p > .05) { ctx.strokeStyle = '#ffe08a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(sx, sy - 5, 10, -Math.PI / 2, -Math.PI / 2 + Math.min(1, k.p / 1.5) * Math.PI * 2); ctx.stroke(); } } });
   for (const [id, p] of Object.entries(COOP.P)) {
     if (id === COOP.id || p.hd || !isFinite(p.x)) continue;
@@ -478,3 +483,23 @@ async function testCoopStages() {
   } catch (e) { document.title = 'ERR ' + e + ' ' + R.join(' | '); }
 }
 { const _t = runTest; runTest = async function (kind) { if (kind === 'coops') return testCoopStages(); return _t(kind); }; }
+// 鑰匙可達測試（?test=coopkeys）：4 個場景各開 30 次（8 把鑰匙），每把都要能從出發點走到（上鎖的門＝牆），出發點判定圈內要可站
+async function testCoopKeys() {
+  const R = []; let bad = 0;
+  try {
+    COOP.host = true; COOP.id = 'H'; COOP.P = {}; coopAdd('H', _L('房主')); coopAdd('C', _L('小美'));
+    if (Q.get('exit')) { const sc = +Q.get('exit'); coopBegin({ scene: sc, mons: [], keys: null, nk: 4 }); await wait(50); COOP.keys.forEach((k, i) => coopTakeKey(i, 'C')); const S = COOP_SCENES[sc].spawn; P.x = S[0] + 4; P.y = S[1] - 3; COOP.P.C.x = 99; await wait(400); document.title = 'EXIT ' + OBJTEXT; return; }   // 截圖用：鑰匙全拿、站在出口圈旁
+    for (const sc of [1, 2, 3, 4]) {
+      let n = 0, miss = 0;
+      for (let r = 0; r < 30; r++) {
+        coopBegin({ scene: sc, mons: [], keys: null, nk: 8 }); await wait(10);
+        const S = COOP_SCENES[sc].spawn, sx = Math.floor(S[0]), sy = Math.floor(S[1]), seen = new Uint8Array(W * H), qu = [[sx, sy]]; seen[sy * W + sx] = 1;
+        while (qu.length) { const [x, y] = qu.pop(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H || seen[ny * W + nx] || solidTile(nx, ny)) continue; seen[ny * W + nx] = 1; qu.push([nx, ny]); } }
+        for (const k of COOP.keys) { n++; if (!seen[Math.floor(k.y) * W + Math.floor(k.x)]) miss++; }
+      }
+      bad += miss; R.push(`scene${sc} keys=${n} unreachable=${miss}`);
+    }
+    document.title = (bad === 0 ? 'PASS ' : 'FAIL ') + R.join(' | ');
+  } catch (e) { document.title = 'ERR ' + e + ' ' + R.join(' | '); }
+}
+{ const _t = runTest; runTest = async function (kind) { if (kind === 'coopkeys') return testCoopKeys(); return _t(kind); }; }

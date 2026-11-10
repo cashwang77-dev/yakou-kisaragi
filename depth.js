@@ -30,14 +30,14 @@ const BASE_LORE = LORE.filter(l => l[0] !== 'pumpkin').map(l => l[0]);   // 隱�
 const hiddenReady = () => fragsGot().length >= 7 && BASE_LORE.every(id => loreGot().includes(id));
 
 /* 從玩家位置找走得到、靠牆、旁邊沒東西的格子（門一律當成開著） */
-function reachTiles() {
+function reachTiles(noLocked) {   // noLocked：上鎖的門當牆（多人模式不會開門，鑰匙不能放進鎖住的房間）
   const sx = Math.floor(P.x), sy = Math.floor(P.y), seen = new Uint8Array(W * H), qu = [[sx, sy]], out = []; seen[sy * W + sx] = 1;
   while (qu.length) {
     const [x, y] = qu.pop(); out.push([x, y]);
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H || seen[ny * W + nx]) continue;
       const c = at(nx, ny), o = OBJAT[nx + ',' + ny];
-      if (c === 'X' || c === '#' || c === 'P' || c === 'f' || (o && o.solid)) continue;
+      if (c === 'X' || c === '#' || c === 'P' || c === 'f' || (o && o.solid) || (noLocked && c === 'D' && DOORS[nx + ',' + ny] && DOORS[nx + ',' + ny].locked)) continue;
       seen[ny * W + nx] = 1; qu.push([nx, ny]);
     }
   }
