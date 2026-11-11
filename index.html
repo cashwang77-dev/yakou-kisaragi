@@ -242,7 +242,7 @@ button{touch-action:manipulation}#hwNote,#runSet,#end,#invMenu{touch-action:pan-
 const LANG=(()=>{const q=(location.search.match(/[?&]lang=(\w+)/)||[])[1];if(q){try{if(q!=='dump')localStorage.setItem('kisaragiLang',q)}catch(e){}return q}
   try{const s=localStorage.getItem('kisaragiLang');if(s)return s}catch(e){}return /^zh/i.test(navigator.language||'zh')?'zh':'en'})();
 let I18N={};const I18N_MISS=new Set();
-if(LANG==='en'){document.documentElement.lang='en';document.documentElement.classList.add('en');document.write('<script src="i18n_en.js?v=bddc8eba"><\/script>');}
+if(LANG==='en'){document.documentElement.lang='en';document.documentElement.classList.add('en');document.write('<script src="i18n_en.js?v=7778e17a"><\/script>');}
 function _L(s,...v){
   if(Array.isArray(s)&&s.raw){
     if(LANG==='en'){const k=s.reduce((a,x,i)=>a+'{'+(i-1)+'}'+x);const e=I18N[k];
@@ -415,5 +415,6 @@ function _Ldom(root){const CJK=/[\u3000-\u30ff\u4e00-\u9fff\uff00-\uffef]/,INL=/
 <script src="lighting.js?v=1e791feb"></script>
 <script src="stealth.js?v=ba76b399"></script>
 <script src="bigprops.js?v=bacc9ea6"></script>
+<script src="chase.js?v=b0e98a71"></script>
 </body>
 </html>
