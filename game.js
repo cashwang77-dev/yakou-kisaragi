@@ -1338,6 +1338,7 @@ function render() {
   if (typeof coopSprites === 'function') coopSprites(list);   // 多人合作：隊友與鑰匙（coop.js）
   list.sort((a, b) => a.d - b.d);
   for (const l of list) l.f(l.tall && l.d > pd + .2 && near(l.sx, l.sy, l.tall) && !P.hidden ? .3 : 1);
+  if (typeof ltWorld === 'function') ltWorld();   // lighting.js：霧、雨的漣漪
   // 光照（DARK＝整體暗幕濃度，太暗玩起來很累 → 2026-10-21 由 .8 調到 .6，10/22 再調到 .5）
   const fl = G.flash;
   dctx.globalCompositeOperation = 'source-over'; dctx.clearRect(0, 0, VW, VH);
@@ -1349,14 +1350,15 @@ function render() {
     const lampObj = OBJAT[Math.floor(l.x) + ',' + Math.floor(l.y)];
     if (lampObj && lampObj.t === 'lamp' && lampObj.on === false) continue;
     const [sx, sy] = iso(l.x, l.y); if (sx < -150 || sx > VW + 150 || sy < -150 || sy > VH + 150) continue;
-    glow(sx, sy - 4, l.r * 22, .92);
+    if (typeof ltClip === 'function') ltClip(dctx, l, () => glow(sx, sy - 4, l.r * 22, .92)); else glow(sx, sy - 4, l.r * 22, .92);
   }
   if (!P.hidden) glow(psx, psy - 18, 64, .75);   // 咪醬周圍的微光（看得到腳邊）
   if (P.light && !P.hidden) {
     const [fx, fy] = SCR[P.dir], ang = Math.atan2(fy * .55, fx), len = 200, spread = .48;
     const g = dctx.createRadialGradient(psx, psy - 14, 6, psx, psy - 14, len);
     g.addColorStop(0, 'rgba(0,0,0,.98)'); g.addColorStop(.7, 'rgba(0,0,0,.8)'); g.addColorStop(1, 'rgba(0,0,0,0)');
-    dctx.fillStyle = g; dctx.beginPath(); dctx.moveTo(psx, psy - 14); dctx.arc(psx, psy - 14, len, ang - spread, ang + spread); dctx.closePath(); dctx.fill();
+    const cone = () => { dctx.fillStyle = g; dctx.beginPath(); dctx.moveTo(psx, psy - 14); dctx.arc(psx, psy - 14, len, ang - spread, ang + spread); dctx.closePath(); dctx.fill(); };
+    if (typeof ltClip === 'function') ltClip(dctx, 'P', cone); else cone();
   }
   dctx.globalCompositeOperation = 'source-over';
   ctx.drawImage(dark, 0, 0);
@@ -1366,9 +1368,11 @@ function render() {
     const lampObj = OBJAT[Math.floor(l.x) + ',' + Math.floor(l.y)];
     if (lampObj && lampObj.t === 'lamp' && lampObj.on === false) continue;
     const [sx, sy] = iso(l.x, l.y); const r = l.r * 22; const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, r);
-    g.addColorStop(0, `rgba(${l.c},.13)`); g.addColorStop(1, `rgba(${l.c},0)`); ctx.fillStyle = g; ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
+    g.addColorStop(0, `rgba(${l.c},.13)`); g.addColorStop(1, `rgba(${l.c},0)`); ctx.fillStyle = g;
+    if (typeof ltClip === 'function') ltClip(ctx, l, () => ctx.fillRect(sx - r, sy - r, r * 2, r * 2)); else ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
   }
   ctx.globalCompositeOperation = 'source-over';
+  if (typeof ltAfterDark === 'function') ltAfterDark(psx, psy);   // lighting.js：光束暖色、灰塵、濕地倒影
   // 附近可以調查、還沒看過的東西：一閃一閃的星光（畫在暗幕之上，暗處也找得到）
   const sparkle = {};   // 每一種（act）只閃最近的那一個
   for (const o of OBJ) {
@@ -1402,7 +1406,8 @@ function render() {
   const dg = G.danger || 0;
   vg.addColorStop(0, 'rgba(0,0,0,0)'); vg.addColorStop(1, P.hidden ? 'rgba(0,0,0,.92)' : `rgba(${Math.round(150 * dg)},0,0,${.6 + dg * .2 * (1 + Math.sin(G.t * 8)) / 2})`);
   ctx.fillStyle = vg; ctx.fillRect(0, 0, VW, VH);
-  ctx.globalAlpha = .025 + dg * .05; ctx.drawImage(grain[Math.floor(G.t * 20) % 3], 0, 0, VW, VH); ctx.globalAlpha = 1;
+  if (typeof ltPost === 'function' && LT.on) ltPost(dg);   // lighting.js：細顆粒雜訊、紅藍色偏移
+  else { ctx.globalAlpha = .025 + dg * .05; ctx.drawImage(grain[Math.floor(G.t * 20) % 3], 0, 0, VW, VH); ctx.globalAlpha = 1; }
 }
 
 /* ---------- 主迴圈 ---------- */

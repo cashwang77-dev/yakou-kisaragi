@@ -29,7 +29,7 @@ function hwDecorate() {
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H || seen[ny * W + nx]) continue;
       const c = at(nx, ny), o = OBJAT[nx + ',' + ny];
-      if (c === 'X' || c === '#' || c === 'P' || c === 'f' || (o && o.solid)) continue;
+      if (c === 'X' || c === '#' || c === 'P' || c === 'f' || (o && o.solid) || (c === 'D' && DOORS[nx + ',' + ny] && doorForever(DOORS[nx + ',' + ny]))) continue;   // 永遠鎖住的教室不放
       seen[ny * W + nx] = 1; qu.push([nx, ny]);
     }
   }
@@ -51,7 +51,7 @@ function hwDecorate() {
   // 南瓜頭：躲在離入口比較遠的地方
   if (!G.flags['hwpk' + G.scene]) {
     const far = cand.filter(([x, y]) => dist(x + .5, y + .5, P.x, P.y) > 9).sort((a, b) => dist(b[0], b[1], P.x, P.y) - dist(a[0], a[1], P.x, P.y));
-    const pool = far.slice(0, Math.max(1, Math.floor(far.length * .45)));
+    const pool = far.slice(0, Math.max(1, Math.floor(far.length * .45))).filter(([x, y]) => !blocksPath(x, y));   // 南瓜頭是實心的：不能堵路
     const p = pool.length && pool[Math.floor(r() * pool.length)];
     if (p) { add('hw_head', p[0], p[1], { solid: true, act: 'hwpk', label: _L('跟南瓜頭說話'), ph: r() * 6 }); HW.head = { x: p[0] + .5, y: p[1] + .5 }; setTimeout(() => toast(_L('🎃 萬聖夜：這一章也躲著一個南瓜頭，找找看！')), 1200); }
   } else HW.head = null;

@@ -26,7 +26,7 @@ function xmDecorate() {
   const wall = (x, y) => at(x, y) === '#';
   const c = reachTiles().filter(([x, y]) => (wall(x - 1, y) || wall(x, y - 1)) && dist(x + .5, y + .5, P.x, P.y) > 3);
   const r = rng(G.scene * 211 + 5), pick = n => { const out = []; const L = c.slice(); for (let i = L.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [L[i], L[j]] = [L[j], L[i]]; } for (const p of L) { if (out.length >= n) break; if (!OBJAT[p[0] + ',' + p[1]] && out.every(o => Math.abs(o[0] - p[0]) + Math.abs(o[1] - p[1]) >= 8)) out.push(p); } return out; };
-  for (const [x, y] of pick(4)) { const o = obj('xm_tree', x, y, { solid: true, xm: 1, ph: r() * 6 }); OBJAT[x + ',' + y] = o; LIGHTS.push({ x: x + .5, y: y + .5, r: 1.6, c: '255,220,140' }); }
+  let nt = 0; for (const [x, y] of pick(12)) { if (nt >= 4 || blocksPath(x, y)) continue; nt++; const o = obj('xm_tree', x, y, { solid: true, xm: 1, ph: r() * 6 }); OBJAT[x + ',' + y] = o; LIGHTS.push({ x: x + .5, y: y + .5, r: 1.6, c: '255,220,140' }); }
   if (!G.flags['xmg' + G.scene]) {
     const far = c.filter(([x, y]) => dist(x + .5, y + .5, P.x, P.y) > 9 && !OBJAT[x + ',' + y]);
     const p = far[Math.floor(r() * far.length)];

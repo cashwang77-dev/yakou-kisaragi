@@ -30,23 +30,35 @@ const BASE_LORE = LORE.filter(l => l[0] !== 'pumpkin').map(l => l[0]);   // 隱�
 const hiddenReady = () => fragsGot().length >= 7 && BASE_LORE.every(id => loreGot().includes(id));
 
 /* 從玩家位置找走得到、靠牆、旁邊沒東西的格子（門一律當成開著） */
-function reachTiles(noLocked) {   // noLocked：上鎖的門當牆（多人模式不會開門，鑰匙不能放進鎖住的房間）
+function reachTiles(noLocked) {   // noLocked：所有上鎖的門當牆（多人模式不會開門）；預設：永遠打不開的門（只有 msg 的裝飾教室）當牆
   const sx = Math.floor(P.x), sy = Math.floor(P.y), seen = new Uint8Array(W * H), qu = [[sx, sy]], out = []; seen[sy * W + sx] = 1;
   while (qu.length) {
     const [x, y] = qu.pop(); out.push([x, y]);
     for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
       const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H || seen[ny * W + nx]) continue;
       const c = at(nx, ny), o = OBJAT[nx + ',' + ny];
-      if (c === 'X' || c === '#' || c === 'P' || c === 'f' || (o && o.solid) || (noLocked && c === 'D' && DOORS[nx + ',' + ny] && DOORS[nx + ',' + ny].locked)) continue;
+      if (c === 'X' || c === '#' || c === 'P' || c === 'f' || (o && o.solid) || (c === 'D' && DOORS[nx + ',' + ny] && (noLocked ? DOORS[nx + ',' + ny].locked : doorForever(DOORS[nx + ',' + ny])))) continue;
       seen[ny * W + nx] = 1; qu.push([nx, ny]);
     }
   }
   return out.filter(([x, y]) => at(x, y) !== 'D' && !OBJAT[x + ',' + y] && !ITEMS.some(i => dist(i.x, i.y, x + .5, y + .5) < 1.5));
 }
+// 實心裝飾（聖誕樹、南瓜頭）會不會擋路：暫時放上去，從玩家位置數走得到的格數，少超過 1 格（它自己）就是把路堵住了
+function reachCount() {
+  const sx = Math.floor(P.x), sy = Math.floor(P.y), seen = new Uint8Array(W * H), qu = [[sx, sy]]; let n = 0; seen[sy * W + sx] = 1;
+  while (qu.length) { const [x, y] = qu.pop(); n++; for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H || seen[ny * W + nx]) continue; const c = at(nx, ny), o = OBJAT[nx + ',' + ny], dr = DOORS[nx + ',' + ny]; if (c === 'X' || c === '#' || c === 'P' || c === 'f' || (o && o.solid) || (c === 'D' && dr && doorForever(dr))) continue; seen[ny * W + nx] = 1; qu.push([nx, ny]); } }
+  return n;
+}
+function blocksPath(x, y) {
+  const k = x + ',' + y, keep = OBJAT[k], n0 = reachCount(); OBJAT[k] = { solid: true }; const n1 = reachCount();
+  if (keep) OBJAT[k] = keep; else delete OBJAT[k];
+  return n1 < n0 - 1;
+}
 function placeFrag() {
   DEPTH.fragScene = G.scene;
   const n = G.scene; if (!FRAGS[n] || (G.flags.frag || []).includes(n)) return;
   let p = G.flags['fragPos' + n];   // 位置記在存檔裡，讀檔不會換地方
+  if (p && !reachTiles().some(([x, y]) => x === p[0] && y === p[1])) p = null;   // 舊存檔可能放在永遠鎖住的教室裡（11/10 修正前）→ 重新放
   if (!p) {
     const wall = (x, y) => at(x, y) === '#';
     const c = reachTiles().filter(([x, y]) => (wall(x - 1, y) || wall(x, y - 1) || wall(x + 1, y) || wall(x, y + 1)) && dist(x + .5, y + .5, P.x, P.y) > 8);
@@ -318,3 +330,64 @@ async function testNg() {
   } catch (e) { document.title = 'ERR ' + e; }
 }
 { const _t = runTest; runTest = async function (kind) { if (kind === 'ng') return testNg(); return _t(kind); }; }
+// 單人巡檢（?test=spaudit&ch=1..7）：從該章起點出發，算「最後走得到」的範圍（有鑰匙／劇情會開的門當通、只有 msg 的門＝永遠鎖）
+//   報告：隨機放置（遺落物/禮物/南瓜頭用的 reachTiles()）有幾格落在永遠到不了的地方；怪物巡邏點是否在牆裡／到不了；起點離鬼多近
+const DOOR_SCRIPTED = { 3: ['35,9'], 5: ['26,5'] };   // 沒有 key、但劇情會打開的門
+function doorForever(dr) { return dr.locked && !dr.key && !(DOOR_SCRIPTED[G.scene] || []).includes(dr.x + ',' + dr.y); }
+function reachEventually() {
+  const sx = Math.floor(P.x), sy = Math.floor(P.y), seen = new Uint8Array(W * H), qu = [[sx, sy]]; seen[sy * W + sx] = 1;
+  while (qu.length) { const [x, y] = qu.pop(); for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) { const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W || ny >= H || seen[ny * W + nx]) continue; const c = at(nx, ny), o = OBJAT[nx + ',' + ny], dr = DOORS[nx + ',' + ny]; if (c === 'X' || c === '#' || c === 'P' || c === 'f' || (o && o.solid) || (c === 'D' && dr && doorForever(dr))) continue; seen[ny * W + nx] = 1; qu.push([nx, ny]); } }
+  return seen;
+}
+async function testSpAudit() {
+  const ch = +(Q.get('ch') || 1), R = [];
+  try {
+    if (ch === 1) { resetWorld(); startPlay(); } else { startFrom(ch); for (let i = 0; i < 400 && !(G.mode === 'play' && !G.lock); i++) await wait(20); }
+    await wait(200);
+    R.push(`ch${ch} scene=${G.scene} start=${P.x.toFixed(1)},${P.y.toFixed(1)}`);
+    const ev = reachEventually(), rt = reachTiles();
+    const bad = rt.filter(([x, y]) => !ev[y * W + x]);
+    const forever = Object.values(DOORS).filter(doorForever).map(d => d.x + ',' + d.y + (d.msg ? '' : '?'));
+    R.push(`randomCand=${rt.length} unreachableForever=${bad.length}` + (bad.length ? `[${bad.slice(0, 5).map(p => p.join(',')).join(' ')}]` : '') + ` foreverDoors=${forever.length}`);
+    const wp = (name, L) => { if (!L) return; const b = L.filter(([x, y]) => solidTile(Math.floor(x), Math.floor(y)) || !ev[Math.floor(y) * W + Math.floor(x)]); R.push(`${name}=${L.length}` + (b.length ? ` BADWP[${b.map(p => p.join(',')).join(' ')}]` : '')); return b.length; };
+    let nbad = bad.length;
+    if (GH.active) nbad += wp('PATROL', PATROL) || 0;
+    // chk：本格或旁邊走得到就能互動
+    const chk = (name, p) => { if (!p) return; const px = Math.floor(p[0]), py = Math.floor(p[1]), ok = [[0, 0], [1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => ev[(py + dy) * W + px + dx]);; R.push(name + '=' + p.map(v => Math.floor(v)).join(',') + (ok ? '' : ' UNREACHABLE')); if (!ok) nbad++; };
+    const fo = OBJ.find(o => o.t === 'frag'); chk('frag', fo && [fo.x, fo.y]);
+    if (FRAGS[G.scene]) { let miss = 0; const k = 'fragPos' + G.scene, fr = G.flags.frag; G.flags.frag = [];   // 重抽 200 次
+      for (let i = 0; i < 200; i++) { const old = OBJ.findIndex(o => o.t === 'frag'); if (old >= 0) { const o = OBJ[old]; delete OBJAT[o.x + ',' + o.y]; OBJ.splice(old, 1); } delete G.flags[k]; placeFrag(); const p = G.flags[k]; if (p && !ev[p[1] * W + p[0]]) miss++; }
+      G.flags.frag = fr; R.push('frag200 unreachable=' + miss); nbad += miss; }
+    const ho = OBJ.find(o => o.t === 'hw_head'); chk('pumpkinHead', ho && [ho.x, ho.y]);
+    const go = OBJ.find(o => o.t === 'xm_gift'); chk('xmasGift', go && [go.x, go.y]);
+    const deco = OBJ.filter(o => (o.xm || o.hw) && o.solid); if (deco.length) { const n1 = reachCount(); deco.forEach(o => delete OBJAT[o.x + ',' + o.y]); const n0 = reachCount(); deco.forEach(o => OBJAT[o.x + ',' + o.y] = o); R.push(`decoSolid=${deco.length} reachLoss=${n0 - n1 - deco.length}`); if (n0 - n1 > deco.length) nbad++; }
+    if (G.scene === 3 && typeof AM_PATROL !== 'undefined') nbad += wp('AM', AM_PATROL) || 0;
+    if (G.scene === 4 && typeof HK_PATROL !== 'undefined') nbad += wp('HK', HK_PATROL) || 0;
+    if (G.scene === 6 && typeof HA_PATROL !== 'undefined') nbad += wp('HA', HA_PATROL) || 0;
+    const nm = e => e === GH ? 'kuchi' : typeof AM === 'object' && e === AM ? 'am' : typeof HK === 'object' && e === HK ? 'hk' : typeof TK === 'object' && e === TK ? 'tk' : typeof BABA === 'object' && e === BABA ? 'baba' : 'other';
+    const th = (typeof threats === 'function' ? threats() : []).map(t => [nm(t.e), dist(t.e.x, t.e.y, P.x, P.y)]);
+    R.push('threats ' + th.map(([k, d]) => k + '@' + d.toFixed(1)).join(' '));
+    if (th.some(([, d]) => d < 4)) { nbad++; R.push('MONSTER-NEAR-START'); }
+    if (Q.get('walk')) {   // 走遍可達格：記錄 JS 錯誤、卡住（G.lock 超過 3 秒）、意外換場景、Game Over
+      const errs = []; addEventListener('error', e => errs.length < 5 && errs.push(String(e.message).slice(0, 80) + '@' + Math.floor(P.x) + ',' + Math.floor(P.y)));
+      addEventListener('unhandledrejection', e => errs.length < 5 && errs.push('rej:' + String(e.reason).slice(0, 80) + '@' + Math.floor(P.x) + ',' + Math.floor(P.y)));
+      const sc = G.scene, tiles = []; for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (ev[y * W + x]) tiles.push([x, y]);
+      const ev2 = {}; const note = (k, x, y) => { (ev2[k] = ev2[k] || []).length < 4 && ev2[k].push(x + ',' + y); };
+      let lockT = 0;
+      for (const [x, y] of tiles) {
+        if (G.mode !== 'play' || G.scene !== sc) break;
+        P.x = x + .5; P.y = y + .5; P.hidden = null; P.inv = 99; G.hearts = 5; GH.active = false;
+        for (let f = 0; f < 4; f++) { P.dir = (f * 2) % 8; await wait(9); }
+        if (G.lock) { lockT += .04; if (lockT > 3) { note('stuckLock', x, y); lockT = 0; } } else lockT = 0;
+        if (typeof advanceFn === 'function' && advanceFn) for (let i = 0; i < 40 && advanceFn; i++) { advanceFn(); await wait(5); }
+      }
+      if (G.scene !== sc) note('scene' + sc + '→' + G.scene, Math.floor(P.x), Math.floor(P.y));
+      if (G.mode !== 'play') note('mode:' + G.mode, Math.floor(P.x), Math.floor(P.y));
+      R.push(`walk tiles=${tiles.length} errors=${errs.length}` + (errs.length ? '[' + errs.join(' ; ') + ']' : '') + ' ' + Object.entries(ev2).map(([k, v]) => k + '[' + v.join(' ') + ']').join(' '));
+      if (errs.length || ev2.stuckLock) nbad++;
+    }
+    if (Q.get('map')) { const pre = document.createElement('pre'); pre.id = 'dump'; let t = ''; for (let y = 0; y < H; y++) { for (let x = 0; x < W; x++) { const o = OBJAT[x + ',' + y]; t += Math.floor(P.x) === x && Math.floor(P.y) === y ? '@' : o && /xm_gift|hw_head|frag/.test(o.t) ? 'G' : ev[y * W + x] ? '.' : o && o.solid ? 'o' : at(x, y) === 'D' ? 'D' : at(x, y) === 'X' ? ' ' : '#'; } t += String.fromCharCode(10); } pre.textContent = t; document.body.appendChild(pre); R.push('MAP/' + t.split(String.fromCharCode(10)).map((l, y) => y + ':' + l.replace(/ +$/, '')).join('/')); }
+    document.title = (nbad ? 'FOUND ' : 'CLEAN ') + R.join(' | ');
+  } catch (e) { document.title = 'ERR ' + e + ' ' + R.join(' | '); }
+}
+{ const _t = runTest; runTest = async function (kind) { if (kind === 'spaudit') return testSpAudit(); return _t(kind); }; }
