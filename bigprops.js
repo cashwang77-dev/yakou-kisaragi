@@ -74,26 +74,27 @@ function bpGlow() {
   if (_a) ltAfterDark = function (psx, psy) { _a(psx, psy); bpGlow(); }; }
 
 /* 警衛室屋頂：人在外面時蓋上（遮住空心的牆頂），走進去或走到它後面時變淡 */
-const BP_ROOF = { a: 1 };
-function bpRoof() {
-  const g = BP_GUARD, h = WALLH, o = .1;
+const BP_ROOFS = [{ ...BP_GUARD, a: 1 }, { x0: 3, x1: 7, y0: 32, y1: 35, a: 1, shed: 1 }];   // 警衛室、器材小屋
+function bpRoof(g) {
+  const h = WALLH, o = .1;
   const inG = P.x >= g.x0 && P.x < g.x1 + 1 && P.y >= g.y0 && P.y < g.y1 + 1;
-  const [psx, psy] = iso(P.x, P.y), [cx, cy] = iso(g.x0 + 2, g.y0 + 2);
-  const behind = P.x + P.y < g.x1 + g.y1 + 1 && Math.abs(psx - cx) < 46 && psy < cy + 20 && psy > cy - 60;
+  const [psx, psy] = iso(P.x, P.y), [cx, cy] = iso((g.x0 + g.x1 + 1) / 2, (g.y0 + g.y1 + 1) / 2);
+  const behind = P.x + P.y < g.x1 + g.y1 + 1 && Math.abs(psx - cx) < 16 * (g.x1 - g.x0 + 2) && psy < cy + 20 && psy > cy - 60;
   const tgt = inG ? 0 : behind && !P.hidden ? .3 : 1;
-  BP_ROOF.a += (tgt - BP_ROOF.a) * .15;
-  if (BP_ROOF.a < .02) return;
+  g.a += (tgt - g.a) * .15;
+  if (g.a < .02) return;
   const up = ([x, y]) => [x, y - h];
   const A = up(iso(g.x0 - o, g.y0 - o)), B = up(iso(g.x1 + 1 + o, g.y0 - o)), C = up(iso(g.x1 + 1 + o, g.y1 + 1 + o)), D = up(iso(g.x0 - o, g.y1 + 1 + o));
-  ctx.globalAlpha = BP_ROOF.a;
+  ctx.globalAlpha = g.a;
   // 屋簷厚度（前、右兩面）
   const th = 3, dn = p => [p[0], p[1] + th];
   poly([D, C, dn(C), dn(D)], '#5f5a52'); poly([C, B, dn(B), dn(C)], '#4a463f');
   // 屋頂面：水泥板＋防水層的格線、積水反光
   poly([A, B, C, D], '#77736b');
   ctx.strokeStyle = 'rgba(40,38,34,.35)'; ctx.lineWidth = 1;
-  for (let k = 1; k < 4; k++) {
-    const t = k / 4, p1 = [A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t], p2 = [D[0] + (C[0] - D[0]) * t, D[1] + (C[1] - D[1]) * t];
+  const nk = g.x1 - g.x0 + 1;
+  for (let k = 1; k < nk; k++) {
+    const t = k / nk, p1 = [A[0] + (B[0] - A[0]) * t, A[1] + (B[1] - A[1]) * t], p2 = [D[0] + (C[0] - D[0]) * t, D[1] + (C[1] - D[1]) * t];
     ctx.beginPath(); ctx.moveTo(p1[0], p1[1]); ctx.lineTo(p2[0], p2[1]); ctx.stroke();
   }
   const [wx, wy] = up(iso(g.x0 + 2.6, g.y0 + 2.4));
@@ -101,11 +102,57 @@ function bpRoof() {
   // 屋頂上的小東西：通風管、天線
   const [vx, vy] = up(iso(g.x0 + .9, g.y0 + 1.1));
   ctx.fillStyle = '#56524b'; ctx.fillRect(vx - 2, vy - 6, 4, 6); ctx.fillStyle = '#3c3934'; ctx.fillRect(vx - 3, vy - 7, 6, 2);
+  if (!g.shed) {
   const [ax, ay] = up(iso(g.x1 + .6, g.y0 + .5));
   ctx.strokeStyle = '#2e2c29'; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ax, ay - 14); ctx.moveTo(ax - 4, ay - 11); ctx.lineTo(ax + 4, ay - 11); ctx.moveTo(ax - 3, ay - 8); ctx.lineTo(ax + 3, ay - 8); ctx.stroke();
+  }
   // 前緣的亮邊
   ctx.strokeStyle = 'rgba(210,205,190,.3)'; ctx.beginPath(); ctx.moveTo(D[0], D[1]); ctx.lineTo(C[0], C[1]); ctx.lineTo(B[0], B[1]); ctx.stroke();
   ctx.globalAlpha = 1;
 }
 { const _cs = typeof coopSprites === 'function' ? coopSprites : null;
-  coopSprites = function (list) { if (_cs) _cs(list); if (G.scene === 1 && IMG.guard_f) list.push({ d: BP_GUARD.x1 + BP_GUARD.y1 + 1.05, f: bpRoof }); }; }
+  coopSprites = function (list) { if (_cs) _cs(list); if (G.scene === 1 && IMG.guard_f) for (const g of BP_ROOFS) list.push({ d: g.x1 + g.y1 + 1.05, f: () => bpRoof(g) }); }; }
+
+/* ② 看台（第一章 x=1 上層、x=2 下層，y=18–30，y=24 是走道）：程式逐格畫
+   水泥階梯＋立面水漬、褪色的塑膠座椅（偶爾缺一張、一張是紅的）、上層後方欄杆、走道兩側的端牆 */
+const bpH = (x, y, k = 0) => ((x * 73856093) ^ (y * 19349663) ^ (k * 83492791)) >>> 0;
+function bpSeat(sx, sy, z, col) {   // 座椅面向 +x（面向操場）：sx,sy＝世界座標中心
+  const q = (dx, dy, dz) => { const [a, b] = iso(sx + dx, sy + dy); return [a, b - z - dz]; };
+  poly([q(-.14, -.13, 3), q(.14, -.13, 3), q(.14, .13, 3), q(-.14, .13, 3)], col[0]);            // 座面
+  poly([q(-.14, -.13, 3), q(-.14, .13, 3), q(-.14, .13, 9), q(-.14, -.13, 9)], col[1]);           // 椅背
+  poly([q(-.14, .13, 3), q(.14, .13, 3), q(.14, .13, 2), q(-.14, .13, 2)], col[2]);              // 座面前緣
+  const [a, b] = iso(sx, sy); ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(a - 1, b - z - 2, 2, 2);  // 支腳
+}
+const BP_SEATC = { blue: ['#46627c', '#3a5269', '#2c3e50'], red: ['#7c3a3a', '#673030', '#4a2222'], grey: ['#6c6e70', '#5a5c5e', '#444648'] };
+function bpBleach(o) {
+  const { x, y } = o, low = !!o.hideOnly, h = low ? 9 : 18;
+  // 水泥本體
+  box(x, y, 1, 1, h, '#6f6b63', y === 30 || y === 23 ? '#4f4b45' : null, '#4a4640');
+  // 立面（朝操場的 R 面）：模板接縫、水漬往下流
+  const [rx0, ry0] = iso(x + 1, y + 1), [rx1, ry1] = iso(x + 1, y);
+  ctx.fillStyle = 'rgba(20,20,18,.28)';
+  for (let k = 0; k < 3; k++) { const t = (bpH(x, y, k) % 100) / 100, len = 3 + bpH(x, y, k + 9) % (h - 3); const px = rx0 + (rx1 - rx0) * t, py = ry0 + (ry1 - ry0) * t; ctx.fillRect(Math.round(px), Math.round(py - h), 1, len); }
+  ctx.strokeStyle = 'rgba(0,0,0,.25)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(rx0, ry0 - h + 1.5); ctx.lineTo(rx1, ry1 - h + 1.5); ctx.stroke();   // 踏面前緣的陰影
+  ctx.strokeStyle = 'rgba(190,185,170,.3)'; ctx.beginPath(); ctx.moveTo(rx0, ry0 - h + .5); ctx.lineTo(rx1, ry1 - h + .5); ctx.stroke();
+  if (y === 30 || y === 23) {   // 端牆：一道裂縫
+    const [lx, ly] = iso(x + .55, y + 1); ctx.strokeStyle = 'rgba(15,15,14,.5)'; ctx.beginPath(); ctx.moveTo(lx, ly - h + 2); ctx.lineTo(lx + 2, ly - h + 6); ctx.lineTo(lx + 1, ly - h + 9); ctx.stroke();
+  }
+  // 座椅：每格兩張
+  for (let k = 0; k < 2; k++) {
+    const hv = bpH(x, y, k + 3) % 23; if (hv === 0) continue;   // 缺一張
+    const c = hv === 7 && !low ? BP_SEATC.red : hv % 9 === 4 ? BP_SEATC.grey : BP_SEATC.blue;
+    bpSeat(x + .6, y + .27 + k * .46, h, c);
+  }
+  // 上層後方欄杆
+  if (!low) {
+    const [a, b] = iso(x + .08, y), [c2, d] = iso(x + .08, y + 1);
+    ctx.fillStyle = '#3a3c3e'; ctx.fillRect(Math.round(a), Math.round(b - h - 13), 1, 13);
+    if (y === 30 || y === 23) ctx.fillRect(Math.round(c2), Math.round(d - h - 13), 1, 13);
+    ctx.strokeStyle = '#4a4c4f'; ctx.beginPath(); ctx.moveTo(a, b - h - 12.5); ctx.lineTo(c2, d - h - 12.5); ctx.moveTo(a, b - h - 6.5); ctx.lineTo(c2, d - h - 6.5); ctx.stroke();
+  }
+}
+{ const _dp = typeof drawProp === 'function' ? drawProp : null;
+  drawProp = function (o, cx, cy, shaking) {
+    if (o.t === 'bleach' && G.scene === 1) { bpBleach(o); return true; }
+    return _dp ? _dp(o, cx, cy, shaking) : false;
+  }; }
