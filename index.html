@@ -242,7 +242,7 @@ button{touch-action:manipulation}#hwNote,#runSet,#end,#invMenu{touch-action:pan-
 const LANG=(()=>{const q=(location.search.match(/[?&]lang=(\w+)/)||[])[1];if(q){try{if(q!=='dump')localStorage.setItem('kisaragiLang',q)}catch(e){}return q}
   try{const s=localStorage.getItem('kisaragiLang');if(s)return s}catch(e){}return /^zh/i.test(navigator.language||'zh')?'zh':'en'})();
 let I18N={};const I18N_MISS=new Set();
-if(LANG==='en'){document.documentElement.lang='en';document.documentElement.classList.add('en');document.write('<script src="i18n_en.js?v=d2d96648"><\/script>');}
+if(LANG==='en'){document.documentElement.lang='en';document.documentElement.classList.add('en');document.write('<script src="i18n_en.js?v=bddc8eba"><\/script>');}
 function _L(s,...v){
   if(Array.isArray(s)&&s.raw){
     if(LANG==='en'){const k=s.reduce((a,x,i)=>a+'{'+(i-1)+'}'+x);const e=I18N[k];
@@ -406,6 +406,7 @@ function _Ldom(root){const CJK=/[\u3000-\u30ff\u4e00-\u9fff\uff00-\uffef]/,INL=/
 <script src="homeec.js?v=8f35adac"></script>
 <script src="balance.js?v=c45f71a1"></script>
 <script src="faces.js?v=3d275219"></script>
+<script src="puzzles.js?v=8ea052a8"></script>
 <script src="inventory.js?v=90365749"></script>
 <script src="halloween.js?v=72774ad4"></script>
 <script src="depth.js?v=2a2c0f94"></script>
