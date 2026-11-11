@@ -3,7 +3,7 @@
    bpFaceL(img, i, n, x, y, h)：x 方向的牆面（L 面，朝 +y＝面向鏡頭左下），第 i 條／共 n 條，貼在格子 (x,y) 的 L 面
    bpFaceR(img, i, n, x, y, h)：y 方向的牆面（R 面，朝 +x），圖片左邊＝靠鏡頭那端（y 大）
    ① 警衛室（第一章 31–34, 32–35）：assets/guard_f.png（南面接待窗）、guard_s.png（東面冷氣／公告欄），tools/guard_tex.py 產生 */
-loadImages(['guard_f', 'guard_s']);
+loadImages(['guard_f', 'guard_s', 'school_f']);
 
 function bpFaceL(img, i, n, x, y, h) {
   const sw = img.width / n, [X, Y] = iso(x, y + 1);
@@ -28,6 +28,7 @@ const bpInGuard = (x, y) => G.scene === 1 && x >= BP_GUARD.x0 && x <= BP_GUARD.x
 
 { const _w = typeof sceneWall === 'function' ? sceneWall : null;
   sceneWall = function (x, y) {
+    if (bpSchool(x, y)) return true;
     if (bpInGuard(x, y) && at(x, y) === '#' && IMG.guard_f && IMG.guard_s && (y === BP_GUARD.y1 || x === BP_GUARD.x1)) {
       const h = WALLH;
       if (y === BP_GUARD.y1) {
@@ -156,3 +157,26 @@ function bpBleach(o) {
     if (o.t === 'bleach' && G.scene === 1) { bpBleach(o); return true; }
     return _dp ? _dp(o, cx, cy, shaking) : false;
   }; }
+
+/* ③ 校舍外牆（第一章 正面 y=12、東側 x=38）：assets/school_f.png 8 格一循環（tools/guard_tex.py） */
+function bpSchool(x, y) {
+  if (G.scene !== 1 || !IMG.school_f || at(x, y) !== '#') return false;
+  const front = y === 12 && x >= 1 && x <= 38 && !['#', 'D'].includes(at(x, y + 1));
+  const east = x === 38 && y >= 1 && y <= 12 && !['#', 'D'].includes(at(x + 1, y));
+  if (!front && !east) return false;
+  const h = WALLH;
+  if (front) {
+    bpFaceL(IMG.school_f, (x - 1) % 8, 8, x, y, h);
+    const [a, b] = iso(x, y + 1), [c, d] = iso(x + 1, y + 1); poly([[a, b], [c, d], [c, d - h], [a, b - h]], 'rgba(0,0,0,.12)');
+    if (x === 26) {   // 正門上方的時鐘（原本 drawWall 畫的）
+      const [sx, sy] = iso(x + .5, y + 1); ctx.fillStyle = '#d8d2c0'; ctx.beginPath(); ctx.ellipse(sx, sy - 24, 5, 5, 0, 0, 7); ctx.fill();
+      ctx.strokeStyle = '#222'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(sx, sy - 24); ctx.lineTo(sx - 3, sy - 25); ctx.moveTo(sx, sy - 24); ctx.lineTo(sx + 1, sy - 28); ctx.stroke();
+    }
+  }
+  if (east) {
+    bpFaceR(IMG.school_f, (12 - y + 3) % 8, 8, x, y, h);
+    const [a, b] = iso(x + 1, y + 1), [c, d] = iso(x + 1, y); poly([[a, b], [c, d], [c, d - h], [a, b - h]], 'rgba(0,0,0,.4)');
+  }
+  box(x, y, 1, 1, h, '#8d8475', null, null);
+  return true;
+}
